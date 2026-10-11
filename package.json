@@ -1,0 +1,44 @@
+{
+  "name": "saas-booking",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.9.0",
+    "@phosphor-icons/react": "2.1.10",
+    "@supabase/supabase-js": "2.45.4",
+    "archiver": "7.0.1",
+    "browser-image-compression": "2.0.2",
+    "imapflow": "1.0.164",
+    "leaflet": "1.9.4",
+    "next": "14.2.15",
+    "nodemailer": "6.9.15",
+    "pino": "9.4.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "7.53.0",
+    "xlsx": "0.18.5",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/archiver": "6.0.2",
+    "@types/leaflet": "1.9.12",
+    "@types/node": "20.16.5",
+    "@types/nodemailer": "6.4.16",
+    "@types/react": "18.3.5",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.6.2"
+  }
+}

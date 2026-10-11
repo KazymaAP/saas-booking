@@ -1,0 +1,28 @@
+# .github/workflows/backup.yml — еженедельный pg_dump (ТЗ §35). pg_dump есть на runner Ubuntu, на Vercel его нет.
+# Нужен секрет репозитория SUPABASE_DB_URL: строка подключения Postgres из настроек Supabase (Session pooler, порт 5432).
+name: weekly-backup
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'   # воскресенье 00:00 UTC = 03:00 МСК
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges --format=custom --file=backup.dump
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup.dump
+          retention-days: 60

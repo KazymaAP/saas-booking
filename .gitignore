@@ -1,0 +1,20 @@
+# зависимости и сборка
+node_modules/
+.next/
+out/
+next-env.d.ts
+
+# секреты: .env.local и любые .env с значениями не попадают в git
+.env
+.env.*
+!.env.example
+
+# локальные артефакты
+*.log
+.DS_Store
+Thumbs.db
+.vercel
+
+scripts/import/
+check-log.txt
+tsconfig.tsbuildinfo

@@ -1,0 +1,18 @@
+{
+  "crons": [
+    { "path": "/api/cron/send-emails", "schedule": "* * * * *" },
+    { "path": "/api/cron/check-replies", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/booking-reminders", "schedule": "0 * * * *" },
+    { "path": "/api/cron/unconfirmed-reminder", "schedule": "0 * * * *" },
+    { "path": "/api/cron/follow-up", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/reset-email-limits", "schedule": "0 21 * * *" },
+    { "path": "/api/cron/subscription-reminders", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/archive-refused", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/cleanup-audit-log", "schedule": "0 0 1 * *" },
+    { "path": "/api/cron/process-transfers", "schedule": "30 1 * * *" },
+    { "path": "/api/cron/process-deletions", "schedule": "0 1 * * *" },
+    { "path": "/api/cron/cleanup-slots", "schedule": "0 23 * * *" },
+    { "path": "/api/cron/cleanup-prototypes", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/check-domains", "schedule": "0 3 * * *" }
+  ]
+}

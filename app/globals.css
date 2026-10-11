@@ -1,0 +1,14 @@
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-color: #111111;
+}
+
+.btn-primary {
+  @apply inline-flex h-11 items-center justify-center rounded-md px-4 text-white;
+  background: var(--brand-color);
+}
+.input {
+  @apply h-11 w-full rounded-md border border-[#e5e5e5] px-3 focus:outline-none focus:ring-2;
+}
