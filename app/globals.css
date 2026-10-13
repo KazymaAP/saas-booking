@@ -1,14 +1,152 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Дизайн-система панелей. Все базовые правила привязаны к .panel-shell:
+   шаблон клиента (rabota) использует слои CSS и не должен получать эти стили. */
+
 :root {
   --brand-color: #111111;
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --line: #e5e5e5;
+  --surface: #ffffff;
+  --soft: #f6f6f6;
+  --danger: #dc2626;
+  --radius: 10px;
 }
 
-.btn-primary {
-  @apply inline-flex h-11 items-center justify-center rounded-md px-4 text-white;
-  background: var(--brand-color);
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #fafafa;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Общие классы, которые используют и панели, и форма записи */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-color);
+  background: var(--brand-color);
+  color: #fff;
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
 .input {
-  @apply h-11 w-full rounded-md border border-[#e5e5e5] px-3 focus:outline-none focus:ring-2;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  outline: none;
+}
+.input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06); }
+
+/* ===== Панели ===== */
+.panel-shell h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 16px; }
+.panel-shell h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
+.panel-shell h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.panel-shell p { margin: 0 0 8px; }
+.panel-shell a { color: var(--ink); }
+
+.panel-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.panel-shell select,
+.panel-shell textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  outline: none;
+}
+.panel-shell input:focus,
+.panel-shell select:focus,
+.panel-shell textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06); }
+.panel-shell textarea { min-height: 80px; }
+
+.panel-shell button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-color);
+  background: var(--brand-color);
+  color: #fff;
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+.panel-shell button[type="submit"]:hover { opacity: 0.88; }
+.panel-shell button:not([type="submit"]) {
+  font: inherit;
+  cursor: pointer;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.panel-shell button:not([type="submit"]):hover { background: var(--soft); }
+.panel-shell button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.panel-shell table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 14px;
+}
+.panel-shell thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--soft);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-shell tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.panel-shell tbody tr:last-child td { border-bottom: 0; }
+.panel-shell tbody tr:hover td { background: #fcfcfc; }
+
+.panel-shell details,
+.panel-shell section > .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+
+.panel-shell :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .panel-shell h1 { font-size: 22px; }
+  .panel-shell input, .panel-shell select, .panel-shell textarea { min-height: 44px; font-size: 16px; }
+  .panel-shell button { min-height: 44px; }
 }

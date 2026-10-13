@@ -13,7 +13,7 @@ async function login(formData: FormData) {
 
 export default function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
   return (
-    <main className="mx-auto mt-16 max-w-[360px] px-4">
+    <main className="mx-auto mt-16 max-w-[360px] px-4 panel-shell">
       <h1 className="text-[24px] font-semibold">Вход в панель</h1>
       {searchParams.error && <p role="alert" className="mt-3 text-[#dc2626]">Неверная почта или пароль</p>}
       <form action={login} className="mt-6 grid gap-3">

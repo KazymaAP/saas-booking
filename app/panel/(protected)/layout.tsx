@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   if (!(await isSuperAdmin())) redirect('/panel/login');
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen panel-shell">
       <nav className="flex flex-wrap gap-4 border-b border-[#e5e5e5] px-4 py-3 text-[14px]">
         {NAV.map((n) => <Link key={n.href} href={n.href} className="underline">{n.label}</Link>)}
       </nav>

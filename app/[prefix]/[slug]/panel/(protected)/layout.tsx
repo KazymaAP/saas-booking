@@ -30,7 +30,7 @@ export default async function OwnerLayout({ children, params }: { children: Reac
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen panel-shell">
       <nav className="flex flex-wrap items-center gap-4 border-b border-[#e5e5e5] px-4 py-3 text-[14px]">
         <span className="font-semibold">{access.business.name}</span>
         {nav.filter((n) => access.member.role === 'owner' || !['settings', 'subscription', 'team'].includes(n.href.split('/').pop() ?? '')).map((n) => <Link key={n.href} href={n.href} className="underline">{n.label}</Link>)}
