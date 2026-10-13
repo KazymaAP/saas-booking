@@ -1,6 +1,7 @@
 // lib/owner-session.ts — вход владельца/менеджера бизнеса (ТЗ §5.3, §16, §20).
 // Email + пароль через Supabase Auth. Доступ проверяется на каждом запросе: пользователь должен быть
 // в admin_users для этого бизнеса (роль owner или manager). Cookie одна, права — всегда по БД.
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { adminClient } from './supabase';
@@ -34,7 +35,7 @@ export async function signInOwner(email: string, password: string, slug: string)
 }
 
 // Возвращает бизнес и роль, если текущая сессия имеет доступ к бизнесу со slug, иначе null.
-export async function currentOwner(slug: string): Promise<{ business: Business; member: AdminUser } | null> {
+async function currentOwnerUncached(slug: string): Promise<{ business: Business; member: AdminUser } | null> {
   const token = cookies().get(OWNER_COOKIE)?.value;
   if (!token) return null;
   const { data: userData } = await anonClient(token).auth.getUser(token);
@@ -49,6 +50,9 @@ export async function currentOwner(slug: string): Promise<{ business: Business; 
   if (!member) return null;
   return { business: business as Business, member: member as AdminUser };
 }
+
+// Кэш в рамках одного запроса: layout и страница не делают повторных запросов к базе.
+export const currentOwner = cache(currentOwnerUncached);
 
 export function signOutOwner(): void {
   cookies().delete(OWNER_COOKIE);

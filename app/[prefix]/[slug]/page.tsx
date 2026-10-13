@@ -7,7 +7,7 @@ import { BookingForm } from './BookingForm';
 import { SwRegister } from './SwRegister';
 import { StudioTemplate } from '@/components/templates/StudioTemplate';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // кэш сайта клиента на 60 секунд, быстрее ответ без похода в базу
 
 // PWA: манифест и заголовок страницы (ТЗ §5.1, §5.1 SEO).
 export async function generateMetadata({ params }: { params: { prefix: string; slug: string } }): Promise<Metadata> {

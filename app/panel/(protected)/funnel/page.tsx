@@ -8,7 +8,7 @@ import { GenerateProgress } from './GenerateProgress';
 export const dynamic = 'force-dynamic';
 
 type Row = { id: string; name: string; city: string | null; status: string; preview_url: string | null; emails: string[] };
-const PAGE = 100;
+const PAGE = 50;
 const COLS = 'id, name, city, status, preview_url, emails';
 
 export default async function FunnelPage({ searchParams }: { searchParams: { city?: string; email?: string; tpl?: string } }) {

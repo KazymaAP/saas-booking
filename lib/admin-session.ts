@@ -1,5 +1,6 @@
 // lib/admin-session.ts — вход супер-админа (ТЗ §16, §5.4): email + пароль через Supabase Auth.
 // Доступ только для адресов из SUPERADMIN_EMAILS (через запятую). Сессия: httpOnly-cookie, 30 дней (§0.3).
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
@@ -33,7 +34,7 @@ export async function signInSuperAdmin(email: string, password: string): Promise
   return true;
 }
 
-export async function isSuperAdmin(): Promise<boolean> {
+async function isSuperAdminUncached(): Promise<boolean> {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return false;
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -44,6 +45,9 @@ export async function isSuperAdmin(): Promise<boolean> {
   const email = data.user?.email?.toLowerCase();
   return Boolean(email && superAdmins().includes(email));
 }
+
+// Кэш в рамках одного запроса (проверка в Auth занимает сетевой запрос).
+export const isSuperAdmin = cache(isSuperAdminUncached);
 
 export function signOutSuperAdmin(): void {
   cookies().delete(SESSION_COOKIE);

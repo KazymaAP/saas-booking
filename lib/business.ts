@@ -1,4 +1,4 @@
-// lib/business.ts — резолв бизнеса по префиксу и slug (ТЗ §3.3, п. 2 и 4).
+// lib/business.ts — резолв бизнеса по префиксу и slug (ТЗ §3.3, п. 2 и 4). Запросы к базе выполняются параллельно.
 import { adminClient } from './supabase';
 import type { Business, Service, VerticalTemplate } from './database.types';
 
@@ -10,9 +10,12 @@ export type Resolved =
 // Публичный сайт виден только для status='client'. Прототипы открываются через /preview/{slug}?token=.
 export async function resolveBusiness(prefix: string, slug: string): Promise<Resolved> {
   const db = adminClient();
-  const { data: template } = await db.from('vertical_templates').select('*').eq('url_prefix', prefix).maybeSingle();
+  // Шаблон ниши и бизнес независимы друг от друга: два запроса параллельно вместо последовательных.
+  const [{ data: template }, { data: business }] = await Promise.all([
+    db.from('vertical_templates').select('*').eq('url_prefix', prefix).maybeSingle(),
+    db.from('businesses').select('*').eq('slug', slug).maybeSingle(),
+  ]);
 
-  const { data: business } = await db.from('businesses').select('*').eq('slug', slug).maybeSingle();
   if (business) {
     if (business.status !== 'client') return { kind: 'notfound' };
     if (template && business.vertical_template_id !== template.id) return { kind: 'notfound' };
