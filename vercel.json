@@ -1,8 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/send-emails", "schedule": "* * * * *" },
-    { "path": "/api/cron/check-replies", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/booking-reminders", "schedule": "0 * * * *" },
     { "path": "/api/cron/unconfirmed-reminder", "schedule": "0 * * * *" },
     { "path": "/api/cron/follow-up", "schedule": "0 8 * * *" },
     { "path": "/api/cron/reset-email-limits", "schedule": "0 21 * * *" },
