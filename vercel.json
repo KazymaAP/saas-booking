@@ -1,6 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/unconfirmed-reminder", "schedule": "0 * * * *" },
     { "path": "/api/cron/follow-up", "schedule": "0 8 * * *" },
     { "path": "/api/cron/reset-email-limits", "schedule": "0 21 * * *" },
     { "path": "/api/cron/subscription-reminders", "schedule": "0 7 * * *" },
