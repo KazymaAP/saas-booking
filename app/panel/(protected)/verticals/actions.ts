@@ -6,7 +6,7 @@ import { audit } from '@/lib/audit';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
-function parseJson<T>(raw: string, fallback: T): T | null {
+function parseJson<T>(raw: string, fallback: T | null): T | null {
   try {
     return raw.trim() ? (JSON.parse(raw) as T) : fallback;
   } catch {
