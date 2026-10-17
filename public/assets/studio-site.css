@@ -1,0 +1,218 @@
+/* public/assets/studio-site.css
+ * Слой стилей для классов StudioTemplate, которых нет в studio.css (задача 3).
+ * Использует токены из studio.css (--color-*, --text-*, --radius-element, --shadow-*).
+ * Подключается после studio.css. Не переопределяет существующие классы studio.css.
+ * --color-on-accent пока не определён в studio.css: fallback #fff. Вычислять контраст — задача 4.
+ */
+
+.t-h1 {
+  margin: 0;
+  font-size: var(--text-heading-1-size);
+  font-weight: var(--text-heading-1-weight);
+  line-height: var(--text-heading-1-leading);
+  color: var(--color-text-primary);
+}
+
+.t-h2 {
+  margin: 0 0 12px;
+  font-size: var(--text-heading-2-size);
+  font-weight: var(--text-heading-2-weight);
+  line-height: var(--text-heading-2-leading);
+  color: var(--color-text-primary);
+}
+
+.t-h3 {
+  margin: 0;
+  font-size: var(--text-heading-3-size);
+  font-weight: var(--text-heading-3-weight);
+  line-height: var(--text-heading-3-leading);
+  color: var(--color-text-primary);
+}
+
+.t-body {
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
+  color: var(--color-text-primary);
+}
+
+.t-sub {
+  font-size: var(--text-supporting-size);
+  font-weight: var(--text-supporting-weight);
+  line-height: var(--text-supporting-leading);
+  color: var(--color-text-secondary);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.strong {
+  font-weight: var(--text-label-weight);
+}
+
+.accent {
+  color: var(--color-accent);
+}
+
+.demo-banner {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: var(--text-supporting-size);
+  color: var(--color-text-primary);
+  background: var(--color-accent-muted);
+}
+
+.studio-top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-low);
+}
+
+.feature {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actions,
+.contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.service-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chev {
+  flex-shrink: 0;
+  color: var(--color-icon-primary);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-element);
+  background: var(--color-background-gray);
+  color: var(--color-text-primary);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-leading);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent, #fff);
+}
+
+.btn.icon {
+  width: 44px;
+  padding: 0;
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.text-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-icon-primary);
+}
+
+.big {
+  width: 56px;
+  height: 56px;
+}
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 0;
+  border-top: 1px solid var(--color-background-gray);
+}
+
+.glass {
+  background: rgba(28, 28, 30, 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* Нижняя навигация: плавающая, с отступом под системные полосы (safe area). */
+.nav {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 999px;
+}

@@ -1,0 +1,39 @@
+diff --git a/app/panel/(protected)/settings/actions.ts b/app/panel/(protected)/settings/actions.ts
+index a5dc93c..fa5ad09 100644
+--- a/app/panel/(protected)/settings/actions.ts
++++ b/app/panel/(protected)/settings/actions.ts
+@@ -23,11 +23,15 @@ export async function saveRequisites(formData: FormData) {
+     email: str(formData.get('email'), 200),
+     phone: str(formData.get('phone'), 40),
+     city: str(formData.get('city'), 100),
++    // Адрес для корреспонденции — для договора поручения и запросов субъектов ПД (ФЗ-152 ст. 14 ч. 7).
++    address: str(formData.get('address'), 300),
+     card: str(formData.get('card'), 40),
+     bank: str(formData.get('bank'), 100),
+     nalog_url: str(formData.get('nalog_url'), 300),
+     oferta: String(formData.get('oferta') ?? '').slice(0, 20000),
+     policy: String(formData.get('policy') ?? '').slice(0, 20000),
++    // Дополнительные условия договора поручения (/dogovor-porucheniya).
++    dpa: String(formData.get('dpa') ?? '').slice(0, 20000),
+   });
+ }
+ 
+diff --git a/app/panel/(protected)/settings/page.tsx b/app/panel/(protected)/settings/page.tsx
+index d4c4a4c..84f6eaa 100644
+--- a/app/panel/(protected)/settings/page.tsx
++++ b/app/panel/(protected)/settings/page.tsx
+@@ -24,11 +24,13 @@ export default async function PlatformSettings() {
+       <section>
+         <h2 className="text-[18px] font-semibold">Реквизиты (§29)</h2>
+         <form action={saveRequisites} className="mt-3 grid gap-2">
+-          {[['fio', 'ФИО'], ['inn', 'ИНН'], ['email', 'Email'], ['phone', 'Телефон'], ['city', 'Город'], ['card', 'Карта для переводов'], ['bank', 'Банк'], ['nalog_url', 'Ссылка «Мой налог»']].map(([k, l]) => (
++          {[['fio', 'ФИО'], ['inn', 'ИНН'], ['email', 'Email'], ['phone', 'Телефон'], ['city', 'Город'], ['address', 'Адрес для корреспонденции'], ['card', 'Карта для переводов'], ['bank', 'Банк'], ['nalog_url', 'Ссылка «Мой налог»']].map(([k, l]) => (
+             <label key={k} className="grid gap-1">{l}<input name={k} defaultValue={req[k] ?? ''} className="input" /></label>
+           ))}
+           <label className="grid gap-1">Текст оферты<textarea name="oferta" defaultValue={req.oferta ?? ''} className="input h-[140px] py-2" /></label>
+           <label className="grid gap-1">Текст политики<textarea name="policy" defaultValue={req.policy ?? ''} className="input h-[140px] py-2" /></label>
++          <label className="grid gap-1">Доп. условия договора поручения<textarea name="dpa" defaultValue={req.dpa ?? ''} className="input h-[140px] py-2" /></label>
++          <p className="text-[#595959]">Карта и банк в документах не публикуются. Тексты выше показываются в документах отдельным разделом «Дополнительные условия».</p>
+           <button className="btn-primary w-fit" type="submit">Сохранить реквизиты</button>
+         </form>
+       </section>

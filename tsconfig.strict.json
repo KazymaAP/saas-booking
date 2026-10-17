@@ -1,0 +1,32 @@
+{
+  "//": "Строгая проверка инфраструктурных файлов (зона 13): noUncheckedIndexedAccess + exactOptionalPropertyTypes. В общем tsconfig флаг даёт ошибки в чужих файлах — см. notes.md. by-domain не включён: он импортирует страницу бизнеса (агент 4) и через неё components/OceanBackdrop.tsx. Запуск: pnpm typecheck:strict.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "incremental": false,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "types/**/*.d.ts",
+    "middleware.ts",
+    "instrumentation.ts",
+    "vitest.config.ts",
+    "lib/site.ts",
+    "lib/site.test.ts",
+    "lib/env.ts",
+    "lib/env.test.ts",
+    "lib/supabase.ts",
+    "lib/supabase.test.ts",
+    "lib/custom-domain.ts",
+    "lib/domain-map.ts",
+    "lib/domain-map.test.ts",
+    "app/layout.tsx",
+    "app/api/health/route.ts",
+    "app/api/resolve-domain/route.ts",
+    "middleware.test.ts",
+    "app/api/health/route.test.ts",
+    "app/api/resolve-domain/route.test.ts",
+    "lib/env-example.test.ts"
+  ]
+}

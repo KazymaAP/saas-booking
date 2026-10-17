@@ -1,0 +1,7 @@
+{
+  "regions": ["lhr1"],
+  "crons": [
+    { "path": "/api/cron/backup", "schedule": "0 3 * * 0" },
+    { "path": "/api/cron/cleanup-audit-log", "schedule": "0 6 * * *" }
+  ]
+}
