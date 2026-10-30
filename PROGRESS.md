@@ -2,7 +2,7 @@
 
 Состояние проекта по факту кода. Решения и отклонения от ТЗ — [DECISIONS.md](DECISIONS.md), история — [CHANGELOG.md](CHANGELOG.md).
 
-Обновлено: 2026-10-24. Версия: `0.1.0` (`package.json`). Ветка `main`, последний коммит — 2026-10-13.
+Обновлено: 2026-10-30. Версия: `0.1.0` (`package.json`). Ветка `master`, последний коммит — 2026-10-30.
 
 ## Оглавление
 
@@ -26,7 +26,7 @@
 | Telegram | Готово (два бота; привязка по коду `BIZ-…` с TTL 15 мин) |
 | Лицензии и передача кода | Готово: передача одним `.txt` (без ZIP и без исходников), MIGRATIONS 0001–0014; single-tenant — см. «Не сделано» |
 | Документация | Готово (см. [README.md](README.md#документация)) |
-| Автотесты | Нет по ТЗ §0.4; есть `scripts/smoke-test.sh` |
+| Автотесты | Есть: `vitest run --config vitest.config.mts` → 1296 passed / 0 failed (85 файлов); `tsc --noEmit` чисто; `next build` зелёный; `scripts/smoke-test.sh` |
 
 ## Готово
 
@@ -64,7 +64,7 @@
 - Воронка, бизнесы (фильтры, массовая смена статуса, импорт 2GIS, экспорт CSV/XLSX), карточка бизнеса, входящие,
   клиенты (оплата, доступ, продление), лицензии, ящики, шаблоны, ниши, статистика (MRR), логи, настройки, бэкап.
 
-**Фоновые задачи** — 15 cron-эндпоинтов под `Bearer CRON_SECRET`, 10 из них в `vercel.json`.
+**Фоновые задачи** — 15 cron-эндпоинтов под `Bearer CRON_SECRET`; 2 из них в `vercel.json` (лимит Vercel Hobby: `backup`, `cleanup-audit-log`), остальные 13 — через внешний планировщик (UptimeRobot/cron).
 
 **Интеграции** — Yandex 360 SMTP/IMAP с пулом ящиков и шифрованием паролей; бот оператора (`/stats`, алерты);
 бот бизнесов; лицензии (`/api/license/ping`, `revoke`, блокировка в middleware при заданном `LICENSE_ID`);
@@ -82,17 +82,19 @@
 
 ## Не сделано
 
-| Что | ТЗ | Комментарий |
-|---|---|---|
-| `/api/health` | §3.2 | `smoke-test.sh` выдаёт `WARN` |
-| Single-tenant сборка (`SINGLE_TENANT`, `build-single-tenant.ts`) | §14.5 | Путь передачи — [INSTALL.md](INSTALL.md) |
-| List-Unsubscribe, `/unsubscribe` | §9.5 | Влияет на доставляемость |
-| Пауза 45 с между письмами, 3 повтора | §9.1 | Одно письмо за вызов |
-| Отдельный service worker на каждый сайт | §5.1 | Один `/sw.js` на сервис |
-| Миграция на VPS / Docker / российский хостинг | §22 | Абстракции `*_PROVIDER` не реализованы; неиспользуемые переменные убраны из `.env.example` |
-| Сброс пароля владельцем | — | Через Supabase Dashboard, см. [docs/faq.md](docs/faq.md) |
-| ESLint | — | `pnpm lint` спрашивает конфиг и выходит с кодом 1 |
-| Юридические вопросы (ФЗ-152, холодная рассылка) | — | Риск принят владельцем, см. [DECISIONS.md](DECISIONS.md#открытые-риски) |
+Проверено по коду 2026-10-30 (документ ранее отставал: `/api/health` и `List-Unsubscribe`/`/unsubscribe` уже реализованы и присутствуют в коде).
+
+| Что | ТЗ | Комментарий | Блокирует релиз |
+|---|---|---|---|
+| Single-tenant сборка (`SINGLE_TENANT`, `build-single-tenant.ts`, `INSTALL.md`) | §14.5 | `SINGLE_TENANT=true` — только плейсхолдер в генерируемом `.env.example`; скрипта сборки и `INSTALL.md` нет | Нет (фича передачи кода, не ядро SaaS) |
+| Пауза 45 с + 3 повтора между письмами | §9.1 | В пути отправки нет `sleep`/`setTimeout`; retry на уровне очереди (`next_retry_at`) есть | Нет (доставляемость/лимиты SMTP) |
+| Отдельный service worker на каждый сайт | §5.1 | Один глобальный `app/sw.js/route.ts`, а не per-site | Нет |
+| Миграция на VPS / Docker / российский хостинг | §22 | Абстракции `*_PROVIDER` не реализованы (намеренно убраны) | Нет (хостим на Vercel) |
+| Сброс пароля владельцем | — | Через Supabase Dashboard, см. [docs/faq.md](docs/faq.md) | Нет |
+| ESLint | — | `pnpm lint` спрашивает конфиг и выходит с кодом 1 | Нет |
+| Юридические вопросы (ФЗ-152, холодная рассылка) | — | Риск принят владельцем, см. [DECISIONS.md](DECISIONS.md#открытые-риски) | Нет |
+
+**Единственный блокер живого сайта — env в Vercel `servis`:** там лежат `VITE_*`/`VAPID_*` от старого Vite-PWA. `checkEnv()` (запускается при старте сервера) требует ровно 6 переменных: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (все три — проект `oryzoexstuzgpbqvpjbr`), `ENCRYPTION_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`. `ENCRYPTION_KEY` добавлен агентом 30.10.2026 в Vercel; `CRON_SECRET` и `NEXT_PUBLIC_SITE_URL` уже присутствуют. Остаётся вставить владельцу 3 ключа Supabase из дашборда `oryzoexstuzgpbqvpjbr` (Settings → API), затем Redeploy.
 
 Ранее числилось «не сделано», но реализовано: отдельный бот оператора (`/api/telegram/admin-webhook`),
 массовые операции в списке бизнесов (`massSetStatus`).
