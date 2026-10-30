@@ -76,6 +76,7 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 | 11 | `supabase/migrations/0011_analytics.sql` | аналитика: ограничения событий, хэши, агрегаты |
 | 12 | `supabase/migrations/0012_rate_limit_hit.sql` | атомарный rate limit (`rate_limit_hit`) |
 | 13 | `supabase/migrations/0013_data_requests_types.sql` | типы запросов ПД: `withdraw`, `unsubscribe` |
+| 14 | `supabase/migrations/0014_partition_bookings.sql` | партиционирование `bookings` (производительность при 10000+ тенантов) |
 
 Миграции задуманы как идемпотентные (`if not exists`, `on conflict do nothing`), но при повторном запуске смотрите вывод на ошибки: `pg_cron`-задачи и сторонние расширения при повторе могут ругаться не всегда безвредно.
 
@@ -144,14 +145,16 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"        
 ## Шаг 5. Vercel: проект и первый деплой
 
 1. [vercel.com/new](https://vercel.com/new) → **Import Git Repository** → `saas-booking`.
+   Если в локальном репозитории нет GitHub-remote (`git remote -v` пуст), сначала создайте репозиторий на GitHub и добавьте его:
+   `git remote add origin https://github.com/<аккаунт>/saas-booking.git && git push -u origin master`.
 2. **Framework Preset**: Next.js. **Install Command**: `pnpm install`. **Build Command**: `pnpm build`
    (определяются автоматически по `pnpm-lock.yaml`). Если сборка падает на установке с
    `packages field missing or empty`, Vercel выбрал pnpm 9: укажите **Install Command**
    `npx pnpm@10 install --frozen-lockfile`.
-3. **Settings → General → Node.js Version**: `24.x` (совпадает с `engines.node` в `package.json`).
+3. **Settings → General → Node.js Version**: `22.x` (совпадает с `engines.node` в `package.json`).
 4. **Settings → Environment Variables**: добавьте переменные шага 4 для окружения **Production**
    (и **Preview**, если нужны превью-деплои).
-5. **Deploy**. Регион функций `lhr1` и 10 cron-задач подтягиваются из `vercel.json`.
+5. **Deploy**. Регион функций `lhr1` и 2 cron-задачи (низкочастотные: backup — раз в неделю, cleanup-audit-log — раз в сутки) подтягиваются из `vercel.json`. Частые задачи — внешним планировщиком (шаг 9).
 
 **Проверка:**
 
@@ -161,7 +164,7 @@ bash scripts/smoke-test.sh https://<project>.vercel.app
 
 - Ожидаемо: все проверки `OK`, кроме `/api/health` (`WARN` — эндпоинта нет в коде) и публичного сайта
   (`SKIP` — клиентов пока нет).
-- **Vercel → Settings → Cron Jobs**: 10 задач.
+- **Vercel → Settings → Cron Jobs**: 2 задачи (backup, cleanup-audit-log).
 - Вход на `https://<project>.vercel.app/panel/login` работает (хост `*.vercel.app` считается основным).
 
 ## Шаг 6. Домен
@@ -243,6 +246,8 @@ curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 
 `booking-reminders` ищет брони в окне «через 23–24 часа» и «через 1–2 часа». Если запускать реже раза в час,
 часть напоминаний будет пропущена.
+
+> **Warm-up — чтобы БД не засыпала.** На free-тарифе Supabase проект «засыпает» после простоя, и первый запрос к БД идёт 5–20 с. Настройте UptimeRobot (бесплатно) на пинг `https://<домен>/api/cron/warmup` каждые 5 минут с заголовком `Authorization: Bearer <CRON_SECRET>`. Эндпоинт делает лёгкий запрос к таблице `businesses` и возвращает `{"ok":true,"businesses_count":N}`. Без этого первый визит клиента после паузы будет медленным.
 
 Вариант с GitHub Actions для часовых задач (минимальный интервал GitHub — 5 минут, запуски могут опаздывать,
 поэтому `send-emails` раз в минуту лучше вызывать через cron-job.org или crontab). Файл
@@ -346,6 +351,6 @@ bash scripts/smoke-test.sh https://zapishisya.ru t/<slug-клиента>
 
 1. `pnpm typecheck && pnpm build` локально.
 2. Новые миграции — в SQL Editor до пуша кода, который их использует.
-3. `git push origin main` → Vercel собирает автоматически.
+3. `git push origin master` → Vercel собирает автоматически (ветка по умолчанию в репозитории — `master`).
 4. `bash scripts/smoke-test.sh https://zapishisya.ru`.
 5. Запись в [CHANGELOG.md](CHANGELOG.md).
