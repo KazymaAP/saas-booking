@@ -85,7 +85,7 @@ saas-booking/
 | Владелец бизнеса | строка `admin_users` с `role='owner'` | `/{prefix}/{slug}/panel/login` | `lib/owner-session.ts → currentOwner(slug)` в layout и в каждом server action кабинета |
 | Менеджер бизнеса | `admin_users.role='manager'` | то же | то же; разделы `settings`, `subscription`, `team` скрыты, действия в них проверяют `role === 'owner'` |
 | Клиент бизнеса | без входа | — | rate limit по IP, токен `bookings.cancel_token` для отмены и переноса |
-| Telegram | секрет в заголовке `X-Telegram-Bot-Api-Secret-Token` | — | `api/telegram/webhook`, `api/telegram/admin-webhook` |
+| Telegram | секрет в заголовке `X-Telegram-Bot-Api-Secret-Token` | — | `api/telegram/webhook` (один бот на обе роли) |
 | Планировщик | `Authorization: Bearer <CRON_SECRET>` | — | `lib/cron.ts → isCronAuthorized()` |
 
 Сессии: httpOnly-cookie с access token Supabase Auth на 30 дней (`sa_session` — супер-админ, `biz_session` — кабинет).
@@ -153,8 +153,7 @@ saas-booking/
 | GET | `/api/verticals` | супер-админ | список ниш в JSON |
 | POST | `/api/backup/restore` | супер-админ, `confirm=ВОССТАНОВИТЬ` | восстановление из JSON-копии |
 | GET | `/api/resolve-domain?host=` | публичный | префикс и slug по кастомному домену |
-| POST | `/api/telegram/webhook` | секрет Telegram | `/start BIZ-xxxxxx` привязывает чат бизнеса |
-| POST | `/api/telegram/admin-webhook` | секрет Telegram + `TELEGRAM_CHAT_ID` | `/stats` для оператора |
+| POST | `/api/telegram/webhook` | секрет Telegram | `/start BIZ-xxxxxx` привязывает чат бизнеса; `/stats`, `/ping`, `/health` — только из чата `TELEGRAM_CHAT_ID` |
 
 ## Потоки данных
 
@@ -343,7 +342,7 @@ Storage: `photos`, `logos` — публичные, до 5 МБ, `image/jpeg|png|
 - Публичные POST-эндпоинты броней — rate limit в Postgres; валидация входа — zod.
 - Click-трекер редиректит только на адреса, начинающиеся с `SITE_URL` (защита от open redirect).
 - Превью: случайный `preview_token` (uuid), `noindex` в метаданных и заголовке, `robots.txt` закрывает `/preview/`, `/panel`, `/api/`, `/booking/`.
-- Webhook Telegram сверяют секрет из заголовка; admin-webhook отвечает только чату `TELEGRAM_CHAT_ID`.
+- Webhook Telegram сверяет секрет из заголовка; команды оператора (`/stats`, `/ping`, `/health`) обрабатывает только чат `TELEGRAM_CHAT_ID`.
 - Известный риск: server actions супер-админки (`app/panel/(protected)/**/actions.ts`) не вызывают `isSuperAdmin()`
   сами, защита держится на layout. Исправление вынесено в задачи для разработки — см. [PROGRESS.md](PROGRESS.md#известные-проблемы), проблема 6.
 
@@ -385,7 +384,7 @@ Storage: `photos`, `logos` — публичные, до 5 МБ, `image/jpeg|png|
 | Защита брони | exclusion constraint `tstzrange` | уникальный индекс по времени начала + проверка в коде |
 | Домен | `servis-jade.ru` | `NEXT_PUBLIC_SITE_URL`, по умолчанию `zapishisya.ru` |
 | Healthcheck | `/api/health` | нет |
-| Секреты Telegram | `TELEGRAM_ADMIN_SECRET`, `TELEGRAM_BIZ_SECRET`, ответ 403 | `TELEGRAM_ADMIN_WEBHOOK_SECRET`, `TELEGRAM_WEBHOOK_SECRET`, ответ 401 |
+| Секреты Telegram | `TELEGRAM_ADMIN_SECRET`, `TELEGRAM_BIZ_SECRET`, ответ 403 | `TELEGRAM_WEBHOOK_SECRET` (фолбэк `TELEGRAM_BIZ_SECRET`), ответ 403 |
 | Single-tenant | `SINGLE_TENANT=true`, `scripts/build-single-tenant.ts` | нет; лицензия через `LICENSE_ID` |
 | Manifest | `/manifest.json` | `/{prefix}/{slug}/manifest.webmanifest` |
 | Таблиц | 48 | 22 |

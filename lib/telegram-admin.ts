@@ -1,5 +1,5 @@
 // lib/telegram-admin.ts — команды владельца сервиса (ТЗ §18.4, §21, §54).
-// Вызываются из admin-webhook и из бизнес-webhook (один бот — две роли), только для TELEGRAM_CHAT_ID.
+// Вызываются из единого webhook `/api/telegram/webhook` (один бот — две роли), только для TELEGRAM_CHAT_ID.
 import { adminClient } from './supabase';
 import { getBotInfo, logTelegramError, sendTelegram, type TelegramRole } from './telegram';
 

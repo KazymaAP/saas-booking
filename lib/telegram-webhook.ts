@@ -236,14 +236,9 @@ export async function handleTelegramWebhook(req: Request, handlers: WebhookHandl
   return ok();
 }
 
-/** Секрет бизнес-бота: имя из .env.example, фолбэк — имя из ТЗ §18.1. */
+/** Секрет бота (один бот, одна роль webhook): имя из .env.example, фолбэк — имя из ТЗ §18.1. */
 export function businessWebhookSecret(): string | null {
   return process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_BIZ_SECRET || null;
-}
-
-/** Секрет админ-бота: имя из .env.example, фолбэк — имя из ТЗ §18.1. */
-export function adminWebhookSecret(): string | null {
-  return process.env.TELEGRAM_ADMIN_WEBHOOK_SECRET || process.env.TELEGRAM_ADMIN_SECRET || null;
 }
 
 /** Сброс внутренних флагов — для тестов. */

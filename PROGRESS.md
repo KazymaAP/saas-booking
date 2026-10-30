@@ -23,7 +23,7 @@
 | Кабинет владельца | Готово |
 | Супер-админка | Готово; server actions сами проверяют `isSuperAdmin` (обёртка `guarded`) |
 | Рассылка и входящие | Готово; частые cron — только через внешний планировщик (лимит Vercel Hobby) |
-| Telegram | Готово (два бота; привязка по коду `BIZ-…` с TTL 15 мин) |
+| Telegram | Готово (один бот на обе роли; привязка по коду `BIZ-…` с TTL 15 мин) |
 | Лицензии и передача кода | Готово: передача одним `.txt` (без ZIP и без исходников), MIGRATIONS 0001–0014; single-tenant — см. «Не сделано» |
 | Документация | Готово (см. [README.md](README.md#документация)) |
 | Автотесты | Есть: `vitest run --config vitest.config.mts` → 1296 passed / 0 failed (85 файлов); `tsc --noEmit` чисто; `next build` зелёный; `scripts/smoke-test.sh` |
@@ -96,7 +96,8 @@
 
 **Единственный блокер живого сайта — env в Vercel `servis`:** там лежат `VITE_*`/`VAPID_*` от старого Vite-PWA. `checkEnv()` (запускается при старте сервера) требует ровно 6 переменных: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (все три — проект `oryzoexstuzgpbqvpjbr`), `ENCRYPTION_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`. `ENCRYPTION_KEY` добавлен агентом 30.10.2026 в Vercel; `CRON_SECRET` и `NEXT_PUBLIC_SITE_URL` уже присутствуют. Остаётся вставить владельцу 3 ключа Supabase из дашборда `oryzoexstuzgpbqvpjbr` (Settings → API), затем Redeploy.
 
-Ранее числилось «не сделано», но реализовано: отдельный бот оператора (`/api/telegram/admin-webhook`),
+Ранее числилось «не сделано», но реализовано: единый Telegram-бот на обе роли — операторские команды
+(`/stats`, `/ping`, `/health`) и привязка владельцев по коду `BIZ-…` (TTL 15 мин) через `/api/telegram/webhook`;
 массовые операции в списке бизнесов (`massSetStatus`).
 
 ## Известные проблемы

@@ -8,7 +8,6 @@ vi.mock('./supabase', () => ({ adminClient: () => fake.client() }));
 vi.mock('@/lib/supabase', () => ({ adminClient: () => fake.client() }));
 
 import { POST as businessPost } from '@/app/api/telegram/webhook/route';
-import { POST as adminPost } from '@/app/api/telegram/admin-webhook/route';
 import { resetTelegramState } from './telegram';
 import { resetWebhookState, parseCommand, SECRET_HEADER } from './telegram-webhook';
 import { generateCode, normalizeCode, resetConnectState, CODE_ATTEMPTS_LIMIT, CODE_TTL_MS } from './telegram-connect';
@@ -18,7 +17,7 @@ type FetchFn = (url: string, init: RequestInit) => Promise<Response>;
 let fetchMock: Mock<FetchFn>;
 
 const BIZ_SECRET = 'biz-secret';
-const ADMIN_SECRET = 'admin-secret';
+const ADMIN_SECRET = BIZ_SECRET;
 const ADMIN_CHAT = 1000;
 const OWNER_CHAT = 555;
 let updateId = 1;
@@ -93,9 +92,7 @@ describe('секрет (ТЗ §18.2)', () => {
     expect((await post(businessPost, update(OWNER_CHAT, '/start'), '')).status).toBe(403);
   });
 
-  it('секрет бизнеса не подходит к админ-webhook', async () => {
-    expect((await post(adminPost, update(ADMIN_CHAT, '/stats'), BIZ_SECRET)).status).toBe(403);
-  });
+  // Тест на «секрет бизнеса не подходит к админ-webhook» удалён: теперь один бот, один webhook, один секрет.
 
   it('фолбэк на имя секрета из ТЗ (TELEGRAM_BIZ_SECRET)', async () => {
     vi.stubEnv('TELEGRAM_WEBHOOK_SECRET', '');
@@ -225,10 +222,10 @@ describe('idempotency по update_id', () => {
     expect(fake.tables.rate_limits.some((r) => String(r.bucket).startsWith('tgu:tg_business:'))).toBe(true);
   });
 
-  it('одинаковый update_id у разных ботов не конфликтует', async () => {
+  it('одинаковый update_id на одном боте дедуплицируется: второй вызов без ответа', async () => {
     const id = updateId++;
-    await post(businessPost, { ...update(OWNER_CHAT, '/start'), update_id: id }, BIZ_SECRET);
-    await post(adminPost, { ...update(ADMIN_CHAT, '/ping'), update_id: id }, ADMIN_SECRET);
+    await post(businessPost, { ...update(ADMIN_CHAT, '/ping'), update_id: id }, BIZ_SECRET);
+    await post(businessPost, { ...update(ADMIN_CHAT, '/ping'), update_id: id }, ADMIN_SECRET);
     expect(repliesTo(ADMIN_CHAT)).toEqual(['🏓 pong']);
   });
 });
@@ -288,7 +285,7 @@ describe('размер тела', () => {
 describe('админ-бот (ТЗ §18.4)', () => {
   it('/stats из TELEGRAM_CHAT_ID → сводка', async () => {
     fake.tables.businesses = [{ id: 'b1', status: 'client', telegram_chat_id: '1' }, { id: 'b2', status: 'sent', telegram_chat_id: null }];
-    await post(adminPost, update(ADMIN_CHAT, '/stats'), ADMIN_SECRET);
+    await post(businessPost, update(ADMIN_CHAT, '/stats'), ADMIN_SECRET);
     const text = repliesTo(ADMIN_CHAT)[0];
     expect(text).toContain('Бизнесов: <b>2</b>');
     expect(text).toContain('Клиентов: <b>1</b>');
@@ -296,23 +293,22 @@ describe('админ-бот (ТЗ §18.4)', () => {
   });
 
   it('/ping и /health', async () => {
-    await post(adminPost, update(ADMIN_CHAT, '/ping'), ADMIN_SECRET);
-    await post(adminPost, update(ADMIN_CHAT, '/health'), ADMIN_SECRET);
+    await post(businessPost, update(ADMIN_CHAT, '/ping'), ADMIN_SECRET);
+    await post(businessPost, update(ADMIN_CHAT, '/health'), ADMIN_SECRET);
     const replies = repliesTo(ADMIN_CHAT);
     expect(replies[0]).toBe('🏓 pong');
     expect(replies[1]).toContain('✅ БД');
     expect(replies[1]).toContain('@zapis_bot');
   });
 
-  it('чужой chat_id игнорируется полностью: ни ответа, ни записей', async () => {
-    const res = await post(adminPost, update(4242, '/stats'), ADMIN_SECRET);
+  it('чужой chat_id → «Неизвестная команда» (без сводки), событие webhook зафиксировано', async () => {
+    const res = await post(businessPost, update(4242, '/stats'), ADMIN_SECRET);
     expect(res.status).toBe(200);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(fake.tables.webhook_events).toBeUndefined();
+    expect(repliesTo(4242)[0]).toMatch(/^Неизвестная команда/);
   });
 
   it('неизвестная команда админу → подсказка', async () => {
-    await post(adminPost, update(ADMIN_CHAT, '/what'), ADMIN_SECRET);
+    await post(businessPost, update(ADMIN_CHAT, '/what'), ADMIN_SECRET);
     expect(repliesTo(ADMIN_CHAT)[0]).toMatch(/^Неизвестная команда/);
   });
 

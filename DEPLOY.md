@@ -32,7 +32,7 @@
 | Аккаунт Supabase (Free или Pro) | Postgres, Auth, Storage |
 | Домен с доступом к DNS | основной адрес сервиса |
 | Yandex 360 для бизнеса с ящиками на домене | рассылка, уведомления, входящие |
-| Telegram | два бота: оператора и бизнесов |
+| Telegram | один бот на обе роли (единый webhook) |
 | Node 20+ и pnpm 10 локально | генерация ключей, импорт 2GIS из консоли |
 
 Тариф Vercel влияет на cron: на Hobby разрешены только ежедневные задачи, поэтому частые задачи вынесены во внешний
@@ -117,7 +117,6 @@ select key from settings order by key;  -- default_price, feature_flags, rate_li
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"        # ENCRYPTION_KEY
 node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"  # CRON_SECRET
 node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"        # TELEGRAM_WEBHOOK_SECRET
-node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"        # TELEGRAM_ADMIN_WEBHOOK_SECRET
 ```
 
 | Переменная | Обязательна | Пример / где взять | Если не задать |
@@ -131,7 +130,6 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"        
 | `SUPERADMIN_EMAILS` | да | `owner@zapishisya.ru` | вход в `/panel` невозможен |
 | `SMTP_HOST`, `SMTP_PORT` | нет | `smtp.yandex.ru`, `465` | запасные значения, если у ящика не указан хост |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | нет | [docs/telegram-setup.md](docs/telegram-setup.md) | нет уведомлений оператору |
-| `TELEGRAM_ADMIN_WEBHOOK_SECRET` | нет | случайная строка | команда `/stats` не работает |
 | `TELEGRAM_BUSINESS_BOT_TOKEN`, `TELEGRAM_BUSINESS_BOT_USERNAME` | нет | [docs/telegram-setup.md](docs/telegram-setup.md) | бизнесы не подключат Telegram |
 | `TELEGRAM_WEBHOOK_SECRET` | нет | случайная строка | привязка `/start BIZ-…` не работает |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | нет | шаг 6 | кастомные домены добавляются вручную |
@@ -214,14 +212,16 @@ curl -s https://zapishisya.ru/robots.txt | grep Sitemap     # Sitemap: https://z
 
 ## Шаг 8. Telegram-боты
 
-Подробно — [docs/telegram-setup.md](docs/telegram-setup.md). Кратко: два бота в @BotFather, токены в переменные,
-`setWebhook` с `secret_token`:
+Подробно — [docs/telegram-setup.md](docs/telegram-setup.md). Кратко: один бот в @BotFather, токен в переменные,
+`setWebhook` с `secret_token` на единый эндпоинт:
 
 ```bash
-curl -s "https://api.telegram.org/bot$TELEGRAM_BUSINESS_BOT_TOKEN/setWebhook" \
-  -d "url=https://zapishisya.ru/api/telegram/webhook" -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+# Один бот: регистрируем webhook на единый эндпоинт
 curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -d "url=https://zapishisya.ru/api/telegram/admin-webhook" -d "secret_token=$TELEGRAM_ADMIN_WEBHOOK_SECRET"
+  -d "url=https://zapishisya.ru/api/telegram/webhook" -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+# (опц.) отдельный бизнес-бот — тот же эндпоинт и секрет:
+# curl -s "https://api.telegram.org/bot$TELEGRAM_BUSINESS_BOT_TOKEN/setWebhook" \
+#   -d "url=https://zapishisya.ru/api/telegram/webhook" -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
 ```
 
 **Проверка:** боту оператора `/stats` → сводка; `getWebhookInfo` без `last_error_message`.

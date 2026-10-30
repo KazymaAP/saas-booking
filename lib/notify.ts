@@ -64,7 +64,8 @@ export function escapeTelegramHtml(value: string): string {
 // ===== Telegram =====
 
 export async function sendTelegram(chatId: string, text: string): Promise<boolean> {
-  const token = process.env.TELEGRAM_BUSINESS_BOT_TOKEN;
+  // Один бот: токен бизнес-роли берёт TELEGRAM_BUSINESS_BOT_TOKEN, иначе общий TELEGRAM_BOT_TOKEN.
+  const token = process.env.TELEGRAM_BUSINESS_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
   if (!token || !chatId) return false;
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

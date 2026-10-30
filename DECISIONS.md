@@ -67,7 +67,7 @@
 
 | Решение | Почему | Где |
 |---|---|---|
-| Два Telegram-бота: оператора (`TELEGRAM_BOT_TOKEN`) и бизнесов (`TELEGRAM_BUSINESS_BOT_TOKEN`) | Владельцы бизнеса не видят служебные сообщения; разные webhook и секреты | [docs/telegram-setup.md](docs/telegram-setup.md) |
+| Один Telegram-бот (`TELEGRAM_BOT_TOKEN`) на обе роли: бизнес-уведомления и команды оператора (`/stats`, `/health`, `/ping` — только из чата `TELEGRAM_CHAT_ID`) | Единый webhook `/api/telegram/webhook`, единый секрет `TELEGRAM_WEBHOOK_SECRET`; `TELEGRAM_BUSINESS_BOT_TOKEN` — опц. отдельный бот для бизнеса | [docs/telegram-setup.md](docs/telegram-setup.md) |
 | Привязка Telegram владельца — кодом `BIZ-xxxxxx` | Без OAuth: владелец отправляет код боту | `business_telegram_codes`, `/api/telegram/webhook` |
 | Почта — пул ящиков Yandex 360 с дневным лимитом | Распределение нагрузки и прогрев доменов; выбирается активный ящик с наименьшим `sent_today`, при исчерпании `daily_limit` письмо не уходит | `lib/notify.ts` → `pickAccount`, `email_accounts` |
 | IMAP-параметры — из `email_accounts`, а не env | У каждого ящика свой сервер | `/api/cron/check-replies` |
@@ -95,8 +95,8 @@
 |---|---|---|
 | Домен `servis-jade.ru` | В коде `zapishisya.ru` | Через `NEXT_PUBLIC_SITE_URL` + `MAIN_HOSTS` |
 | `/api/health` (§3.2) | Нет | `smoke-test.sh` проверяет и выдаёт `WARN` |
-| `TELEGRAM_ADMIN_SECRET`, `TELEGRAM_BIZ_SECRET` | `TELEGRAM_ADMIN_WEBHOOK_SECRET`, `TELEGRAM_WEBHOOK_SECRET` | Документированы имена из кода |
-| Webhook отвечает 403 на неверный секрет | Отвечает 401 | Документирован 401 |
+| `TELEGRAM_BIZ_SECRET` | `TELEGRAM_WEBHOOK_SECRET` (фолбэк `TELEGRAM_BIZ_SECRET`) | Документированы имена из кода; `TELEGRAM_ADMIN_WEBHOOK_SECRET`/`TELEGRAM_ADMIN_SECRET` удалены — один бот |
+| Webhook отвечает 403 на неверный секрет | Отвечает 403 | Документирован 403 |
 | Exclusion constraint на брони (§10.2) | Уникальный индекс | См. «Данные» |
 | `/manifest.json` | `/{prefix}/{slug}/manifest.webmanifest` | Манифест на бизнес |
 | SINGLE_TENANT, `scripts/build-single-tenant.ts` (§14.5) | Нет | [INSTALL.md](INSTALL.md) описывает фактический путь передачи |
