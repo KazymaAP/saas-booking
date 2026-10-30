@@ -11,7 +11,7 @@ import { businessTimeZone, loadDayContext, slotsForDay } from '@/lib/availabilit
 import { bookingCreated, bookingInput, PRIVACY_VERSION, type BookingCreated, type BookingInput } from '@/lib/schemas';
 import { clientIp } from '@/lib/rate-limit';
 import { fail, isSameOrigin, limitOrFail, ok, readJson, validationFailure } from '@/lib/booking-http';
-import { notifyCreated } from '@/lib/booking-notify';
+import { notifyClientBooking, notifyCreated } from '@/lib/booking-notify';
 import { audit } from '@/lib/audit';
 import { logError } from '@/lib/log';
 import type { Business } from '@/lib/database.types';
@@ -131,6 +131,9 @@ async function createBooking(req: Request, input: BookingInput): Promise<Respons
     startsAt: new Date(inserted.row.scheduled_at).toISOString(),
   });
 
+  const origin = new URL(req.url).origin;
+  const cancelUrl = `${origin}/booking/cancel/${body.cancelToken}`;
+  const rescheduleUrl = `${origin}/booking/reschedule/${body.cancelToken}`;
   await Promise.all([
     notifyCreated({
       business,
@@ -139,6 +142,17 @@ async function createBooking(req: Request, input: BookingInput): Promise<Respons
       timeZone,
       clientName: input.name,
       clientPhone: phone,
+      autoConfirmed: body.status === 'confirmed',
+    }),
+    // №24: клиенту — письмо со ссылками отмены/переноса (иначе запись неуправляема).
+    notifyClientBooking({
+      businessName: business.name,
+      serviceName: service.name,
+      startsAt: body.startsAt,
+      timeZone,
+      clientEmail: input.email || null,
+      cancelUrl,
+      rescheduleUrl,
       autoConfirmed: body.status === 'confirmed',
     }),
     // audit_log без PII: только идентификаторы и статус (ТЗ §10.3 п.10).
@@ -156,6 +170,10 @@ export async function POST(req: Request): Promise<Response> {
 
   const parsed = bookingInput.safeParse(await readJson(req));
   if (parsed.success === false) return fail(validationFailure(parsed.error));
+  // Старая страница с устаревшей политикой: согласие на текст, которого уже нет, не записываем.
+  if (parsed.data.privacyVersion !== undefined && parsed.data.privacyVersion !== PRIVACY_VERSION) {
+    return fail({ reason: 'privacy_outdated' });
+  }
 
   try {
     return await createBooking(req, parsed.data);

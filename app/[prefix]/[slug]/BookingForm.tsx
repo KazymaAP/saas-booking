@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useForm, useWatch, type FieldErrors, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { bookingFormSchema, BOOKING_FIELD_ORDER, type BookingField, type BookingFormValues } from '@/lib/schemas';
+import { bookingFormSchema, BOOKING_FIELD_ORDER, PRIVACY_VERSION, type BookingField, type BookingFormValues } from '@/lib/schemas';
 import { formatPhoneMask } from '@/lib/phone';
 import { formatSlotDateTime } from '@/lib/slots';
 import { dateBounds, dateOptions, firstOpenDate, isDateInBounds, resolveSchedule, type ClientSchedule } from '@/lib/booking-dates';
@@ -245,8 +245,9 @@ function PrivacyField({ form, ids }: PartProps) {
       <label className="flex items-start gap-2 text-[14px]">
         <input type="checkbox" className="mt-1 h-4 w-4" {...aria(form, ids, 'privacyAccepted')} {...form.register('privacyAccepted')} />
         <span>
-          Согласен на обработку персональных данных согласно{' '}
-          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">политике конфиденциальности</a>.
+          Даю согласие на обработку персональных данных (имя, телефон, email, комментарий) для записи на услугу.{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Политика обработки персональных данных</a>{' '}
+          (редакция {PRIVACY_VERSION}). Согласие можно отозвать в <a href="/data-request" target="_blank" rel="noopener noreferrer" className="underline">форме запроса</a>.
         </span>
       </label>
       <FieldError id={ids.privacyAccepted.error} message={error} />

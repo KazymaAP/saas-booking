@@ -111,7 +111,8 @@ export async function notifyBusinessEvent(businessId: string, event: BusinessEve
     await sendTelegram(business.telegram_chat_id, `${EVENT_TEXT[event]}\n${lines.map(escapeTelegramHtml).join('\n')}`);
   }
   const ownerEmail = Array.isArray(business.emails) ? business.emails[0] : undefined;
-  if (ownerEmail) await sendMail({ to: ownerEmail, subject: EVENT_TEXT[event], text: plain });
+  // №26: уведомление владельцу о брони — транзакционное, не расходует лимит рассылки.
+  if (ownerEmail) await sendMail({ to: ownerEmail, subject: EVENT_TEXT[event], text: plain, transactional: true });
 }
 
 // ===== классификация ошибок SMTP =====
@@ -149,6 +150,9 @@ export type MailOptions = {
   // Epoch ms: после этого момента повторные попытки не начинаются (бюджет cron, Vercel Hobby 10 с).
   // Первая попытка выполняется всегда; недоотправленное письмо уйдёт в retry очереди.
   deadline?: number;
+  // №26: транзакционное письмо (уведомление о брони, клиенту, доступ владельцу) не расходует дневной
+  // лимит холодной рассылки и не теряется при его исчерпании.
+  transactional?: boolean;
 };
 
 export type SendResult =
@@ -197,7 +201,7 @@ async function resolveAccount(deps: NotifyDeps, opts: MailOptions, skip: Set<str
     const acc = await deps.store.getById(opts.accountId);
     return acc && acc.active && acc.smtp_pass_encrypted ? acc : null;
   }
-  return pickAccount(deps.store, { exclude: skip, now: deps.now() });
+  return pickAccount(deps.store, { exclude: skip, now: deps.now(), transactional: opts.transactional });
 }
 
 // Одна попытка через конкретный ящик.
@@ -212,10 +216,11 @@ async function attemptSend(deps: NotifyDeps, acc: EmailAccountRecord, opts: Mail
 
 // Письмо уже принято SMTP-сервером. Сбой учёта (sent_today, last_error) логируется, но не превращает
 // успех в ошибку: иначе вызывающий код (очередь) повторил бы отправку и получатель получил бы дубль.
-async function recordAccountSuccess(deps: NotifyDeps, acc: EmailAccountRecord): Promise<void> {
+async function recordAccountSuccess(deps: NotifyDeps, acc: EmailAccountRecord, transactional = false): Promise<void> {
   try {
-    await markSent(deps.store, acc, deps.now());
-    await markHealthy(deps.store, acc, deps.now());
+    // №26: транзакционные письма не увеличивают sent_today (не расходуют лимит рассылки).
+    if (!transactional) await markSent(deps.store, acc, deps.now());
+    else await markHealthy(deps.store, acc, deps.now());
   } catch (e) {
     await deps.log(`email_accounts: учёт отправки не записан: ${maskPii((e as Error).message ?? 'unknown')}`, { account: maskEmail(acc.email) });
   }
@@ -239,7 +244,7 @@ export async function sendMailWith(deps: NotifyDeps, opts: MailOptions): Promise
     attempts = attempt + 1;
     const r = await attemptSend(deps, acc, opts);
     if (r.ok) {
-      await recordAccountSuccess(deps, acc);
+      await recordAccountSuccess(deps, acc, opts.transactional);
       return { ok: true, accountId: acc.id, fromEmail: acc.email, messageId: r.messageId, attempts: attempt + 1 };
     }
     last = r.info;
@@ -298,7 +303,7 @@ export async function sendMailDetailed(opts: MailOptions): Promise<SendResult> {
 }
 
 // Прежний API: true — письмо ушло. Ошибки уже залогированы внутри.
-export async function sendMail(opts: { to: string; subject: string; text: string; html?: string }): Promise<boolean> {
+export async function sendMail(opts: { to: string; subject: string; text: string; html?: string; transactional?: boolean }): Promise<boolean> {
   const r = await sendMailDetailed(opts);
   return r.ok;
 }

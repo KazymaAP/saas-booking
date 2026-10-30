@@ -56,16 +56,24 @@ async function conditionalUpdate(id: string, patch: Patch, c: Cond): Promise<boo
   return Boolean(data?.length);
 }
 
-async function markPaid(id: string): Promise<Result> {
+async function markPaid(id: string, planKey?: string): Promise<Result> {
   const p = await prices();
-  const patch = predictPatch('paid', { subscription_until: null }, new Date(), p.monthly);
+  // №22: тарифы из settings.tariffs — записываем выбранный при оплате план, а не всегда basic/1000 ₽.
+  const { data: tariffsRow, error: tErr } = await adminClient().from('settings').select('value').eq('key', 'tariffs').maybeSingle<{ value: Record<string, { name?: string; price?: number }> | null }>();
+  if (tErr) throw new Error(tErr.message);
+  const tariffs = tariffsRow?.value ?? {};
+  const planKeys = Object.keys(tariffs).filter((k) => typeof tariffs[k]?.price === 'number' && (tariffs[k].price as number) > 0);
+  const plan = planKey && planKeys.includes(planKey) ? planKey : (planKeys[0] ?? 'basic');
+  const tariffPrice = typeof tariffs[plan]?.price === 'number' ? (tariffs[plan].price as number) : null;
+  const price = tariffPrice ?? p.monthly;
+  const patch = predictPatch('paid', { subscription_until: null }, new Date(), p.monthly, { type: plan, price });
   const now = new Date().toISOString();
   const okUpd = await conditionalUpdate(id, { ...patch, subscription_started_at: now }, { notIn: NOT_PAYABLE });
   if (!okUpd) return fail('Оплата уже отмечена или бизнес недоступен');
-  await audit('mark_paid', 'business', id, { amount: p.initial, monthly: p.monthly, until: patch.subscription_until });
+  await audit('mark_paid', 'business', id, { amount: p.initial, monthly: price, plan, until: patch.subscription_until });
   // Уведомление в Telegram — без названия и контактов бизнеса (только id): канал внешний.
-  await notifyAdmin(`Оплата ${p.initial} ₽: бизнес ${id}`);
-  return ok(`Оплата ${p.initial.toLocaleString('ru-RU')} ₽ отмечена. Подписка до ${patch.subscription_until}`, patch);
+  await notifyAdmin(`Оплата ${p.initial} ₽ (тариф «${plan}» ${price} ₽/мес): бизнес ${id}`);
+  return ok(`Оплата ${p.initial.toLocaleString('ru-RU')} ₽ отмечена. Тариф «${plan}», ${price.toLocaleString('ru-RU')} ₽/мес. Подписка до ${patch.subscription_until}`, patch);
 }
 
 // Продление: optimistic-lock по текущей дате окончания — два параллельных клика не дадут +60 дней.
@@ -111,7 +119,7 @@ async function remind(id: string): Promise<Result> {
   const p = await prices();
   const until = b.subscription_until ?? 'не указан';
   const text = `${b.name}, подписка на сайт онлайн-записи действует до ${until}. Сумма продления: ${p.monthly} ₽. Реквизиты — в кабинете, раздел «Подписка».`;
-  const sent = await sendMail({ to, subject: 'Продление подписки', text }).catch(async (e: unknown) => {
+  const sent = await sendMail({ to, subject: 'Продление подписки', text, transactional: true }).catch(async (e: unknown) => {
     await logError('email', errorMessage(e), { action: 'payment_reminder', business: id });
     return false;
   });
@@ -124,12 +132,13 @@ const HANDLERS: Record<ClientOp, (id: string) => Promise<Result>> = { paid: mark
 const idSchema = z.string().uuid();
 
 // Единая точка для кнопок таблицы (optimistic на клиенте, откат при ok=false).
-export async function clientAction(id: string, op: string): Promise<Result> {
+// №22: при op='paid' можно передать выбранный тариф (planKey), чтобы записать не basic по умолчанию.
+export async function clientAction(id: string, op: string, plan?: string): Promise<Result> {
   return await guarded(`clients.${op}`, async () => {
     const pid = idSchema.safeParse(id);
     const pop = clientOpSchema.safeParse(op);
     if (!pid.success || !pop.success) return fail('Неизвестное действие');
-    const res = await HANDLERS[pop.data](pid.data);
+    const res = pop.data === 'paid' ? await markPaid(pid.data, plan) : await HANDLERS[pop.data](pid.data);
     if (res.ok) revalidate(pid.data);
     return res;
   });
@@ -181,7 +190,8 @@ export async function createOwnerAccess(_prev: ActionResult<AccessCreated> | nul
       throw new Error(link.error.message);
     }
     const mail = accessMail(email, password, ownerLoginUrl(b));
-    const mailed = await sendMail({ to: email, ...mail }).catch(() => false);
+    // №26: письмо с доступом владельцу — транзакционное, не расходует лимит рассылки.
+    const mailed = await sendMail({ to: email, ...mail, transactional: true }).catch(() => false);
     if (!mailed) await logError('email', 'access_created: письмо не отправлено', { business: id });
     await audit('create_access', 'business', id, { role: 'owner', mailed });
     revalidate(id);

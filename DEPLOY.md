@@ -68,13 +68,21 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 | 3 | `supabase/migrations/0003_seed.sql` | 11 ниш в `vertical_templates`, buckets `photos` и `logos` |
 | 4 | `supabase/migrations/0004_features.sql` | `ssl_status`, версии шаблонов, `legacy_redirects`, ключи `settings` |
 | 5 | `supabase/migrations/0005_indexes.sql` | составные индексы |
+| 6 | `supabase/migrations/0006_partitions.sql` | партиции по месяцам: `audit_log`, `license_pings`, `app_logs`, `analytics_events` |
+| 7 | `supabase/migrations/0007_rls_audit.sql` | RLS и политики, юридические таблицы (`unsubscribes`, `data_requests`, `cookie_consents`), хелперы |
+| 8 | `supabase/migrations/0008_pg_cron.sql` | задачи `pg_cron` |
+| 9 | `supabase/migrations/0009_retention.sql` | сроки хранения данных |
+| 10 | `supabase/migrations/0010_partitions.sql` | обслуживание партиций |
+| 11 | `supabase/migrations/0011_analytics.sql` | аналитика: ограничения событий, хэши, агрегаты |
+| 12 | `supabase/migrations/0012_rate_limit_hit.sql` | атомарный rate limit (`rate_limit_hit`) |
+| 13 | `supabase/migrations/0013_data_requests_types.sql` | типы запросов ПД: `withdraw`, `unsubscribe` |
 
-Все миграции идемпотентны (`if not exists`, `on conflict do nothing`): повторный запуск ничего не ломает.
+Миграции задуманы как идемпотентные (`if not exists`, `on conflict do nothing`), но при повторном запуске смотрите вывод на ошибки: `pg_cron`-задачи и сторонние расширения при повторе могут ругаться не всегда безвредно.
 
 Вариант через CLI вместо SQL Editor (нужен `psql` и строка подключения из **Project Settings → Database**):
 
 ```bash
-for f in supabase/migrations/000*.sql; do psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f" || break; done
+for f in $(ls supabase/migrations/*.sql | sort); do psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f" || break; done
 ```
 
 **Проверка** (в SQL Editor):

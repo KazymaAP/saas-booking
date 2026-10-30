@@ -144,6 +144,29 @@ from (values
 join pg_attribute a
   on a.attrelid = to_regclass('public.' || v.tbl) and a.attname = v.col and not a.attisdropped;
 
+-- 11. analytics_events: ограничения whitelist и формат хэшей (миграция 0011). Без них anon-вставка принимает любой мусор.
+insert into _db_check (section, name, status, detail)
+select 'constraints', v.name,
+       case when exists (
+         select 1 from pg_constraint c
+         where c.conname = v.name and c.conrelid = to_regclass('public.analytics_events')
+       ) then 'PASS' else 'FAIL' end,
+       'ограничение analytics_events (0011)'
+from (values
+  ('analytics_events_event_chk'), ('analytics_events_ip_hash_chk'),
+  ('analytics_events_ua_hash_chk'), ('analytics_events_session_chk')
+) as v(name);
+
+-- 12. data_requests: CHECK на type должен принимать все типы из lib/data-request.ts (миграция 0013).
+insert into _db_check (section, name, status, detail)
+select 'constraints', 'data_requests_type_check',
+       case when exists (
+         select 1 from pg_constraint c
+         where c.conname = 'data_requests_type_check' and c.conrelid = to_regclass('public.data_requests')
+           and pg_get_constraintdef(c.oid) like '%withdraw%' and pg_get_constraintdef(c.oid) like '%unsubscribe%'
+       ) then 'PASS' else 'FAIL' end,
+       'withdraw и unsubscribe разрешены (0013)';
+
 -- Итог.
 select section, name, status, detail from _db_check order by section, status, name;
 select status, count(*) as n from _db_check group by status order by status;

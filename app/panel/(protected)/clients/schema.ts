@@ -54,10 +54,25 @@ export function extendFrom(until: string | null, now: Date = new Date(), days = 
 
 // Что изменится в строке после действия. Тот же расчёт на клиенте (optimistic) и на сервере (UPDATE),
 // поэтому после ответа сервера значения в таблице не «прыгают».
-export function predictPatch(op: ClientOp, row: Pick<ClientRow, 'subscription_until'>, now: Date = new Date(), monthly = DEFAULT_MONTHLY): ClientPatch {
+// №22: для оплаты можно передать выбранный тариф { type, price } — иначе basic по умолчанию.
+export function predictPatch(
+  op: ClientOp,
+  row: Pick<ClientRow, 'subscription_until'>,
+  now: Date = new Date(),
+  monthly = DEFAULT_MONTHLY,
+  plan?: { type: string; price: number } | null,
+): ClientPatch {
   switch (op) {
     case 'paid':
-      return { status: 'client', paid_initial_at: now.toISOString(), subscription_active: true, subscription_until: isoDate(new Date(now.getTime() + PERIOD_DAYS * DAY_MS)), plan_type: 'basic', subscription_price: monthly };
+      return {
+        status: 'client',
+        paid_initial_at: now.toISOString(),
+        subscription_active: true,
+        subscription_until: isoDate(new Date(now.getTime() + PERIOD_DAYS * DAY_MS)),
+        // №22: выбранный при оплате тариф, иначе basic по умолчанию.
+        plan_type: plan?.type ?? 'basic',
+        subscription_price: plan?.price ?? monthly,
+      };
     case 'extend':
       return { subscription_until: extendFrom(row.subscription_until, now), subscription_active: true };
     case 'disable':

@@ -65,6 +65,7 @@ async function notifyConfirmed(booking: UpdatedBooking, businessName: string): P
     to: booking.client_email,
     subject: `Запись подтверждена — ${businessName}`,
     text: `${greeting}аша запись в «${businessName}» подтверждена: ${formatDateTime(booking.scheduled_at)}.`,
+    transactional: true,
   }).catch(() => false);
   if (!sent) await logError('email', 'panel: booking_confirmed not sent', { booking_id: booking.id });
 }

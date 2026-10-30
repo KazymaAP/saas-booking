@@ -100,7 +100,7 @@ const fakeClient = {
 
 vi.mock('./supabase', () => ({ adminClient: () => fakeClient }));
 
-const { rateLimit, rateLimitScope, hitRateLimit, clientIp, RATE_LIMITS } = await import('./rate-limit');
+const { rateLimit, rateLimitScope, hitRateLimit, clientIp, RATE_LIMITS, scopeLimitFromSettings } = await import('./rate-limit');
 
 const T0 = Date.parse('2026-10-15T10:00:00Z');
 const BUCKET = 'booking:203.0.113.7';
@@ -297,5 +297,30 @@ describe('rateLimitScope / hitRateLimit / clientIp', () => {
     expect(clientIp(new Headers({ 'x-forwarded-for': ' ', 'x-real-ip': '198.51.100.3' }))).toBe('198.51.100.3');
     expect(clientIp(new Headers())).toBe('unknown');
     expect(clientIp(new Headers({ 'x-forwarded-for': 'a'.repeat(500) }))).toHaveLength(64);
+  });
+});
+
+describe('scopeLimitFromSettings — маппинг settings.rate_limits в scope', () => {
+  it('booking_per_10min → scope booking (окно 600с)', () => {
+    expect(scopeLimitFromSettings({ booking_per_10min: 3, cancel_per_15min: 7 }, 'booking')).toEqual({
+      limit: 3,
+      windowSeconds: 600,
+    });
+  });
+
+  it('cancel_per_15min → scope cancel и reschedule (окно 900с)', () => {
+    expect(scopeLimitFromSettings({ cancel_per_15min: 7 }, 'cancel')).toEqual({ limit: 7, windowSeconds: 900 });
+    expect(scopeLimitFromSettings({ cancel_per_15min: 7 }, 'reschedule')).toEqual({ limit: 7, windowSeconds: 900 });
+  });
+
+  it('slots не имеет настройки → null (берётся дефолт RATE_LIMITS)', () => {
+    expect(scopeLimitFromSettings({ booking_per_10min: 3, cancel_per_15min: 7 }, 'slots')).toBeNull();
+  });
+
+  it('пусто / нечисловое / null / undefined → null', () => {
+    expect(scopeLimitFromSettings(null, 'booking')).toBeNull();
+    expect(scopeLimitFromSettings(undefined, 'booking')).toBeNull();
+    expect(scopeLimitFromSettings({}, 'booking')).toBeNull();
+    expect(scopeLimitFromSettings({ booking_per_10min: 'x' as unknown as number }, 'booking')).toBeNull();
   });
 });

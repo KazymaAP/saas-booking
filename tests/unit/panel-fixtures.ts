@@ -18,5 +18,19 @@ export function makeBusiness(patch: Partial<Business> = {}): Business {
 }
 
 export function makeMember(role: AdminUser['role']): AdminUser {
-  return { id: ROW_ID, business_id: BUSINESS_ID, email: `${role}@test.ru`, role, auth_user_id: 'auth-1', created_at: '2026-01-01T00:00:00Z' };
+  return {
+    id: ROW_ID,
+    business_id: BUSINESS_ID,
+    email: `${role}@test.ru`,
+    role,
+    auth_user_id: 'auth-1',
+    created_at: '2026-01-01T00:00:00Z',
+    invited_at: null,
+    invited_by: null,
+    last_login: null,
+    name: null,
+    phone: null,
+    status: 'active',
+    updated_at: '2026-01-01T00:00:00Z',
+  };
 }

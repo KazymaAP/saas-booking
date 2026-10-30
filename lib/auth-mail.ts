@@ -65,7 +65,8 @@ export function resetMail(to: string, token: string): AuthMail {
 // true — письмо ушло. Ошибка SMTP не пробрасывается: пишем в журнал ошибок без адреса получателя.
 export async function deliver(mail: AuthMail, kind: 'invite' | 'magic_link' | 'reset'): Promise<boolean> {
   try {
-    const sent = await sendMail(mail);
+    // №26: письма авторизации (приглашение, magic-link, сброс пароля) — транзакционные, не расходуют лимит рассылки.
+    const sent = await sendMail({ ...mail, transactional: true });
     if (!sent) await logError('email', `auth ${kind}: нет доступного ящика`, { kind });
     return sent;
   } catch (err) {

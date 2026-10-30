@@ -99,6 +99,19 @@ describe('email-accounts', () => {
     expect(chooseAccount([acc('x', { active: false })], TODAY)).toBeNull();
   });
 
+  it('chooseAccount транзакционное: берёт ящик с исчерпанным лимитом (№26)', () => {
+    const list = [acc('a', { sent_today: 50 })]; // лимит 50 исчерпан
+    expect(chooseAccount(list, TODAY)).toBeNull();
+    expect(chooseAccount(list, TODAY, new Set(), true)?.id).toBe('a');
+  });
+
+  it('pickAccount транзакционное: выбирает ящик вне зависимости от лимита рассылки (№26)', async () => {
+    const rows = [acc('a', { sent_today: 50, last_reset: TODAY })];
+    const { s } = store(rows);
+    expect(await pickAccount(s, { now: NOW })).toBeNull();
+    expect((await pickAccount(s, { now: NOW, transactional: true }))?.id).toBe('a');
+  });
+
   it('remainingCapacity суммирует остаток лимитов', () => {
     expect(remainingCapacity([acc('a', { sent_today: 10 }), acc('b', { sent_today: 50 }), acc('c', { sent_today: 99, last_reset: '2026-01-01' })], TODAY)).toBe(40 + 0 + 50);
   });

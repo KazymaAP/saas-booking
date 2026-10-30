@@ -38,9 +38,22 @@ export function mainHostsFor(site_url: string): readonly string[] {
   return [apex, `www.${apex}`, ...DEV_HOSTS];
 }
 
+// Дополнительные основные хосты из env (через запятую): алиасы, CDN, старые домены.
+// Не заменяют выведенные из SITE_URL, а дополняют их. Некорректные значения отбрасываются.
+export function mainHostsFromEnv(site_url: string): readonly string[] {
+  const base = mainHostsFor(site_url);
+  const extra = (process.env.NEXT_PUBLIC_MAIN_HOSTS ?? '')
+    .split(',')
+    .map((h) => normalizeHost(h))
+    .filter((h) => h.length > 0);
+  if (extra.length === 0) return base;
+  // Без дублей, порядок: выведенные сначала, затем дополнительные.
+  return [...new Set([...base, ...extra])];
+}
+
 export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 export const SITE_HOST = new URL(SITE_URL).hostname;
-export const MAIN_HOSTS: readonly string[] = mainHostsFor(SITE_URL);
+export const MAIN_HOSTS: readonly string[] = mainHostsFromEnv(SITE_URL);
 
 // Хост основного сайта (не кастомный домен клиента). Пустой/некорректный хост считается основным:
 // такой запрос не должен уходить в резолв доменов.

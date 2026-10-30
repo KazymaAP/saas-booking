@@ -18,6 +18,7 @@ export const REASON_STATUS: Record<ApiReason, number> = {
   reschedule_limit: 409,
   forbidden: 403,
   server: 500,
+  privacy_outdated: 409,
 };
 
 const NO_STORE = 'no-store';

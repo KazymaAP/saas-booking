@@ -43,12 +43,15 @@ async function loadPage(view: View, q: string, page: number) {
   query = view === 'candidates' ? query.order('created_at', { ascending: false }) : query.order('subscription_until', { ascending: true, nullsFirst: true });
   const [list, tariffs] = await Promise.all([
     query.range(from, from + PAGE - 1).returns<DbRow[]>(),
-    db.from('settings').select('value').eq('key', 'tariffs').maybeSingle<{ value: Record<string, { name?: string }> | null }>(),
+    db.from('settings').select('value').eq('key', 'tariffs').maybeSingle<{ value: Record<string, { name?: string; price?: number }> | null }>(),
   ]);
   // Email на клиент не отдаём — только признак (кнопка «Напомнить»). ПД не уходят в RSC-payload.
   const rows: ClientRow[] = (list.data ?? []).map(({ emails, ...r }) => ({ ...r, has_email: (emails?.length ?? 0) > 0 }));
-  const plans: Record<string, string> = {};
-  for (const [k, v] of Object.entries(tariffs.data?.value ?? {})) if (v?.name) plans[k] = v.name;
+  // №22: тарифы с ценами — нужны для выбора плана при отметке оплаты.
+  const plans: Record<string, { name: string; price: number }> = {};
+  for (const [k, v] of Object.entries(tariffs.data?.value ?? {})) {
+    if (v && typeof v.price === 'number' && v.price > 0) plans[k] = { name: v.name ?? k, price: v.price };
+  }
   return { rows, total: list.count ?? 0, plans, failed: Boolean(list.error) };
 }
 

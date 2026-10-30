@@ -104,4 +104,23 @@ describe('SITE_URL / MAIN_HOSTS из env', () => {
     const site = await import('./site');
     expect(site.SITE_URL).toBe(DEFAULT_SITE_URL);
   });
+
+  it('MAIN_HOSTS дополняется из NEXT_PUBLIC_MAIN_HOSTS (через запятую)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://servis-jade.ru/');
+    vi.stubEnv('NEXT_PUBLIC_MAIN_HOSTS', 'old.servis-jade.ru, cdn.example.com');
+    vi.resetModules();
+    const site = await import('./site');
+    expect(site.MAIN_HOSTS).toContain('servis-jade.ru');
+    expect(site.MAIN_HOSTS).toContain('old.servis-jade.ru');
+    expect(site.MAIN_HOSTS).toContain('cdn.example.com');
+    expect(site.isMainHost('old.servis-jade.ru')).toBe(true);
+  });
+
+  it('NEXT_PUBLIC_MAIN_HOSTS пуст → только выведенные из SITE_URL хосты', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://servis-jade.ru/');
+    vi.stubEnv('NEXT_PUBLIC_MAIN_HOSTS', '');
+    vi.resetModules();
+    const site = await import('./site');
+    expect(site.MAIN_HOSTS).toEqual(['servis-jade.ru', 'www.servis-jade.ru', 'localhost', '127.0.0.1']);
+  });
 });

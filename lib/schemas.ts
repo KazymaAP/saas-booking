@@ -17,7 +17,8 @@ export const LIMITS = {
 } as const;
 
 // Версия политики конфиденциальности, с которой согласился клиент (bookings.privacy_version).
-export const PRIVACY_VERSION = '2026-10-01';
+// Единый источник — lib/legal-versions.ts (ту же версию показывает страница политики). Расхождение = запись согласия на устаревший текст.
+export { PRIVACY_VERSION } from './legal-versions';
 
 const PHONE_FORMAT_MESSAGE = 'Телефон в формате +7 (999) 123-45-67';
 const TELEGRAM_RE = /^@?[A-Za-z0-9_]{5,32}$/;
@@ -104,8 +105,10 @@ export const bookingFormSchema = z.object({
 });
 export type BookingFormValues = z.input<typeof bookingFormSchema>;
 
-// Вход POST /api/bookings = поля формы + адрес сайта.
-export const bookingInput = bookingFormSchema.merge(siteRefSchema);
+// Вход POST /api/bookings = поля формы + адрес сайта + версия политики, которую увидел клиент (если устаревшая страница — 409 privacy_outdated).
+export const bookingInput = bookingFormSchema.merge(siteRefSchema).extend({
+  privacyVersion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 export type BookingInput = z.output<typeof bookingInput>;
 
 // Вход POST /api/bookings/{token}/reschedule.
@@ -124,7 +127,7 @@ export type SlotsQuery = z.output<typeof slotsQuery>;
 
 export const API_REASONS = [
   'validation', 'rate_limited', 'not_found', 'service_not_found', 'slot_taken', 'too_late',
-  'not_cancellable', 'not_reschedulable', 'reschedule_limit', 'forbidden', 'server',
+  'not_cancellable', 'not_reschedulable', 'reschedule_limit', 'forbidden', 'server', 'privacy_outdated',
 ] as const;
 export type ApiReason = (typeof API_REASONS)[number];
 
@@ -176,6 +179,7 @@ export const REASON_MESSAGES: Record<ApiReason, string> = {
   reschedule_limit: 'Запись уже переносили максимальное число раз. Позвоните, пожалуйста.',
   forbidden: 'Запрос отклонён. Обновите страницу и попробуйте снова.',
   server: 'Что-то пошло не так. Попробуйте ещё раз.',
+  privacy_outdated: 'Политика обработки данных обновилась. Обновите страницу и подтвердите согласие ещё раз.',
 };
 export const NETWORK_MESSAGE = 'Не удалось. Попробуйте ещё раз.';
 

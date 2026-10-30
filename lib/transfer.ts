@@ -28,6 +28,8 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0010_partitions.sql',
   'supabase/migrations/0011_analytics.sql',
   'supabase/migrations/0012_rate_limit_hit.sql',
+  'supabase/migrations/0013_data_requests_types.sql',
+  'supabase/migrations/0014_partition_bookings.sql',
 ] as const;
 
 export type TransferBusiness = {

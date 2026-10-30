@@ -20,7 +20,7 @@ describe('fail / ok', () => {
     expect(fail({ reason: 'slot_taken' }).status).toBe(409);
     expect(fail({ reason: 'too_late', phone: '+7' }).status).toBe(409);
     expect(fail({ reason: 'server' }).status).toBe(500);
-    expect(Object.keys(REASON_STATUS)).toHaveLength(11);
+    expect(Object.keys(REASON_STATUS)).toHaveLength(12);
   });
 
   it('тело { ok: false, reason } и no-store', async () => {

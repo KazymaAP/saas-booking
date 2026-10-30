@@ -2,12 +2,15 @@
 import { permanentRedirect, notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { resolveBusiness, activeServices } from '@/lib/business';
+import { jsonLdSafe } from '@/lib/json-ld';
 import { adminClient } from '@/lib/supabase';
 import { BookingForm } from './BookingForm';
 import { SwRegister } from './SwRegister';
 import { StudioTemplate } from '@/components/templates/StudioTemplate';
 
-export const revalidate = 60; // кэш сайта клиента на 60 секунд, быстрее ответ без похода в базу
+export const revalidate = 3600; // кэш сайта клиента на 1 час: слоты брони всё равно живые (клиентский API),
+// а HTML/услуги/фото меняются редко — реже запросы в базу и быстрее ответ на cache-hit.
+// Подогрев БД (cron /api/cron/warmup) держит Supabase в тепле, поэтому cache-miss тоже быстрый.
 
 // PWA: манифест и заголовок страницы (ТЗ §5.1, §5.1 SEO).
 export async function generateMetadata({ params }: { params: { prefix: string; slug: string } }): Promise<Metadata> {
@@ -50,7 +53,7 @@ export default async function BusinessPage({ params }: { params: { prefix: strin
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdSafe({
             '@context': 'https://schema.org',
             '@type': 'LocalBusiness',
             name: business.name,

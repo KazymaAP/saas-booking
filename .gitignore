@@ -1,6 +1,7 @@
 # зависимости и сборка
 node_modules/
 .next/
+dist/
 out/
 next-env.d.ts
 
@@ -18,3 +19,4 @@ Thumbs.db
 scripts/import/
 check-log.txt
 tsconfig.tsbuildinfo
+supabase/.temp/

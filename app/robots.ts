@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/preview/', '/panel', '/api/', '/booking/'],
+        // /unsubscribe/ — персональные токены отписки не должны попадать в индекс (страница ещё и noindex).
+        disallow: ['/preview/', '/panel', '/api/', '/booking/', '/unsubscribe/'],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

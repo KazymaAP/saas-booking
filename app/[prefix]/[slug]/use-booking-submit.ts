@@ -4,7 +4,7 @@
 import { useCallback, useOptimistic, useState, useTransition } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { browserBookingClient, type ClientFailure } from '@/lib/booking-client';
-import { BOOKING_FIELD_ORDER, firstErrorField, type BookingCreated, type BookingField, type BookingFormValues } from '@/lib/schemas';
+import { BOOKING_FIELD_ORDER, PRIVACY_VERSION, firstErrorField, type BookingCreated, type BookingField, type BookingFormValues } from '@/lib/schemas';
 
 const HOUR_MS = 3_600_000;
 const SLOT_GONE_MESSAGE = 'Это время уже недоступно. Выберите другое.';
@@ -66,7 +66,8 @@ export function useBookingSubmit({ form, site, minHoursBefore, focusField, onSlo
       setOutcome({ kind: 'none' });
       startTransition(async () => {
         setPhase('sending');
-        const result = await browserBookingClient().create({ ...values, prefix: site.prefix, slug: site.slug });
+        // privacyVersion — редакция политики, которую видел клиент; сервер сверяет её с актуальной.
+        const result = await browserBookingClient().create({ ...values, prefix: site.prefix, slug: site.slug, privacyVersion: PRIVACY_VERSION });
         if (result.ok) setOutcome({ kind: 'done', booking: result.value });
         else handleFailure(result);
       });

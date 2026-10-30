@@ -74,11 +74,13 @@ export const requisitesSchema = z.object({
   email,
   phone,
   city: optional(100),
+  address: optional(300),
   card,
   bank: optional(100),
   nalog_url: httpsUrl,
   oferta: z.string().max(MAX_TEXT, `Не длиннее ${MAX_TEXT} символов`),
   policy: z.string().max(MAX_TEXT, `Не длиннее ${MAX_TEXT} символов`),
+  dpa: z.string().max(MAX_TEXT, `Не длиннее ${MAX_TEXT} символов`),
 });
 export type Requisites = z.infer<typeof requisitesSchema>;
 export const REQUISITE_FIELDS = Object.keys(requisitesSchema.shape) as (keyof Requisites)[];
@@ -117,7 +119,7 @@ export type Flags = z.infer<typeof flagsSchema>;
 
 // Значения по умолчанию совпадают с seed (миграция 0004_features.sql).
 export const DEFAULTS = {
-  platform_requisites: { fio: '', inn: '', email: '', phone: '', city: '', card: '', bank: '', nalog_url: '', oferta: '', policy: '' } satisfies Requisites,
+  platform_requisites: { fio: '', inn: '', email: '', phone: '', city: '', address: '', card: '', bank: '', nalog_url: '', oferta: '', policy: '', dpa: '' } satisfies Requisites,
   tariffs: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Про', price: 2500 } } satisfies Tariffs,
   default_price: { initial: 5000, monthly: 1000 } satisfies DefaultPrice,
   rate_limits: { booking_per_10min: 5, cancel_per_15min: 10 } satisfies RateLimits,

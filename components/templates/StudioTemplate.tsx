@@ -4,6 +4,7 @@ import { Armchair, CalendarCheck, CaretRight, Clock, Drop, DeviceMobile, Garage,
 import type { Business, Service, WorkingHours } from '@/lib/database.types';
 import { OceanBackdrop } from '@/components/OceanBackdrop';
 import { MapLazy } from '@/components/MapLazy';
+import { onAccentColor } from '@/lib/contrast';
 import Image from 'next/image';
 
 export type TemplatePhoto = { url: string | null; alt: string | null };
@@ -101,7 +102,7 @@ export function StudioTemplate({
   const short = name.split(/\s+/)[0] || name; // как «SGX» из «SGX Detailing»
 
   return (
-    <div style={{ ['--accent' as string]: business.brand_color, ['--color-accent' as string]: business.brand_color, minHeight: '100dvh', background: '#000', color: '#fff' } as React.CSSProperties}>
+    <div style={{ ['--accent' as string]: business.brand_color, ['--color-accent' as string]: business.brand_color, ['--color-on-accent' as string]: onAccentColor(business.brand_color), minHeight: '100dvh', background: '#000', color: '#fff' } as React.CSSProperties}>
       {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link rel="stylesheet" href="/assets/studio.css" />
       <link rel="stylesheet" href="/assets/studio-site.css" />

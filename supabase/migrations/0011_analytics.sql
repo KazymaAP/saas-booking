@@ -24,29 +24,25 @@ as $$
 $$;
 
 -- ===== 2. Таблица событий =====
-create table if not exists analytics_events (
-  id bigserial,
-  business_id uuid,
-  event text not null,
-  path text,
-  ip_hash text,
-  ua_hash text,
-  referrer text,
-  session_id text,
-  created_at timestamptz not null default now(),
-  primary key (id, created_at),
-  -- Whitelist событий дублирует lib/analytics.ts: anon-вставка в обход API тоже не запишет мусор.
-  constraint analytics_events_event_chk check (event in (
-    'pageview', 'booking_open', 'booking_submit', 'phone_click', 'map_open', 'preview_view')),
-  constraint analytics_events_path_chk check (path is null or (char_length(path) <= 512 and left(path, 1) = '/')),
-  constraint analytics_events_referrer_chk check (referrer is null or char_length(referrer) <= 255),
-  -- Хэши — ровно 64 hex-символа: сырой IP/UA сюда не пролезет.
-  constraint analytics_events_ip_hash_chk check (ip_hash is null or ip_hash ~ '^[0-9a-f]{64}$'),
-  constraint analytics_events_ua_hash_chk check (ua_hash is null or ua_hash ~ '^[0-9a-f]{64}$'),
-  -- session_id — только uuid v4, без PII.
-  constraint analytics_events_session_chk check (
-    session_id is null or session_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
-) partition by range (created_at);
+-- Таблица создана в 0006 (партиционирование по created_at). create table if not exists здесь пропускается,
+-- поэтому ограничения добавляются отдельным идемпотентным блоком: работает при любом порядке создания.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'analytics_events_event_chk' and conrelid = to_regclass('public.analytics_events')) then
+    -- Whitelist событий дублирует lib/analytics.ts: anon-вставка в обход API тоже не запишет мусор.
+    alter table analytics_events add constraint analytics_events_event_chk check (event in (
+      'pageview', 'booking_open', 'booking_submit', 'phone_click', 'map_open', 'preview_view'));
+    alter table analytics_events add constraint analytics_events_path_chk check (path is null or (char_length(path) <= 512 and left(path, 1) = '/'));
+    alter table analytics_events add constraint analytics_events_referrer_chk check (referrer is null or char_length(referrer) <= 255);
+    -- Хэши — ровно 64 hex-символа: сырой IP/UA сюда не пролезет.
+    alter table analytics_events add constraint analytics_events_ip_hash_chk check (ip_hash is null or ip_hash ~ '^[0-9a-f]{64}$');
+    alter table analytics_events add constraint analytics_events_ua_hash_chk check (ua_hash is null or ua_hash ~ '^[0-9a-f]{64}$');
+    -- session_id — только uuid v4, без PII.
+    alter table analytics_events add constraint analytics_events_session_chk check (
+      session_id is null or session_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
+  end if;
+end
+$$;
 
 -- Индексы на родителе автоматически создаются на всех партициях (PG 11+).
 create index if not exists idx_analytics_business on analytics_events (business_id, created_at);

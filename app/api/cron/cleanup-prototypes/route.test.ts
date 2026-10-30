@@ -37,6 +37,25 @@ describe('cleanup-prototypes', () => {
     expect(ctx.mem.tables.cron_marks?.map((m) => m.key)).toEqual(['recent']);
   });
 
+  it('бывший клиент с бронями не удаляется, даже если помечен задачей (уровень 2)', async () => {
+    const ctx = memoryContext({
+      businesses: [
+        { id: 'proto', status: 'archived', created_at: daysFrom(TEST_NOW, -200) },
+        { id: 'ex-client', status: 'archived', created_at: daysFrom(TEST_NOW, -400) },
+      ],
+      bookings: [{ id: 'b1', business_id: 'ex-client', status: 'done', scheduled_at: daysFrom(TEST_NOW, -10) }],
+      photos: [],
+      cron_marks: [
+        { job: 'cleanup-prototypes', key: 'proto', created_at: daysFrom(TEST_NOW, -31) },
+        { job: 'cleanup-prototypes', key: 'ex-client', created_at: daysFrom(TEST_NOW, -31) },
+      ],
+    });
+    const result = await cleanupPrototypes(ctx);
+    expect(result).toMatchObject({ deleted: 1, protectedFormerClients: 1 });
+    // Удалён только proto (нет броней/услуг); ex-client (есть бронь) сохранён вместе с историей.
+    expect(ctx.mem.tables.businesses?.map((b) => b.id).sort()).toEqual(['ex-client']);
+  });
+
   it('прототип вернули из архива → не удаляется, отметка снимается', async () => {
     const ctx = memoryContext({
       businesses: [{ id: 'back', status: 'approved', created_at: daysFrom(TEST_NOW, -200) }],

@@ -16,7 +16,15 @@ export function MapBlock({ lat, lng, title }: { lat: number; lng: number; title:
         maxZoom: 19,
         attribution: '© OpenStreetMap',
       }).addTo(m);
-      L.marker([lat, lng]).addTo(m).bindPopup(title);
+      // Маркер рисуется inline-SVG (divIcon), а не PNG по умолчанию: стандартная иконка Leaflet при сборке Next часто не находится.
+      const pin = L.divIcon({
+        className: 'map-pin',
+        html: '<svg width="24" height="32" viewBox="0 0 24 32" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#111111"/><circle cx="12" cy="12" r="4.5" fill="#ffffff"/></svg>',
+        iconSize: [24, 32],
+        iconAnchor: [12, 32],
+        popupAnchor: [0, -32],
+      });
+      L.marker([lat, lng], { icon: pin, alt: title }).addTo(m).bindPopup(title);
       map = m;
     })();
     return () => {
@@ -24,5 +32,13 @@ export function MapBlock({ lat, lng, title }: { lat: number; lng: number; title:
       map?.remove();
     };
   }, [lat, lng, title]);
-  return <div ref={el} className="h-[240px] w-full overflow-hidden rounded-2xl" aria-label={`Карта: ${title}`} />;
+  return (
+    <div
+      ref={el}
+      // Размеры inline: произвольные классы Tailwind (h-[240px]) строятся только если content конфига включает components/.
+      // Без высоты Leaflet рисует карту в нулевом блоке.
+      style={{ height: 240, width: '100%', overflow: 'hidden', borderRadius: 16 }}
+      aria-label={`Карта: ${title}`}
+    />
+  );
 }

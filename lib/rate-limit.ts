@@ -65,6 +65,79 @@ export type RateLimitResult = {
   retryAfter: number; // секунд до конца окна (для заголовка Retry-After)
 };
 
+// Настройки платформы хранят лимиты в формате { booking_per_10min, cancel_per_15min }
+// (окно зашито в имя ключа). Сопоставляем их с runtime-scope'ами зоны бронирования.
+// slots не имеет настройки — всегда берётся из RATE_LIMITS по умолчанию.
+const WINDOW_FOR_SETTINGS: Record<string, number> = {
+  booking_per_10min: 600,
+  cancel_per_15min: 900,
+};
+
+// Чистая функция: маппинг значения настройки в лимит scope'а. Выделена отдельно для тестирования
+// без обращения к БД (ТЗ §7.2; settings.rate_limits из app/panel/(protected)/settings/schema.ts).
+export function scopeLimitFromSettings(
+  settings: Record<string, number> | null | undefined,
+  scope: RateLimitScope,
+): { limit: number; windowSeconds: number } | null {
+  if (settings === null || settings === undefined) return null;
+  if (scope === 'booking' && typeof settings.booking_per_10min === 'number') {
+    return { limit: settings.booking_per_10min, windowSeconds: WINDOW_FOR_SETTINGS.booking_per_10min };
+  }
+  if ((scope === 'cancel' || scope === 'reschedule') && typeof settings.cancel_per_15min === 'number') {
+    return { limit: settings.cancel_per_15min, windowSeconds: WINDOW_FOR_SETTINGS.cancel_per_15min };
+  }
+  return null;
+}
+
+// Кэш настроек лимитов: чтобы не дёргать БД на каждую проверку rate-limit в горячем пути
+// (особенно slots — до 30/мин на IP). Обновляется не чаще раза в минуту.
+let cachedRateLimitSettings: Record<string, number> | null = null;
+let cachedAtMs = 0;
+const SETTINGS_TTL_MS = 60_000;
+
+export function clearRateLimitSettingsCache(): void {
+  cachedRateLimitSettings = null;
+  cachedAtMs = 0;
+}
+
+async function readRateLimitSettings(): Promise<Record<string, number> | null> {
+  const nowMs = Date.now();
+  if (cachedRateLimitSettings !== null && nowMs - cachedAtMs < SETTINGS_TTL_MS) {
+    return cachedRateLimitSettings;
+  }
+  try {
+    const { data, error } = await adminClient()
+      .from('settings')
+      .select('value')
+      .eq('key', 'rate_limits')
+      .maybeSingle();
+    if (error !== null) {
+      // Ошибка БД при чтении лимитов — не блокируем запрос, берём дефолты (fail soft).
+      await logError('booking', 'rate_limit_settings_unavailable', {
+        level: 'warn',
+        error: error.message,
+      });
+      return null;
+    }
+    const value = (data as { value?: Record<string, number> } | null)?.value ?? {};
+    cachedRateLimitSettings = value;
+    cachedAtMs = nowMs;
+    return value;
+  } catch (error) {
+    await logError('booking', 'rate_limit_settings_error', {
+      level: 'warn',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+// Лимит scope'а с учётом настроек платформы; при отсутствии/ошибке настроек — дефолт из RATE_LIMITS.
+async function resolveScope(scope: RateLimitScope): Promise<{ limit: number; windowSeconds: number }> {
+  const settings = await readRateLimitSettings();
+  return scopeLimitFromSettings(settings, scope) ?? RATE_LIMITS[scope];
+}
+
 type DbError = { code?: string; message: string } | null;
 type RateRow = { bucket: string; window_start: string; hits: number };
 type RpcRow = { allowed: boolean; hits: number; retry_after: number };
@@ -172,8 +245,9 @@ export async function rateLimit(
 }
 
 // Лимит по предопределённому scope зоны бронирования: bucket = `${scope}:${ip}`.
-export function rateLimitScope(scope: RateLimitScope, ip: string, options: RateLimitOptions = {}): Promise<RateLimitResult> {
-  const { limit, windowSeconds } = RATE_LIMITS[scope];
+// Лимит/окно берутся из settings.rate_limits, если заданы, иначе — дефолт из RATE_LIMITS.
+export async function rateLimitScope(scope: RateLimitScope, ip: string, options: RateLimitOptions = {}): Promise<RateLimitResult> {
+  const { limit, windowSeconds } = await resolveScope(scope);
   return rateLimit(`${scope}:${ip}`, limit, windowSeconds, options);
 }
 

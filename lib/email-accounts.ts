@@ -57,15 +57,19 @@ export function effectiveSentToday(acc: Pick<EmailAccountRecord, 'sent_today' | 
   return acc.last_reset === today ? acc.sent_today : 0;
 }
 
-export function hasCapacity(acc: EmailAccountRecord, today: string): boolean {
-  return acc.active && Boolean(acc.smtp_pass_encrypted) && effectiveSentToday(acc, today) < acc.daily_limit;
+export function hasCapacity(acc: EmailAccountRecord, today: string, transactional = false): boolean {
+  if (!acc.active || !acc.smtp_pass_encrypted) return false;
+  // №26: транзакционные письма (уведомления о бронях, клиенту, доступ владельцу) не расходуют дневной
+  // лимит холодной рассылки и не теряются, когда этот лимит исчерпан.
+  if (transactional) return true;
+  return effectiveSentToday(acc, today) < acc.daily_limit;
 }
 
 // Чистый выбор ящика. exclude — ящики, уже занятые в этом запуске (пауза 45 с между письмами ящика).
-export function chooseAccount(accounts: EmailAccountRecord[], today: string, exclude: ReadonlySet<string> = new Set()): EmailAccountRecord | null {
+export function chooseAccount(accounts: EmailAccountRecord[], today: string, exclude: ReadonlySet<string> = new Set(), transactional = false): EmailAccountRecord | null {
   let best: EmailAccountRecord | null = null;
   for (const acc of accounts) {
-    if (exclude.has(acc.id) || !hasCapacity(acc, today)) continue;
+    if (exclude.has(acc.id) || !hasCapacity(acc, today, transactional)) continue;
     if (!best || effectiveSentToday(acc, today) < effectiveSentToday(best, today)) best = acc;
   }
   return best;
@@ -198,7 +202,7 @@ export async function loadAccounts(store: EmailAccountStore, now: number = Date.
 // ===== операции =====
 
 // Выбор ящика для одного письма. Сброс дневных счётчиков выполняется только при смене дня.
-export async function pickAccount(store: EmailAccountStore, opts: { exclude?: ReadonlySet<string>; now?: Date } = {}): Promise<EmailAccountRecord | null> {
+export async function pickAccount(store: EmailAccountStore, opts: { exclude?: ReadonlySet<string>; now?: Date; transactional?: boolean } = {}): Promise<EmailAccountRecord | null> {
   const now = opts.now ?? new Date();
   const today = todayMsk(now);
   const accounts = await loadAccounts(store, now.getTime());
@@ -206,7 +210,7 @@ export async function pickAccount(store: EmailAccountStore, opts: { exclude?: Re
     await store.resetDaily(today);
     invalidateAccountCache();
   }
-  return chooseAccount(accounts, today, opts.exclude);
+  return chooseAccount(accounts, today, opts.exclude, opts.transactional);
 }
 
 // Учёт успешной отправки. Гонка двух cron-вызовов решается повтором с перечитыванием счётчика.

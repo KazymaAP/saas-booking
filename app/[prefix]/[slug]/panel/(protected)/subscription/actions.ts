@@ -37,7 +37,8 @@ export async function reportPayment(slug: string, input: PaidInput): Promise<Act
 
   const to = adminEmails();
   const mailed = to.length > 0
-    ? await sendMail({ to: to.join(','), subject: `Оплата подписки: ${b.name}`, text: lines.join('\n') }).catch(() => false)
+    // №26: сообщение об оплате — транзакционное, не расходует лимит рассылки.
+    ? await sendMail({ to: to.join(','), subject: `Оплата подписки: ${b.name}`, text: lines.join('\n'), transactional: true }).catch(() => false)
     : false;
   const telegram = await notifyAdmin(`💳 Сообщение об оплате\n${lines.join('\n')}`).catch(() => false);
   if (!mailed && !telegram) return fail('Не удалось отправить. Напишите нам на почту из реквизитов');

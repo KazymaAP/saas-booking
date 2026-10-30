@@ -8,6 +8,10 @@ import { memoryContext } from '@/lib/test-utils/context';
 
 const SECRET = 'route-secret-123';
 const AGENT_8_JOBS = ['send-emails', 'check-replies'];
+// Маршруты, намеренно НЕ использующие обёртку cronRoute: backup — статический маршрут со своим GET и
+// maxDuration = 300 (бэкап больших таблиц страницами, до 10 мин). Имеет приоритет над [job], поэтому
+// старый job 'backup' больше не вызывается по этому пути. Безопасность проверяется отдельным тестом ниже.
+const BESPOKE_STATIC_ROUTES = ['backup'];
 
 function request(token?: string): Request {
   const headers = new Headers();
@@ -73,7 +77,7 @@ describe('/api/cron/[job]', () => {
 describe('статические маршруты app/api/cron/<job>/route.ts', () => {
   const root = join(process.cwd(), 'app', 'api', 'cron');
   const routes = readdirSync(root, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && d.name !== '[job]' && AGENT_8_JOBS.includes(d.name) === false)
+    .filter((d) => d.isDirectory() && d.name !== '[job]' && AGENT_8_JOBS.includes(d.name) === false && BESPOKE_STATIC_ROUTES.includes(d.name) === false)
     .map((d) => d.name);
 
   it.each(routes)('%s: cronRoute с тем же именем, nodejs, maxDuration ≤ 60, force-dynamic', (name) => {
@@ -83,5 +87,14 @@ describe('статические маршруты app/api/cron/<job>/route.ts', 
     expect(source).toContain("runtime = 'nodejs'");
     expect(source).toContain("dynamic = 'force-dynamic'");
     expect(Number(/maxDuration = (\d+)/.exec(source)?.[1])).toBeLessThanOrEqual(60);
+  });
+
+  // backup — исключение из общего правила (см. BESPOKE_STATIC_ROUTES), но авторизация и изоляция обязательны.
+  it('backup: bespoke-маршрут с авторизацией, nodejs и force-dynamic', () => {
+    const source = readFileSync(join(root, 'backup', 'route.ts'), 'utf8');
+    expect(source).toContain('isCronAuthorized');
+    expect(source).toContain("runtime = 'nodejs'");
+    expect(source).toContain("dynamic = 'force-dynamic'");
+    expect(Number(/maxDuration = (\d+)/.exec(source)?.[1])).toBeGreaterThan(60);
   });
 });

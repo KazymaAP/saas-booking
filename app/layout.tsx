@@ -7,6 +7,11 @@ import './globals.css';
 
 const SITE_NAME = 'Онлайн-запись';
 
+// Supabase (API + Storage с фото бизнесов) — один origin для всех запросов сайта.
+// preconnect/dns-prefetch ускоряет первый сетевой шаг на любой странице (ТЗ §5.1 perf).
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+
+
 export const metadata: Metadata = {
   // Относительные og:image/canonical разворачиваются от основного домена.
   metadataBase: new URL(SITE_URL),
@@ -29,6 +34,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ru">
+      <head>
+        {SUPABASE_URL ? (
+          <>
+            <link rel="preconnect" href={SUPABASE_URL} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={SUPABASE_URL} />
+          </>
+        ) : null}
+      </head>
       <body>{children}</body>
     </html>
   );

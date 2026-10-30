@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -20,7 +20,8 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
-    "preflight": "bash scripts/preflight.sh"
+    "preflight": "bash scripts/preflight.sh",
+    "migrate": "node scripts/apply-migrations.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.0",

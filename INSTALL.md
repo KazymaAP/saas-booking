@@ -85,7 +85,7 @@ pnpm typecheck
 
 ### 2. Supabase
 
-Создайте проект и выполните в SQL Editor по порядку `0001_init.sql` … `0005_indexes.sql` из
+Создайте проект и выполните в SQL Editor по порядку `0001_init.sql` … `0013_data_requests_types.sql` из
 `supabase/migrations/`. Подробно с проверочными запросами — [DEPLOY.md, шаг 2](DEPLOY.md#шаг-2-supabase-миграции-в-sql-editor).
 
 ### 3. Переменные окружения

@@ -5,6 +5,7 @@ import { adminClient } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 import { SITE_URL as BASE } from '@/lib/site';
+import { LEGAL_DOCS } from '@/lib/legal';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data } = await adminClient()
@@ -21,8 +22,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: BASE, lastModified: new Date(), changeFrequency: 'monthly', priority: 1 },
-    { url: `${BASE}/oferta`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    // Юрдокументы: lastModified = дата редакции, а не «сейчас» — поисковик видит реальные изменения текста.
+    ...Object.values(LEGAL_DOCS).map((doc) => ({
+      url: `${BASE}${doc.path}`, lastModified: new Date(doc.version), changeFrequency: 'yearly' as const, priority: 0.3,
+    })),
     ...sites,
   ];
 }

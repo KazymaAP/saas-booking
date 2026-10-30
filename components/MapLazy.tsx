@@ -4,5 +4,5 @@ import dynamic from 'next/dynamic';
 
 export const MapLazy = dynamic(() => import('./MapBlock').then((m) => m.MapBlock), {
   ssr: false,
-  loading: () => <div className="h-[240px] w-full rounded-2xl bg-[#f2f2f2]" aria-hidden />,
+  loading: () => <div style={{ height: 240, width: '100%', borderRadius: 16, background: '#f2f2f2' }} aria-hidden />,
 });

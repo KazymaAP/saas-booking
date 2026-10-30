@@ -11,6 +11,7 @@ const REQUISITE_INPUTS = [
   { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
   { name: 'phone', label: 'Телефон', type: 'tel', hint: '+7 и 10 цифр', autoComplete: 'tel' },
   { name: 'city', label: 'Город' },
+  { name: 'address', label: 'Адрес для корреспонденции', hint: 'Для договора поручения и запросов субъектов ПД' },
   { name: 'card', label: 'Карта для переводов', hint: 'Показывается владельцам в разделе «Подписка»', inputMode: 'numeric', autoComplete: 'off' },
   { name: 'bank', label: 'Банк' },
   { name: 'nalog_url', label: 'Ссылка «Мой налог»', type: 'url', hint: 'https://…' },
@@ -47,6 +48,7 @@ export function RequisitesForm({ value }: { value: PlatformSettings['platform_re
         </div>
         <Field name="oferta" label="Текст оферты" multiline rows={6} maxLength={20000} defaultValue={value.oferta} />
         <Field name="policy" label="Текст политики конфиденциальности" multiline rows={6} maxLength={20000} defaultValue={value.policy} />
+        <Field name="dpa" label="Дополнительные условия договора поручения" multiline rows={6} maxLength={20000} defaultValue={value.dpa} />
         <SubmitButton>Сохранить реквизиты</SubmitButton>
       </ActionForm>
     </Section>

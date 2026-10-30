@@ -47,6 +47,13 @@ const security_headers = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Сжатие (gzip/brotli) на встроенном сервере next start. На Vercel этим занимается CDN, но для
+  // самостоятельного хостинга явное включение режет вес HTML/JSON/JS в 3-4 раза.
+  compress: true,
+  // distDir можно вынести через NEXT_DIST_DIR (по умолчанию '.next').
+  // В песочнице запись в project/.next блокируется (safe-delete + EPERM на .next/trace),
+  // поэтому сборку/запуск делаем с NEXT_DIST_DIR вне проекта.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
     // next/image используется только для фото из Supabase Storage.
     // Логотипы (data:image/svg+xml и og:image с произвольных доменов) выводятся через <img> — без оптимизатора.
@@ -54,6 +61,9 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
     ],
     formats: ['image/avif', 'image/webp'],
+    // Мобильно-ориентированный набор: основной трафик записи — с телефонов.
+    // Убрали 2048/3840 (никогда не нужны на витрине), добавили 360/414 для бюджетных аппаратов.
+    deviceSizes: [360, 414, 640, 750, 828, 1080, 1200, 1920],
     // Оптимизированные версии фото кэшируются на сутки: фото меняются редко, URL уникален.
     minimumCacheTTL: 86_400,
     dangerouslyAllowSVG: false,

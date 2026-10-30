@@ -53,7 +53,8 @@ async function notifyOperator(id: string, input: DataRequestInput): Promise<void
     '',
     `Ответ направить на email заявителя. Запросы: ${SITE_URL}/panel`,
   ].filter((line, index, all) => line !== '' || all[index - 1] !== '').join('\n');
-  await sendMail({ to, subject: `Запрос субъекта ПД: ${label}`, text }).catch(() => false);
+  // №26: запрос субъекта ПД (ФЗ-152) — транзакционное письмо, не расходует лимит рассылки.
+  await sendMail({ to, subject: `Запрос субъекта ПД: ${label}`, text, transactional: true }).catch(() => false);
 }
 
 export async function submitDataRequest(_prev: DataRequestState, form: FormData): Promise<DataRequestState> {

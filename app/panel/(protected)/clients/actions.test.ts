@@ -67,6 +67,26 @@ describe('clientAction — операции', () => {
     expect(res.ok).toBe(false);
     expect(auditMock).not.toHaveBeenCalled();
   });
+  it('оплата с выбранным тарифом «pro» записывает plan_type и цену тарифа', async () => {
+    fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } }, { data: { value: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Премиум', price: 2500 } } } });
+    fake.reply('businesses', { data: [{ id: ID }] });
+    const res = await clientAction(ID, 'paid', 'pro');
+    expect(res.ok).toBe(true);
+    const [upd] = fake.find('businesses', 'update');
+    expect(upd).toBeDefined();
+    if (!upd) return;
+    expect(upd.calls.find((c) => c.method === 'update')?.args[0]).toMatchObject({ plan_type: 'pro', subscription_price: 2500 });
+    expect(auditMock).toHaveBeenCalledWith('mark_paid', 'business', ID, expect.objectContaining({ amount: 6000, monthly: 2500, plan: 'pro' }));
+  });
+  it('оплата с неизвестным тарифом — берёт первый доступный (basic)', async () => {
+    fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } }, { data: { value: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Премиум', price: 2500 } } } });
+    fake.reply('businesses', { data: [{ id: ID }] });
+    const res = await clientAction(ID, 'paid', 'unknown');
+    expect(res.ok).toBe(true);
+    const [upd] = fake.find('businesses', 'update');
+    if (!upd) return;
+    expect(upd.calls.find((c) => c.method === 'update')?.args[0]).toMatchObject({ plan_type: 'basic', subscription_price: 1000 });
+  });
   it('продление защищено от двойного клика условием на текущую дату', async () => {
     fake.reply('businesses', { data: { subscription_until: '2099-01-01', status: 'client' } }, { data: [{ id: ID }] });
     const res = await clientAction(ID, 'extend');

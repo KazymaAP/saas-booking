@@ -64,7 +64,8 @@ export async function notifyCreated(notice: CreatedNotice): Promise<void> {
   const tasks: Promise<void>[] = [];
   if (notice.business.telegram_chat_id) tasks.push(safely(sendTelegram(notice.business.telegram_chat_id, text), 'telegram'));
   const email = notice.business.emails?.[0];
-  if (email) tasks.push(safely(sendMail({ to: email, subject, text }), 'email'));
+  // №26: уведомление о брони бизнесу — транзакционное, не расходует лимит рассылки.
+  if (email) tasks.push(safely(sendMail({ to: email, subject, text, transactional: true }), 'email'));
   // Владельцу сервиса — без персональных данных клиента.
   tasks.push(safely(notifyAdmin(`🎉 Бронь: ${notice.business.name}, ${notice.serviceName}`), 'admin'));
   await Promise.all(tasks);
@@ -73,4 +74,35 @@ export async function notifyCreated(notice: CreatedNotice): Promise<void> {
 // Отмена и перенос: события есть в зоне 8, используем её функцию.
 export function notifyChanged(businessId: string, event: 'cancel' | 'reschedule', bookingId: string): Promise<void> {
   return safely(notifyBusinessEvent(businessId, event, bookingId), event);
+}
+
+// Уведомление клиенту после создания брони (ТЗ §10.3 п.9, закрывает №24): письмо с деталями записи
+// и ссылками отмены/переноса. Без этого клиент не может управлять записью — ссылки «теряются».
+export type ClientBookingNotice = {
+  businessName: string;
+  serviceName: string;
+  startsAt: string;
+  timeZone: string;
+  clientEmail: string | null;
+  cancelUrl: string;
+  rescheduleUrl: string;
+  autoConfirmed: boolean;
+};
+
+export async function notifyClientBooking(notice: ClientBookingNotice): Promise<void> {
+  if (!notice.clientEmail) return;
+  const when = formatSlotDateTime(notice.startsAt, notice.timeZone);
+  const subject = notice.autoConfirmed ? 'Запись подтверждена' : 'Запись принята';
+  const text = [
+    `Здравствуйте!`,
+    ``,
+    `Ваша запись в «${notice.businessName}» ${notice.autoConfirmed ? 'подтверждена' : 'принята'}.`,
+    `${notice.serviceName}, ${when}`,
+    ``,
+    `Управление записью:`,
+    `Отменить: ${notice.cancelUrl}`,
+    `Перенести: ${notice.rescheduleUrl}`,
+  ].join('\n');
+  // №26: письмо клиенту — транзакционное, не расходует лимит рассылки и не теряется при его исчерпании.
+  await safely(sendMail({ to: notice.clientEmail, subject, text, transactional: true }), 'client-email');
 }
