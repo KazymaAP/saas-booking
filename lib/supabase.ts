@@ -13,22 +13,19 @@ let admin_cache: CachedClient | null = null;
 const SERVER_AUTH = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } as const;
 
 // URL пула соединений для серверных клиентов.
-// ВАЖНО: порт 6543 — это Postgres-wire пулер (pgbouncer/Supavisor, протокол Postgres), а supabase-js
-// работает поверх HTTPS/REST (порт 443). Ставить JS-клиенту :6543 — ошибка: REST-запросы к БД зависают
-// на ~20-30 с (таймаут), отсюда «медленные вкладки» и ошибки рендера. Пулер нужен только для ПРЯМЫХ
-// pg-соединений, которые supabase-js не использует (PostgREST сам держит пул к БД на стороне сервиса).
-// Поэтому по умолчанию JS-клиент ходит на обычный базовый URL (порт 443).
-// Реальный HTTP-пулер подключается только если явно задан SUPABASE_POOLER_URL (полный URI из Dashboard).
+// supabase-js ходит по HTTPS/REST (порт 443). Порт 6543 — это Postgres-wire пулер (протокол Postgres),
+// его нельзя передавать в createClient(): supabase-js упадёт с
+// «Request cannot be constructed from a URL that includes credentials». Поэтому JS-клиент всегда использует
+// базовый URL (порт 443); явный HTTP(S)-пулер берём только из SUPABASE_POOLER_URL и тоже валидируем.
 export function poolerUrl(base: string = requireEnv('NEXT_PUBLIC_SUPABASE_URL')): string {
   const override = process.env.SUPABASE_POOLER_URL?.trim();
   const url = override || base;
-  // supabase-js ходит поверх HTTPS/REST (порт 443). Postgres-пулер (postgresql://…:6543)
-  // — это протокол Postgres, его нельзя передавать в createClient(): fetch() упадёт с
-  // «Request cannot be constructed from a URL that includes credentials».
+  // supabase-js принимает только http(s)-URL. Postgres connection string (postgresql://…)
+  // вызывает краш fetch() — отсекаем сразу с понятным сообщением.
   if (!/^https?:\/\//i.test(url)) {
     throw new Error(
       `Supabase URL должен начинаться с https://, получено: «${url.slice(0, 14)}…». ` +
-        `Проверьте переменные NEXT_PUBLIC_SUPABASE_URL и SUPABASE_POOLER_URL в окружении — ` +
+        `Проверьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_POOLER_URL — ` +
         `туда попал Postgres connection string вместо проектного URL (https://<project>.supabase.co).`
     );
   }
