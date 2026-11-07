@@ -67,10 +67,13 @@ const nextConfig = {
   // Сжатие (gzip/brotli) на встроенном сервере next start. На Vercel этим занимается CDN, но для
   // самостоятельного хостинга явное включение режет вес HTML/JSON/JS в 3-4 раза.
   compress: true,
-  // distDir можно вынести через NEXT_DIST_DIR (по умолчанию '.next').
-  // В песочнице запись в project/.next блокируется (safe-delete + EPERM на .next/trace),
-  // поэтому сборку/запуск делаем с NEXT_DIST_DIR вне проекта.
-  distDir: process.env.NEXT_DIST_DIR || '.next',
+  // distDir по умолчанию '.next' — именно её ожидает Vercel при деплое (иначе падает
+  // NEXT_OUTPUT_DIR_MISSING) и стандартный next start/dev.
+  // NEXT_DIST_DIR позволяет вынести выходную папку — нужно ТОЛЬКО в локальной песочнице,
+  // где запись в project/.next блокируется safe-delete + EPERM на .next/trace.
+  // На Vercel ВСЕГДА принудительно '.next' (Vercel выставляет VERCEL=1 при сборке),
+  // иначе значение NEXT_DIST_DIR из окружения деплоя ломает поиск выходной директории.
+  distDir: process.env.VERCEL ? '.next' : (process.env.NEXT_DIST_DIR || '.next'),
   images: {
     // next/image используется только для фото из Supabase Storage.
     // Логотипы (data:image/svg+xml и og:image с произвольных доменов) выводятся через <img> — без оптимизатора.
