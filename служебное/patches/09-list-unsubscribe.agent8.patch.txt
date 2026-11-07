@@ -1,0 +1,110 @@
+diff --git a/app/api/cron/send-emails/route.ts b/app/api/cron/send-emails/route.ts
+index 8a8883f..63d1bcc 100644
+--- a/app/api/cron/send-emails/route.ts
++++ b/app/api/cron/send-emails/route.ts
+@@ -4,6 +4,7 @@ import { adminClient } from '@/lib/supabase';
+ import { isCronAuthorized } from '@/lib/cron';
+ import { sendMail } from '@/lib/notify';
+ import { buildEmail } from '@/lib/outreach';
++import { isUnsubscribed } from '@/lib/legal';
+ import { logError } from '@/lib/log';
+ import { notifyAdmin } from '@/lib/admin-notify';
+ 
+@@ -28,6 +29,12 @@ export async function GET(req: Request) {
+     return NextResponse.json({ ok: true, sent: 0 });
+   }
+ 
++  // Повторная проверка перед отправкой: человек мог отписаться после постановки в очередь.
++  if (await isUnsubscribed(business.emails[0])) {
++    await db.from('outreach_log').update({ status: 'skipped' }).eq('id', item.id);
++    return NextResponse.json({ ok: true, sent: 0, reason: 'unsubscribed' });
++  }
++
+   const { data: tpl } = item.template_id && item.template_id !== 'default'
+     ? await db.from('templates').select('subject, body').eq('id', item.template_id).maybeSingle()
+     : { data: null };
+@@ -38,9 +45,10 @@ export async function GET(req: Request) {
+     verticalName: business.vertical_templates?.name?.toLowerCase(),
+     subject: tpl?.subject ?? undefined,
+     body: tpl?.body ?? undefined,
++    to: business.emails[0],
+   });
+ 
+-  const ok = await sendMail({ to: business.emails[0], subject: email.subject, text: email.text, html: email.html }).catch(() => false);
++  const ok = await sendMail({ to: business.emails[0], subject: email.subject, text: email.text, html: email.html, headers: email.headers ?? undefined }).catch(() => false);
+   if (!ok) await logError('email', 'письмо не отправлено: нет ящика с лимитом или ошибка SMTP', { business: business.id });
+   if (!ok) await notifyAdmin('❌ SMTP error: письмо не отправлено');
+   if (!ok) return NextResponse.json({ ok: true, sent: 0, reason: 'no_capacity' });
+diff --git a/lib/notify.ts b/lib/notify.ts
+index c0b62e9..4387d98 100644
+--- a/lib/notify.ts
++++ b/lib/notify.ts
+@@ -55,7 +55,8 @@ async function pickAccount(): Promise<EmailAccount | null> {
+   return acc;
+ }
+ 
+-export async function sendMail(opts: { to: string; subject: string; text: string; html?: string }): Promise<boolean> {
++// headers — дополнительные заголовки письма (List-Unsubscribe по RFC 2369/8058 для холодной рассылки).
++export async function sendMail(opts: { to: string; subject: string; text: string; html?: string; headers?: Record<string, string> }): Promise<boolean> {
+   const acc = await pickAccount();
+   if (!acc || !acc.smtp_pass_encrypted) return false;
+   const transport = nodemailer.createTransport({
+@@ -64,7 +65,7 @@ export async function sendMail(opts: { to: string; subject: string; text: string
+     secure: (acc.smtp_port ?? 465) === 465,
+     auth: { user: acc.smtp_user ?? acc.email, pass: decryptSecret(acc.smtp_pass_encrypted) },
+   });
+-  await transport.sendMail({ from: acc.email, to: opts.to, subject: opts.subject, text: opts.text, html: opts.html });
++  await transport.sendMail({ from: acc.email, to: opts.to, subject: opts.subject, text: opts.text, html: opts.html, headers: opts.headers });
+   await adminClient().from('email_accounts').update({ sent_today: acc.sent_today + 1 }).eq('id', acc.id);
+   return true;
+ }
+diff --git a/lib/outreach.ts b/lib/outreach.ts
+index 40f08bd..774976a 100644
+--- a/lib/outreach.ts
++++ b/lib/outreach.ts
+@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
+ import { adminClient } from './supabase';
+ import type { Business } from './database.types';
+ import { SITE_URL as SITE } from './site';
++import { buildListUnsubscribeHeaders, buildUnsubscribeUrl, isUnsubscribed } from './legal';
+ 
+ export const DEFAULT_TEMPLATE = {
+   subject: 'Сайт онлайн-записи для {name}',
+@@ -24,6 +25,8 @@ export async function queueApproved(templateId?: string): Promise<number> {
+   let queued = 0;
+   for (const b of (businesses ?? []) as Pick<Business, 'id' | 'emails'>[]) {
+     if (!b.emails?.length) continue;
++    // 38-ФЗ ст. 18: адресатам из unsubscribes не пишем. Ошибка БД = считаем отписанным (isUnsubscribed).
++    if (await isUnsubscribed(b.emails[0])) continue;
+     const { data: existing } = await db.from('outreach_log').select('id').eq('business_id', b.id).limit(1);
+     if (existing?.length) continue;
+     await db.from('outreach_log').insert({
+@@ -45,6 +48,8 @@ export function buildEmail(opts: {
+   verticalName?: string;
+   subject?: string;
+   body?: string;
++  // Адрес получателя: нужен для персональной ссылки отписки. Без него (превью в админке) ссылка — заглушка-образец.
++  to?: string;
+ }) {
+   const b = opts.business;
+   const vars = {
+@@ -58,12 +63,17 @@ export function buildEmail(opts: {
+   const subject = renderTemplate(opts.subject ?? DEFAULT_TEMPLATE.subject, vars);
+   const text = renderTemplate(opts.body ?? DEFAULT_TEMPLATE.body, vars);
+   const clickUrl = `${SITE}/api/track/click/${opts.trackingToken}?to=${encodeURIComponent(vars.url)}`;
++  const unsubscribeUrl = (opts.to ? buildUnsubscribeUrl(opts.to) : null) ?? `${SITE}/data-request`;
++  const headers = opts.to ? buildListUnsubscribeHeaders(opts.to) : null;
++  const footerText = `\n\n—\nВы получили это письмо, потому что адрес опубликован в открытом справочнике организаций. Отписаться: ${unsubscribeUrl}`;
+   const pixel = `<img src="${SITE}/api/track/open/${opts.trackingToken}" width="1" height="1" alt="" />`;
+   const html =
+     `<div style="font-family:system-ui,sans-serif;font-size:16px;line-height:1.5;color:#1a1a1a">` +
+     text.split('\n').map((l) => (l ? `<p>${escapeHtml(l)}</p>` : '')).join('') +
+-    `<p><a href="${clickUrl}" style="color:#111111">Открыть демо</a></p>${pixel}</div>`;
+-  return { subject, text, html, previewLink: clickUrl };
++    `<p><a href="${clickUrl}" style="color:#111111">Открыть демо</a></p>` +
++    `<p style="margin-top:24px;font-size:13px;color:#595959">Вы получили это письмо, потому что адрес опубликован в открытом справочнике организаций. ` +
++    `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#595959">Отписаться</a></p>${pixel}</div>`;
++  return { subject, text: text + footerText, html, previewLink: clickUrl, headers };
+ }
+ 
+ function escapeHtml(s: string): string {

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { audit } from '@/lib/audit';
-import { fail, guarded, ok, type ActionResult } from '../_lib/action';
+import { fail, guarded, ok, type ActionResult } from '@/главная/lib/action';
 import { PERIODS, getStats } from './compute';
 
 const periodSchema = z.coerce.number().refine((n): n is (typeof PERIODS)[number] => (PERIODS as readonly number[]).includes(n));

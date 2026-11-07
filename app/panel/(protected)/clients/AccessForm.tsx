@@ -3,8 +3,8 @@
 // Пароль приходит в ответе server action и живёт только в состоянии компонента: после перезагрузки страницы
 // его не видно (раньше лежал в cookie 5 минут и показывался при каждом обновлении).
 import { useCallback, useId, useState } from 'react';
-import { ActionForm, Field, SubmitButton } from '../_components/ActionForm';
-import type { ActionResult } from '../_lib/action';
+import { ActionForm, Field, SubmitButton } from '@/главная/components/ActionForm';
+import type { ActionResult } from '@/главная/lib/action';
 import { createOwnerAccess, type AccessCreated } from './actions';
 
 export function AccessForm({ id, name }: { id: string; name: string }) {

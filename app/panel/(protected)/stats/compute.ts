@@ -6,8 +6,8 @@
 // ▸ Рассылка — только за выбранный период (при росте нужен индекс outreach_log(sent_at) — см. notes.md).
 // Модуль только серверный: импортируется из Server Component и server action (adminClient = service_role).
 import { adminClient } from '@/lib/supabase';
-import { rowsOf } from '../_lib/db';
-import { statusLabel } from '../_lib/statuses';
+import { rowsOf } from '@/главная/lib/db';
+import { statusLabel } from '@/главная/lib/statuses';
 import { aggregateBusinesses, aggregateOutreach, conversion, mrr, type BizRow, type ClientRow, type OutreachRow, type StatsSnapshot } from './aggregate';
 
 export const PERIODS = [30, 90, 365] as const;

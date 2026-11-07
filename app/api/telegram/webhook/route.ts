@@ -7,17 +7,17 @@
 //   /stats /ping /health из TELEGRAM_CHAT_ID — админ-команды (один бот — две роли);
 //   прочее            — «Неизвестная команда».
 // Сообщения не из личного чата (группы/каналы) без /start игнорируются — не отвечаем чужим.
-import { BOT_REPLIES } from '@/lib/telegram-events';
-import { botUsername, isAdminChat, sendTelegram } from '@/lib/telegram';
-import { allowCodeAttempt, bindChat, claimCode, normalizeCode, unbindChat, type ClaimResult } from '@/lib/telegram-connect';
+import { BOT_REPLIES } from '@/телеграмм-бот/telegram-events';
+import { botUsername, isAdminChat, sendTelegram } from '@/телеграмм-бот/telegram';
+import { allowCodeAttempt, bindChat, businessByChat, claimCode, normalizeCode, unbindChat, type ClaimResult } from '@/телеграмм-бот/telegram-connect';
 import {
   businessWebhookSecret,
   handleTelegramWebhook,
   parseCommand,
   type IncomingMessage,
   type MembershipChange,
-} from '@/lib/telegram-webhook';
-import { ADMIN_COMMANDS, runAdminCommand } from '@/lib/telegram-admin';
+} from '@/телеграмм-бот/telegram-webhook';
+import { ADMIN_COMMANDS, runAdminCommand } from '@/телеграмм-бот/telegram-admin';
 import { audit } from '@/lib/audit';
 
 export const runtime = 'nodejs';
@@ -99,6 +99,13 @@ async function onMessage(msg: IncomingMessage): Promise<void> {
   const bareCode = !parsed ? normalizeCode(msg.text) : null;
   if (bareCode) {
     await handleStart(msg, bareCode);
+    return;
+  }
+  // Привязанный чат — это переписка с платформой: текст уже записан в журнал и виден в админке
+  // («Чат»), поэтому отвечаем не «неизвестная команда», а подтверждением, что сообщение дошло.
+  const linked = await businessByChat(msg.chatId);
+  if (linked) {
+    await reply(msg.chatId, BOT_REPLIES.messageForwarded);
     return;
   }
   await reply(msg.chatId, BOT_REPLIES.unknownCommand);

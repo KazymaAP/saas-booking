@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'detailing',
+  prefix: 'd',
+  accent: '#3b82f6',
+  accent2: '#22d3ee',
+  mode: 'dark',
+  bg: '#0a1020',
+  surface: '#101a30',
+  border: '#1e2d4a',
+  borderHover: '#2b3d61',
+  text: '#f2f6ff',
+  textMuted: '#9fb0cc',
+  textSubtle: '#7d8fae',
+  glyph: 'car',
+  businessNoun: 'студия',
+  tagline: 'Премиум-детейлинг вашего авто',
+  intro: 'Полный спектр услуг по уходу за автомобилем: от бесконтактной мойки до керамического покрытия кузова. Работаем с гарантией и только проверенной премиум-химией.',
+  asideTitle: 'Свежий вид для вашего авто',
+  asideText: 'Выберите услугу и удобное время — остальное возьмём на себя.',
+  ctaPrimary: 'Записаться',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Студия всегда под рукой.',
+  installText: 'Записывайтесь за несколько касаний, без поиска ссылки и звонков.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'бокс',
+  resourceType: 'bay',
+  resourceCount: 2,
+  infoCards: [
+    { id: 'hours', title: 'Без выходных', description: 'Открыты с 9 до 21 в будни, до 18 в воскресенье.', icon: 'clock' },
+    { id: 'warranty', title: 'Гарантия 14 дней', description: 'Переделываем любую работу бесплатно.', icon: 'shield' },
+    { id: 'chemi', title: 'Своя премиум-химия', description: 'Только проверенные составы без ущерба ЛКП.', icon: 'sparkle' },
+  ],
+  defaultServices: [
+    { name: 'Комплексная мойка', price: 1500, duration: 60 },
+    { name: 'Химчистка салона', price: 6500, duration: 240 },
+    { name: 'Полировка кузова', price: 12000, duration: 180 },
+    { name: 'Керамическое покрытие', price: 28000, duration: 480 },
+  ],
+  detailField: {
+    title: 'Ваш автомобиль',
+    label: 'Автомобиль',
+    placeholder: 'Марка и модель',
+    pattern: '^[А-Яа-яЁёA-Za-z0-9 .\\-]{2,60}$',
+    patternMessage: 'Автомобиль: от 2 до 60 символов, без спецсимволов',
+  },
+};
+
+export default theme;

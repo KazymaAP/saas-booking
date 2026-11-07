@@ -4,10 +4,10 @@
 // Ссылка «Весь журнал по бизнесу» из карточки ведёт сюда с tab=audit&entity_id=<id>.
 import Link from 'next/link';
 import { LOG_SOURCES } from '@/lib/log';
-import { PrefetchLink } from '../_components/PrefetchLink';
-import { Pager } from '../_components/Pager';
-import { ACTION_LABEL, ENTITY_LABEL, SOURCE_LABEL, actionLabel, auditDetails, isLogSource } from '../_lib/audit-labels';
-import type { Params } from '../_lib/url';
+import { PrefetchLink } from '@/главная/components/PrefetchLink';
+import { Pager } from '@/главная/components/Pager';
+import { ACTION_LABEL, ENTITY_LABEL, SOURCE_LABEL, actionLabel, auditDetails, isLogSource } from '@/главная/lib/audit-labels';
+import type { Params } from '@/главная/lib/url';
 import { hasFilters, readLogFilters, type LogFilters, type LogTab } from './filters';
 import { LOG_PAGE, loadLogs, type LogRow } from './query';
 

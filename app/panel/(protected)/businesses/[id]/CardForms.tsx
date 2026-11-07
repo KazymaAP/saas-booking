@@ -2,12 +2,12 @@
 // Формы карточки бизнеса: slug, домен, SSL, заметки (ActionForm — ошибки под полями, тост),
 // статус (optimistic: бейдж меняется сразу, откат при ошибке), кнопки действий с подтверждением.
 import { useCallback, useMemo, useOptimistic, useState, useTransition } from 'react';
-import { ActionForm, Field, SubmitButton } from '../../_components/ActionForm';
-import { ConfirmDialog } from '../../_components/ConfirmDialog';
-import { StatusBadge } from '../../_components/StatusBadge';
-import { useToast } from '../../_components/Toast';
-import { orNetworkError } from '../../_lib/network';
-import { MASS_STATUSES, STATUS_LABEL } from '../../_lib/statuses';
+import { ActionForm, Field, SubmitButton } from '@/главная/components/ActionForm';
+import { ConfirmDialog } from '@/главная/components/ConfirmDialog';
+import { StatusBadge } from '@/главная/components/StatusBadge';
+import { useToast } from '@/главная/components/Toast';
+import { orNetworkError } from '@/главная/lib/network';
+import { MASS_STATUSES, STATUS_LABEL } from '@/главная/lib/statuses';
 import { cardAction, changeSlug, changeStatus, checkSsl, saveDomain, saveNotes } from './actions';
 import { MAX_NOTES } from './schema';
 

@@ -7,8 +7,8 @@ import { addBusinessSchema } from './schema';
 import { adminClient } from '@/lib/supabase';
 import { slugify, MAX_SLUG_LENGTH } from '@/lib/slug';
 import { audit, auditMany } from '@/lib/audit';
-import { bulkReport, fail, formObject, guarded, guardedBulk, ok, zodFail, type ActionResult, type BulkResult } from '../_lib/action';
-import { MASS_STATUSES, type MassStatus } from '../_lib/statuses';
+import { bulkReport, fail, formObject, guarded, guardedBulk, ok, zodFail, type ActionResult, type BulkResult } from '@/главная/lib/action';
+import { MASS_STATUSES, type MassStatus } from '@/главная/lib/statuses';
 
 const LIST_PATH = '/panel/businesses';
 const PG_UNIQUE_VIOLATION = '23505';

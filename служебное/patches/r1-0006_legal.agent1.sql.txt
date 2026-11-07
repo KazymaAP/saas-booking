@@ -1,0 +1,46 @@
+-- ПРЕДЛОЖЕНИЕ для агента 1 (зона схемы БД): supabase/migrations/0006_legal.sql
+-- Таблицы по ТЗ 4.0 §4.22, §4.42, §4.44 — без них юридический слой пишет «в пустоту»:
+--   ▸ /api/cookie-consent — insert молча падает (по ТЗ допустимо, но журнала согласий нет);
+--   ▸ /data-request — запрос субъекта ПД не сохраняется, пользователь видит ошибку;
+--   ▸ /unsubscribe и One-Click — 500, отписка не оформляется (нарушение ст. 18 38-ФЗ).
+-- Отличия от ТЗ: CHECK на type data_requests расширен (withdraw, unsubscribe — см. lib/data-request.ts),
+-- RLS включён без политик: доступ только через service_role (adminClient), anon ничего не читает.
+
+CREATE TABLE IF NOT EXISTS unsubscribes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text UNIQUE NOT NULL,
+  token uuid UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+  reason text,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_unsubscribes_token ON unsubscribes(token);
+
+CREATE TABLE IF NOT EXISTS data_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  type text NOT NULL CHECK (type IN ('access', 'correct', 'delete', 'withdraw', 'unsubscribe')),
+  business_id uuid REFERENCES businesses(id) ON DELETE SET NULL,
+  request_text text,
+  status text DEFAULT 'new',
+  processed_by text,
+  response_text text,
+  processed_at timestamptz,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_data_requests_status ON data_requests(status);
+-- Контроль срока ответа (10 рабочих дней): выборка открытых запросов по дате.
+CREATE INDEX IF NOT EXISTS idx_data_requests_open ON data_requests(created_at) WHERE status = 'new';
+
+CREATE TABLE IF NOT EXISTS cookie_consents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ip_hash text,
+  ua_hash text,
+  accepted boolean,
+  policy_version text,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cookie_consents_created ON cookie_consents(created_at);
+
+ALTER TABLE unsubscribes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE data_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cookie_consents ENABLE ROW LEVEL SECURITY;

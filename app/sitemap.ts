@@ -11,7 +11,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data } = await adminClient()
     .from('businesses')
     .select('slug, created_at, vertical_templates(url_prefix)')
-    .eq('status', 'client');
+    .eq('status', 'client')
+    // Приостановленная подписка отдаёт заглушку (404 для сайта) — такие адреса в карту не кладём.
+    .eq('subscription_active', true);
 
   const sites = (data ?? []).map((b: any) => ({
     url: `${BASE}/${b.vertical_templates?.url_prefix ?? 'x'}/${b.slug}`,

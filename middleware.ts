@@ -2,11 +2,11 @@
 // Только Edge-совместимые операции: host, cookie, path. Никаких запросов к БД и self-fetch.
 // Статические security headers (CSP, HSTS, XFO, nosniff, Referrer, Permissions) — в next.config.mjs.
 import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
-import { isMainHost, normalizeHost } from './lib/site';
+import { isMainHost, normalizeHost } from './общие/lib/site';
 import {
   DOMAIN_MAP_COOKIE, DOMAIN_MAP_MARKER, RESOLVE_HOST_HEADER, RESOLVE_NEXT_HEADER, RESOLVE_RETRY_HEADER, verifyDomainMap,
-} from './lib/domain-map';
-import { LICENSE_COOKIE, pingLicense, type LicenseStatus } from './lib/license-client';
+} from './общие/lib/domain-map';
+import { LICENSE_COOKIE, pingLicense, type LicenseStatus } from './общие/lib/license-client';
 
 const NOINDEX = 'noindex, nofollow';
 const LICENSE_TTL_MS = 86_400_000;
@@ -91,7 +91,12 @@ function isSystemPath(path: string): boolean {
 }
 
 function isNoindexPath(path: string): boolean {
-  return path.startsWith('/preview/') || path === '/panel' || path.startsWith('/panel/') || /^\/[a-z]{1,4}\/[^/]+\/panel(\/|$)/.test(path);
+  return path.startsWith('/preview/')
+    || path === '/panel' || path.startsWith('/panel/')
+    || path === '/admin' || path.startsWith('/admin/')
+    || path === '/dev' || path.startsWith('/dev/')
+    || path === '/partner' || path.startsWith('/partner/')
+    || /^\/[a-z]{1,4}\/[^/]+\/panel(\/|$)/.test(path);
 }
 
 function withNoindex(res: NextResponse, noindex: boolean): NextResponse {

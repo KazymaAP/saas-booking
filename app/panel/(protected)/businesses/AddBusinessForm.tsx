@@ -1,6 +1,6 @@
 'use client';
 // Ручное добавление бизнеса: поля с подписями, ошибки zod под полями, тост с результатом, сброс формы.
-import { ActionForm, Field, FormError, SubmitButton } from '../_components/ActionForm';
+import { ActionForm, Field, FormError, SubmitButton } from '@/главная/components/ActionForm';
 import { addBusiness } from './actions';
 
 export function AddBusinessForm() {

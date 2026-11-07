@@ -1,6 +1,6 @@
 // Тесты «Бизнесы»: ручное добавление (zod, slug, гонка 23505, audit без ПД), массовая смена статуса.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '../_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

@@ -2,9 +2,9 @@
 // Server Component. Правка — через ?edit=<id> (ссылка, без JS работает тоже), число бизнесов по нише — один запрос.
 import Link from 'next/link';
 import { adminClient } from '@/lib/supabase';
-import { countOf } from '../_lib/db';
+import { countOf } from '@/главная/lib/db';
 import type { VerticalTemplate } from '@/lib/database.types';
-import { uuidParam, type Params } from '../_lib/url';
+import { uuidParam, type Params } from '@/главная/lib/url';
 import { JSON_FIELDS, type JsonField } from './schema';
 import { ActiveToggle, ImportVerticalsForm, VerticalForm, type VerticalView } from './VerticalForms';
 

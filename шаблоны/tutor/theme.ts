@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'tutor',
+  prefix: 't',
+  accent: '#f59e0b',
+  accent2: '#ef4444',
+  mode: 'light',
+  bg: '#fffaf0',
+  surface: '#ffffff',
+  border: '#f0e0c4',
+  borderHover: '#e6d2ac',
+  text: '#3d2f16',
+  textMuted: '#7a6c50',
+  textSubtle: '#7b715c',
+  glyph: 'book',
+  businessNoun: 'школа',
+  tagline: 'Обучение с результатом',
+  intro: 'Репетиторы и курсы: школьная программа, ЕГЭ/ОГЭ, языки и профессиональные направления. Индивидуальный подход к каждому.',
+  asideTitle: 'Знания, которые работают',
+  asideText: 'Выберите предмет и удобное время — преподаватель подтвердит занятие.',
+  ctaPrimary: 'Записаться на занятие',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Школа всегда под рукой.',
+  installText: 'Записывайтесь на занятия за несколько касаний.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'преподаватель',
+  resourceType: 'master',
+  resourceCount: 3,
+  infoCards: [
+    { id: 'approach', title: 'Индивидуальный подход', description: 'Темп и программа под вашу цель.', icon: 'users' },
+    { id: 'results', title: 'Результаты', description: 'Растим баллы и уверенность в предмете.', icon: 'medal' },
+    { id: 'flex', title: 'Гибкий график', description: 'Занятия в удобное для вас время.', icon: 'calendar' },
+  ],
+  defaultServices: [
+    { name: 'Пробное занятие', price: 0, duration: 30 },
+    { name: 'Индивидуальный урок', price: 2500, duration: 60 },
+    { name: 'Мини-группа', price: 1200, duration: 60 },
+    { name: 'Интенсив-курс', price: 18000, duration: 120 },
+  ],
+  detailField: {
+    title: 'Предмет и уровень',
+    label: 'Предмет / уровень',
+    placeholder: 'Например, ЕГЭ по математике',
+    optional: true,
+    hint: 'Поможем подобрать преподавателя точнее.',
+  },
+};
+
+export default theme;

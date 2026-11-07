@@ -10,7 +10,7 @@ import { isSuperAdmin } from '@/lib/admin-session';
 import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
 import { errorMessage, logError } from '@/lib/log';
-import { applyBusinessFilters, paramsFromUrl, readBusinessFilters, type BusinessFilters } from '@/app/panel/(protected)/_lib/business-filters';
+import { applyBusinessFilters, paramsFromUrl, readBusinessFilters, type BusinessFilters } from '@/главная/lib/business-filters';
 import { BOM, COLUMNS, CSV_HEADER, csvLine, fileBase, xlsxRecord, type ExportRow } from './format';
 
 export const runtime = 'nodejs';

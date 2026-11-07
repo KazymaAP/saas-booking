@@ -5,7 +5,7 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   // Все места, где встречаются классы Tailwind. components/ раньше не сканировался — классы Hero/MapLazy/MapBlock вырезались.
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
+  content: ['./app/**/*.{ts,tsx}', './общие/**/*.{ts,tsx}', './шаблоны/**/*.{ts,tsx}', './главная/**/*.{ts,tsx}'],
   // preflight отключён и в globals.css (нет @tailwind base); здесь — чтобы не включился случайно.
   corePlugins: { preflight: false },
   theme: { extend: {} },

@@ -1,6 +1,6 @@
 // Тесты server actions «Ниши»: права, ошибки JSON под полем, уникальность, импорт одним upsert.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '../_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

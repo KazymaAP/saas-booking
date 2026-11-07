@@ -3,8 +3,8 @@
 // Подтверждение обязательно: письма уходят реальным людям (design-spec §6 — опасное действие).
 import { useCallback, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { ActionForm } from '../_components/ActionForm';
-import { ConfirmDialog } from '../_components/ConfirmDialog';
+import { ActionForm } from '@/главная/components/ActionForm';
+import { ConfirmDialog } from '@/главная/components/ConfirmDialog';
 import { queueOutreach } from './actions';
 
 export function QueueForm({ templateId, approved, withEmail }: { templateId: string; approved: number; withEmail: number }) {

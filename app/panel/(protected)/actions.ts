@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { generatePrototype } from '@/lib/generate';
 import { logError } from '@/lib/log';
-import { requireSuperAdmin } from './_lib/guard';
+import { requireSuperAdmin } from '@/главная/lib/guard';
 import type { Business, VerticalTemplate } from '@/lib/database.types';
 
 const MAX_PER_RUN = 20;

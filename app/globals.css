@@ -36,7 +36,7 @@ body {
   border-radius: 8px;
   border: 1px solid var(--brand-color);
   background: var(--brand-color);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font: inherit;
   font-weight: 550;
   cursor: pointer;
@@ -64,6 +64,11 @@ body {
 .panel-shell textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06); }
 
 /* ===== Панели ===== */
+/* Фон кабинета берётся из выбранного стиля (по умолчанию — стиль ниши бизнеса). */
+.panel-shell { background: var(--panel-bg, var(--surface)); color: var(--ink); }
+/* preflight не подключён, поэтому у списков остаются маркеры браузера — в меню они выглядели
+   точками после пунктов. В кабинете все списки стилизованы вручную. */
+.panel-shell ul, .panel-shell ol { list-style: none; margin: 0; padding: 0; }
 .panel-shell h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 16px; }
 .panel-shell h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
 .panel-shell h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
@@ -113,7 +118,7 @@ body {
   vertical-align: top;
 }
 .panel-shell tbody tr:last-child td { border-bottom: 0; }
-.panel-shell tbody tr:hover td { background: #fcfcfc; }
+.panel-shell tbody tr:hover td { background: var(--soft); }
 
 .panel-shell details,
 .panel-shell section > .card {
@@ -125,8 +130,78 @@ body {
 
 .panel-shell :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
+/* Доступность (чек-лист UI/UX): фокус виден везде, включая кабинет партнёра — там другой
+   корневой класс и правило .panel-shell на него не действует. Цвет берём из текущей темы. */
+:where(button, a, [role='button'], summary, select, input, textarea):focus-visible {
+  outline: 2px solid var(--brand-color, var(--ink, #4f46e5));
+  outline-offset: 2px;
+}
+:where(button, a[href], [role='button'], summary):not(:disabled) { cursor: pointer; }
+button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
+
+/* Уважаем системную настройку «уменьшить движение»: никаких анимаций и плавных переходов. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media (max-width: 640px) {
   .panel-shell h1 { font-size: 22px; }
   .panel-shell input, .panel-shell select, .panel-shell textarea { min-height: 44px; font-size: 16px; }
   .panel-shell button { min-height: 44px; }
 }
+
+/* === adaptive grids fix === */
+
+/* Адаптивные сетки внутри .detailing-root: базовая тема задаёт .detailing-root .grid-cols-N
+   (специфичность 0,2,0), из-за чего утилиты sm:/md:/lg: проигрывали и сетки не перестраивались.
+   Дублируем класс для повышения специфичности; блоки идут mobile-first (sm → xl). */
+@media (min-width: 640px) {
+  .detailing-root.detailing-root .sm\:grid-cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .detailing-root.detailing-root .sm\:grid-cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .detailing-root.detailing-root .sm\:grid-cols-6 { grid-template-columns: repeat(6,minmax(0,1fr)); }
+  .detailing-root.detailing-root .sm\:grid-cols-\[140px_1fr\] { grid-template-columns: 140px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[150px_1fr\] { grid-template-columns: 150px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[160px_1fr\] { grid-template-columns: 160px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[180px_1fr\] { grid-template-columns: 180px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[200px_1fr\] { grid-template-columns: 200px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[220px_1fr\] { grid-template-columns: 220px 1fr; }
+  .detailing-root.detailing-root .sm\:grid-cols-\[80px_1fr\] { grid-template-columns: 80px 1fr; }
+}
+@media (min-width: 768px) {
+  .detailing-root.detailing-root .md\:grid-cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .detailing-root.detailing-root .md\:grid-cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .detailing-root.detailing-root .md\:grid-cols-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .detailing-root.detailing-root .md\:grid-cols-5 { grid-template-columns: repeat(5,minmax(0,1fr)); }
+  .detailing-root.detailing-root .md\:grid-cols-\[1\.2fr_1\.1fr_1\.3fr_0\.9fr_0\.8fr\] { grid-template-columns: 1.2fr 1.1fr 1.3fr 0.9fr 0.8fr; }
+  .detailing-root.detailing-root .md\:grid-cols-\[1\.6fr_1\.1fr_1\.2fr_0\.7fr\] { grid-template-columns: 1.6fr 1.1fr 1.2fr 0.7fr; }
+  .detailing-root.detailing-root .md\:grid-cols-\[1\.6fr_1fr_0\.9fr_0\.9fr\] { grid-template-columns: 1.6fr 1fr 0.9fr 0.9fr; }
+  .detailing-root.detailing-root .md\:grid-cols-\[1\.6fr_1fr_1fr_0\.9fr_0\.9fr_0\.9fr_40px\] { grid-template-columns: 1.6fr 1fr 1fr 0.9fr 0.9fr 0.9fr 40px; }
+  .detailing-root.detailing-root .md\:grid-cols-\[1fr_1\.4fr_0\.9fr_1fr_1\.2fr\] { grid-template-columns: 1fr 1.4fr 0.9fr 1fr 1.2fr; }
+}
+@media (min-width: 1024px) {
+  .detailing-root.detailing-root .lg\:grid-cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .detailing-root.detailing-root .lg\:grid-cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .detailing-root.detailing-root .lg\:grid-cols-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .detailing-root.detailing-root .lg\:grid-cols-6 { grid-template-columns: repeat(6,minmax(0,1fr)); }
+  .detailing-root.detailing-root .lg\:grid-cols-\[340px_1fr\] { grid-template-columns: 340px 1fr; }
+  .detailing-root.detailing-root .lg\:grid-cols-\[minmax\(0\,1fr\)_420px\] { grid-template-columns: minmax(0,1fr) 420px; }
+  .detailing-root.detailing-root .lg\:grid-cols-\[minmax\(0\,1fr\)_minmax\(0\,1\.2fr\)\] { grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); }
+  .detailing-root.detailing-root .lg\:grid-cols-\[minmax\(0\,1fr\)_minmax\(0\,1fr\)\] { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .detailing-root.detailing-root .lg\:grid-cols-\[minmax\(0\,1fr\)_minmax\(0\,420px\)\] { grid-template-columns: minmax(0,1fr) minmax(0,420px); }
+}
+
+/* === нижнее меню на светлых темах ниш ===
+   Плашка меню всегда тёмная (стекло), а цвет пунктов берётся из токенов темы. В светлых темах
+   токены тёмные — неактивные пункты давали 3.5:1 на тёмной плашке. Переключаем их на светлые. */
+.detailing-root[data-mode='light'] .bottom-nav__item { color: rgba(255, 255, 255, 0.78); }
+.detailing-root[data-mode='light'] .bottom-nav__item.is-active { color: #ffffff; }
+
+/* === стеклянная плашка на фото (hero) ===
+   Фон плашки всегда тёмный (rgba(0,0,0,.45)), а цвет текста брался из темы. В светлых темах
+   это давало тёмный текст на тёмном стекле (1.6:1). Текст на стекле всегда белый. */
+.detailing-root .pill-glass { color: #fff; }

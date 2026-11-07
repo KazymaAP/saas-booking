@@ -22,7 +22,7 @@ insert into settings (key, value) values
   ('tariffs', '{"basic":{"name":"Базовый","price":1000},"pro":{"name":"Про","price":2500}}'::jsonb),
   ('default_price', '{"initial":5000,"monthly":1000}'::jsonb),
   ('rate_limits', '{"booking_per_10min":5,"cancel_per_15min":10}'::jsonb),
-  ('feature_flags', '{"ai_assistant":false,"telegram_clients":false}'::jsonb)
+  ('feature_flags', '{"telegram_clients":false}'::jsonb)
 on conflict (key) do nothing;
 
 commit;

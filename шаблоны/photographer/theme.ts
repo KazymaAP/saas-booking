@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'photographer',
+  prefix: 'p',
+  accent: '#a855f7',
+  accent2: '#ec4899',
+  mode: 'dark',
+  bg: '#100a1a',
+  surface: '#1a1026',
+  border: '#2f1e45',
+  borderHover: '#432d61',
+  text: '#f6f0ff',
+  textMuted: '#b0a0c8',
+  textSubtle: '#8d7fa6',
+  glyph: 'camera',
+  businessNoun: 'студия',
+  tagline: 'Фотостудия и съёмки на результат',
+  intro: 'Портретные, семейные, предметные и рекламные съёмки. Профессиональный свет, реквизит и постобработка в подарок.',
+  asideTitle: 'Ваши лучшие кадры',
+  asideText: 'Выберите формат съёмки и удобное время — всё подготовим к визиту.',
+  ctaPrimary: 'Забронировать съёмку',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Студия всегда под рукой.',
+  installText: 'Бронируйте съёмки за несколько касаний.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'зал',
+  resourceType: 'room',
+  resourceCount: 2,
+  infoCards: [
+    { id: 'light', title: 'Профессиональный свет', description: 'Циклорама и импульсный свет в аренду.', icon: 'camera' },
+    { id: 'props', title: 'Реквизит и декор', description: 'Готовые сеты под разные идеи.', icon: 'flower' },
+    { id: 'retouch', title: 'Ретушь в подарок', description: 'Обработка лучших кадров включена.', icon: 'sparkle' },
+  ],
+  defaultServices: [
+    { name: 'Портретная съёмка', price: 6000, duration: 60 },
+    { name: 'Семейная съёмка', price: 9000, duration: 90 },
+    { name: 'Предметная съёмка', price: 5000, duration: 60 },
+    { name: 'Аренда зала', price: 2500, duration: 60 },
+  ],
+  detailField: {
+    title: 'Тип съёмки',
+    label: 'Тип съёмки',
+    placeholder: 'Портрет, семейная, реклама…',
+    optional: true,
+    hint: 'Подберём зал и свет под вашу задачу.',
+  },
+};
+
+export default theme;

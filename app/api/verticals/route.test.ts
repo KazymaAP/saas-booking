@@ -1,6 +1,6 @@
 // Тесты выгрузки ниш: права, набор колонок = схема импорта, ошибки БД.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '@/app/panel/(protected)/_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

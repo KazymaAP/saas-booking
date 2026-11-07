@@ -1,6 +1,6 @@
 // Тесты карточки бизнеса: заметки без ПД в audit, домен, slug с историей, статус, кнопки (идемпотентность).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { argOf, createFakeDb } from '../../_lib/fake-db';
+import { argOf, createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

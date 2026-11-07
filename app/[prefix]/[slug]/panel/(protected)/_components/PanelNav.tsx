@@ -36,9 +36,18 @@ export function PanelNav({ base, businessName, items, logout }: {
   const toggle = useCallback(() => setOpen((v) => !v), []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#e5e5e5] bg-white">
+    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)]">
       <div className="mx-auto flex max-w-[1100px] items-center gap-3 px-4 py-2">
-        <Link href={base} className="mr-auto truncate font-semibold !no-underline" prefetch>{businessName}</Link>
+        <Link href={base} className="mr-auto flex min-w-0 items-center gap-2 truncate font-semibold !no-underline" prefetch>
+          <span
+            aria-hidden="true"
+            className="grid size-8 shrink-0 place-items-center rounded-full text-[13px] font-semibold text-white"
+            style={{ background: 'var(--brand-color)' }}
+          >
+            {businessName.trim().charAt(0).toUpperCase() || '•'}
+          </span>
+          <span className="truncate">{businessName}</span>
+        </Link>
         <button
           ref={toggleRef}
           type="button"
@@ -51,13 +60,13 @@ export function PanelNav({ base, businessName, items, logout }: {
           <span className="ml-2">Меню</span>
         </button>
         <form action={logout} className="hidden md:block">
-          <button type="submit" className="!min-h-[40px] !border-[#e5e5e5] !bg-white !text-[#1a1a1a]">Выйти</button>
+          <button type="submit" className="!min-h-[40px] !border-[var(--line)] !bg-[var(--surface)] !text-[var(--ink)]">Выйти</button>
         </form>
       </div>
       <nav
         id={menuId}
         aria-label="Разделы кабинета"
-        className={`${open ? 'block' : 'hidden'} border-t border-[#e5e5e5] md:block`}
+        className={`${open ? 'block' : 'hidden'} border-t border-[var(--line)] md:block`}
       >
         <ul className="mx-auto grid max-w-[1100px] gap-1 px-4 py-2 md:flex md:flex-wrap md:gap-1 md:py-1">
           {items.map((item) => {
@@ -69,7 +78,8 @@ export function PanelNav({ base, businessName, items, logout }: {
                   // null — префетч до loading.tsx (дёшево), true — полный префетч для частых разделов.
                   prefetch={item.eagerPrefetch ? true : null}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex min-h-[44px] items-center rounded-md px-3 text-[15px] !no-underline md:min-h-[36px] md:text-[14px] ${active ? 'bg-[#f0f0f0] font-semibold' : 'hover:bg-[#f6f6f6]'}`}
+                  className={`flex min-h-[44px] items-center rounded-md px-3 text-[15px] !no-underline transition-colors md:min-h-[36px] md:text-[14px] ${active ? 'font-semibold text-white' : 'hover:bg-[var(--soft)]'}`}
+                  style={active ? { background: 'var(--brand-color)' } : undefined}
                 >
                   {item.label}
                   {/* Точка + текст для диктора: цвет — не единственный признак (design-spec §9). */}
@@ -85,7 +95,7 @@ export function PanelNav({ base, businessName, items, logout }: {
           })}
           <li className="md:hidden">
             <form action={logout}>
-              <button type="submit" className="mt-1 w-full !min-h-[44px] !border-[#e5e5e5] !bg-white !text-[#1a1a1a]">Выйти</button>
+              <button type="submit" className="mt-1 w-full !min-h-[44px] !border-[var(--line)] !bg-[var(--surface)] !text-[var(--ink)]">Выйти</button>
             </form>
           </li>
         </ul>

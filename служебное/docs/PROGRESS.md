@@ -1,0 +1,150 @@
+# PROGRESS — saas-booking
+
+Состояние проекта по факту кода. Решения и отклонения от ТЗ — [DECISIONS.md](DECISIONS.md), история — [CHANGELOG.md](CHANGELOG.md).
+
+Обновлено: 2026-10-30. Версия: `0.1.0` (`package.json`). Ветка `master`, последний коммит — 2026-10-30.
+
+## Оглавление
+
+1. [Сводка](#сводка)
+2. [Готово](#готово)
+3. [Частично](#частично)
+4. [Не сделано](#не-сделано)
+5. [Известные проблемы](#известные-проблемы)
+6. [Что нужно для запуска](#что-нужно-для-запуска)
+7. [Проверки](#проверки)
+
+## Сводка
+
+| Область | Статус |
+|---|---|
+| БД (миграции 0001–0014) | Готово, проверено на PostgreSQL 17, идемпотентно |
+| Публичный сайт и запись | Готово |
+| Кабинет владельца | Готово |
+| Супер-админка | Готово; server actions сами проверяют `isSuperAdmin` (обёртка `guarded`) |
+| Рассылка и входящие | Готово; частые cron — только через внешний планировщик (лимит Vercel Hobby) |
+| Telegram | Готово (один бот на обе роли; привязка по коду `BIZ-…` с TTL 15 мин) |
+| Лицензии и передача кода | Готово: передача одним `.txt` (без ZIP и без исходников), MIGRATIONS 0001–0014; single-tenant — см. «Не сделано» |
+| Документация | Готово (см. [README.md](README.md#документация)) |
+| Автотесты | Есть: `vitest run --config vitest.config.mts` → 1296 passed / 0 failed (85 файлов); `tsc --noEmit` чисто; `next build` зелёный; `scripts/smoke-test.sh` |
+
+## Готово
+
+**База данных**
+
+- `0001_init.sql` — 21 таблица, `is_business_member()`, RLS на всех таблицах, `bookings_slot_unique`.
+- `0002_lifecycle.sql` — `refused_at`, сохранение журнала рассылки, bucket `backups`.
+- `0003_seed.sql` — 11 ниш, buckets `photos`, `logos`.
+- `0004_features.sql` — `ssl_status`, версии шаблонов, `legacy_redirects`, ключи `settings`.
+- `0005_indexes.sql` — составные индексы (не закоммичено).
+- `0006_partitions.sql` / `0010_partitions.sql` — партиционирование служебных таблиц.
+- `0007_rls_audit.sql` — усиление RLS и аудита.
+- `0008_pg_cron.sql` — расписание задач в БД.
+- `0009_retention.sql` — политика хранения (outreach_log, cron_marks).
+- `0011_analytics.sql` — кэш статистики (MRR).
+- `0012_rate_limit_hit.sql` — атомарная функция `rate_limit_hit` (см. `lib/rate-limit.ts`).
+- `0013_data_requests_types.sql` — типы для запросов субъектов ПД.
+- `0014_partition_bookings.sql` — партиционирование `bookings` по `scheduled_at` (создана агентом; применить на стенбе перед использованием).
+
+**Публичная часть**
+
+- Сайт бизнеса `/{prefix}/{slug}`: шаблон Studio, услуги, фото, карта (ленивая), JSON-LD, PWA-манифест.
+- Запись: расчёт слотов на лету, rate limit, защита от двойной брони, уведомления владельцу (почта и Telegram).
+- Страницы отмены и переноса по токену, короткие ссылки `/booking/{cancel,reschedule}/{token}`.
+- Кастомные домены: middleware, `/api/resolve-domain`, проверка SSL через Vercel API.
+- Прототипы `/preview/{slug}?token=` с `noindex`; `/oferta`, `/privacy`, `/blocked`, `robots.txt`, `sitemap.xml`.
+
+**Кабинет владельца** (`/{prefix}/{slug}/panel`)
+
+- Брони, услуги, фото (сжатие в браузере), тексты, уведомления (привязка Telegram кодом `BIZ-…`), данные, экспорт CSV.
+- Только для роли `owner`: настройки, подписка, команда.
+
+**Супер-админка** (`/panel`)
+
+- Воронка, бизнесы (фильтры, массовая смена статуса, импорт 2GIS, экспорт CSV/XLSX), карточка бизнеса, входящие,
+  клиенты (оплата, доступ, продление), лицензии, ящики, шаблоны, ниши, статистика (MRR), логи, настройки, бэкап.
+
+**Фоновые задачи** — 15 cron-эндпоинтов под `Bearer CRON_SECRET`; 2 из них в `vercel.json` (лимит Vercel Hobby: `backup`, `cleanup-audit-log`), остальные 13 — через внешний планировщик (UptimeRobot/cron).
+
+**Интеграции** — Yandex 360 SMTP/IMAP с пулом ящиков и шифрованием паролей; бот оператора (`/stats`, алерты);
+бот бизнесов; лицензии (`/api/license/ping`, `revoke`, блокировка в middleware при заданном `LICENSE_ID`);
+еженедельный `pg_dump` в GitHub Actions.
+
+## Частично
+
+| Что | Сделано | Не хватает |
+|---|---|---|
+| Cron (ТЗ §26) | Все задачи написаны | Частые задачи не в `vercel.json` (лимит Hobby) — нужен внешний планировщик |
+
+Ранее были «частично», но доделано: передача кода (`.txt` без ZIP и без исходников, MIGRATIONS 0001–0014),
+подписка (неоплаченный сайт скрывается; тариф выбирается в UI при оплате), rate limit (лимиты читаются из
+`/panel/settings`), смена домена (`NEXT_PUBLIC_MAIN_HOSTS` вместо правки кода `MAIN_HOSTS`).
+
+## Не сделано
+
+Проверено по коду 2026-10-30 (документ ранее отставал: `/api/health` и `List-Unsubscribe`/`/unsubscribe` уже реализованы и присутствуют в коде).
+
+| Что | ТЗ | Комментарий | Блокирует релиз |
+|---|---|---|---|
+| Single-tenant сборка (`SINGLE_TENANT`, `build-single-tenant.ts`, `INSTALL.md`) | §14.5 | `SINGLE_TENANT=true` — только плейсхолдер в генерируемом `.env.example`; скрипта сборки и `INSTALL.md` нет | Нет (фича передачи кода, не ядро SaaS) |
+| Пауза 45 с + 3 повтора между письмами | §9.1 | В пути отправки нет `sleep`/`setTimeout`; retry на уровне очереди (`next_retry_at`) есть | Нет (доставляемость/лимиты SMTP) |
+| Отдельный service worker на каждый сайт | §5.1 | Один глобальный `app/sw.js/route.ts`, а не per-site | Нет |
+| Миграция на VPS / Docker / российский хостинг | §22 | Абстракции `*_PROVIDER` не реализованы (намеренно убраны) | Нет (хостим на Vercel) |
+| Сброс пароля владельцем | — | Через Supabase Dashboard, см. [docs/faq.md](docs/faq.md) | Нет |
+| ESLint | — | `pnpm lint` спрашивает конфиг и выходит с кодом 1 | Нет |
+| Юридические вопросы (ФЗ-152, холодная рассылка) | — | Риск принят владельцем, см. [DECISIONS.md](DECISIONS.md#открытые-риски) | Нет |
+
+**Единственный блокер живого сайта — env в Vercel `servis`:** там лежат `VITE_*`/`VAPID_*` от старого Vite-PWA. `checkEnv()` (запускается при старте сервера) требует ровно 6 переменных: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (все три — проект `oryzoexstuzgpbqvpjbr`), `ENCRYPTION_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`. `ENCRYPTION_KEY` добавлен агентом 30.10.2026 в Vercel; `CRON_SECRET` и `NEXT_PUBLIC_SITE_URL` уже присутствуют. Остаётся вставить владельцу 3 ключа Supabase из дашборда `oryzoexstuzgpbqvpjbr` (Settings → API), затем Redeploy.
+
+Ранее числилось «не сделано», но реализовано: единый Telegram-бот на обе роли — операторские команды
+(`/stats`, `/ping`, `/health`) и привязка владельцев по коду `BIZ-…` (TTL 15 мин) через `/api/telegram/webhook`;
+массовые операции в списке бизнесов (`massSetStatus`).
+
+## Известные проблемы
+
+Требуют правки кода (вне зоны документации). Нумерация совпадает с `notes.md` агента документации.
+
+**Закрыты 2026-10-24** (ранее числились блокерами — исправлены в коде): №30, №6, №24, №26, №27, №28, №23, №22, №29, №12, №4, №8, №7.
+
+| № | Что было | Как закрыто |
+|---|---|---|
+| 30 | cleanup удалял бывших клиентов | двухуровневая защита: удаляются только помеченные задачей прототипы + фильтр бывших клиентов (bookings/services) |
+| 6 | server actions без `isSuperAdmin` | все действия супер-админки идут через `guarded()` → `requireSuperAdmin()` |
+| 24 | клиенту не доходили ссылки отмены/переноса | письмо клиенту с `cancelUrl`/`rescheduleUrl` (`notifyClientBooking`, транзакционное) |
+| 26 | уведомления о бронях ели лимит рассылки | флаг `transactional`: транзакционные письма не расходуют лимит и не теряются |
+| 27 | алерты лицензий ботом бизнесов | ложная тревога: алерты идут ботом оператора (`TELEGRAM_BOT_TOKEN`) |
+| 28 | `parse_mode: HTML` без экранирования | `escapeTelegramHtml` / `escapeHtml` перед отправкой |
+| 23 | неоплаченный сайт не скрывался | `resolveBusiness` проверяет `subscription_active` |
+| 22 | первая оплата всегда basic/1000 ₽ | выбор тарифа в UI + запись `plan_type`/`subscription_price` |
+| 29 | лимиты из настроек не применялись | `rateLimitScope` читает `settings.rate_limits` (кэш 60 с) |
+| 12 | ZIP без исходников, устаревшие MIGRATIONS | `.txt` без исходников; `MIGRATION_FILES` доведён до 0014 |
+| 4 | `MAIN_HOSTS` захардкожен | оверрайд `NEXT_PUBLIC_MAIN_HOSTS` (доп. хосты через запятую) |
+| 8 | `APP_VERSION` не в `.env.example`; 8 мёртвых переменных | `APP_VERSION` документирован; 8 неиспользуемых (`*_PROVIDER`, `IMAP_*`) убраны |
+| 7 | TTL кода `BIZ-…` не проверялся | `claimCode` фильтрует по `created_at >= now()-15m` + `isCodeExpired` |
+
+**Остаётся (не код):** №5 — частые cron не в `vercel.json` из-за лимита Vercel Hobby; рассылка/ответы/напоминания
+идут только через внешний планировщик (см. [DEPLOY.md](DEPLOY.md)).
+
+## Что нужно для запуска
+
+Полный порядок — [DEPLOY.md](DEPLOY.md).
+
+1. Перевыпустить все ключи, которые были в архиве разработки.
+2. Применить миграции 0001–0014 (включая `0014_partition_bookings.sql`) в Supabase SQL Editor.
+3. Заполнить env в Vercel; задать `NEXT_PUBLIC_SITE_URL` и при необходимости `NEXT_PUBLIC_MAIN_HOSTS`.
+4. Настроить внешний планировщик для `send-emails`, `check-replies`, `booking-reminders`, `unconfirmed-reminder`.
+5. Добавить секрет `SUPABASE_DB_URL` в GitHub для бэкапа.
+6. Настроить SPF/DKIM/DMARC ([docs/email-setup.md](docs/email-setup.md)) и ботов ([docs/telegram-setup.md](docs/telegram-setup.md)).
+7. Прогнать `scripts/smoke-test.sh` и сквозной сценарий из [TESTING.md](TESTING.md).
+8. До запуска рассылки получить юридическое заключение по холодной рассылке (проблема 6 закрыта: server actions сами проверяют права).
+
+## Проверки
+
+| Проверка | Результат | Источник |
+|---|---|---|
+| `pnpm install --frozen-lockfile` (pnpm 10) | OK | проверено агентом документации |
+| `pnpm typecheck` | exit 0 | `check-log.txt`, повторно в песочнице |
+| `pnpm build` | exit 0 | `check-log.txt` |
+| `pnpm lint` | exit 1 (нет конфига) | проверено |
+| Миграции на PostgreSQL 17, повторный прогон | OK | проверено с заглушками схем Supabase |
+| `scripts/smoke-test.sh` на мок-сервере | OK / FAIL по сценарию | проверено; на реальном стенде — не запускался |

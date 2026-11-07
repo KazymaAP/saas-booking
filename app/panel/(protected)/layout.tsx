@@ -2,8 +2,8 @@
 // Проверка isSuperAdmin при каждом рендере; server actions дополнительно проверяют права сами (_lib/guard.ts).
 import { redirect } from 'next/navigation';
 import { isSuperAdmin } from '@/lib/admin-session';
-import { PanelNav, type NavItem } from './_components/PanelNav';
-import { ToastProvider } from './_components/Toast';
+import { PanelNav, type NavItem } from '@/главная/components/PanelNav';
+import { ToastProvider } from '@/главная/components/Toast';
 
 // Разделы из ТЗ §13.1, которые реализованы в проекте. Чужие зоны (inbox, templates, …) — только ссылки.
 const NAV: NavItem[] = [
@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   { href: '/panel/logs', label: 'Логи' },
   { href: '/panel/settings', label: 'Настройки' },
   { href: '/panel/backup', label: 'Бэкап' },
+  { href: '/admin', label: 'Админ-студия' },
 ];
 
 export const dynamic = 'force-dynamic';

@@ -62,10 +62,10 @@
 git clone https://github.com/KazymaAP/saas-booking.git
 cd saas-booking
 pnpm install
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Заполните в `.env.local` минимум:
+Заполните в `.env` минимум:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -84,7 +84,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # ENC
 node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"   # CRON_SECRET
 ```
 
-Выполните миграции `supabase/migrations/0001…0005` в Supabase SQL Editor по порядку (подробно — [DEPLOY.md](DEPLOY.md)),
+Выполните миграции `supabase/migrations/0001…0005` в Supabase SQL Editor по порядку (подробно — [DEPLOY.md](служебное/docs/DEPLOY.md)),
 создайте пользователя в Supabase Auth с адресом из `SUPERADMIN_EMAILS` и запустите:
 
 ```bash
@@ -106,10 +106,10 @@ pnpm typecheck && pnpm build
 | `pnpm start` | Запуск собранного проекта |
 | `pnpm typecheck` | Проверка типов `tsc --noEmit` |
 | `pnpm lint` | `next lint` — ESLint ещё не настроен, команда задаёт интерактивный вопрос |
-| `npx tsx scripts/import-excel.ts file.xlsx --filter=шин --dry-run` | Импорт 2GIS из консоли |
-| `npx tsx scripts/migrate-legacy.ts legacy.csv --dry-run` | Перенос legacy-клиентов из CSV |
+| `npx tsx служебное/scripts/import-excel.ts file.xlsx --filter=шин --dry-run` | Импорт 2GIS из консоли |
+| `npx tsx служебное/scripts/migrate-legacy.ts legacy.csv --dry-run` | Перенос legacy-клиентов из CSV |
 | `powershell -ExecutionPolicy Bypass -File scripts\check.ps1` | install + typecheck + build в `check-log.txt` (Windows) |
-| `bash scripts/smoke-test.sh https://<домен>` | Проверка после деплоя |
+| `bash служебное/scripts/smoke-test.sh https://<домен>` | Проверка после деплоя |
 
 ## Структура
 
@@ -125,18 +125,27 @@ saas-booking/
 │   ├── api/                         route handlers: брони, cron, трекинг, лицензии, Telegram, импорт, экспорт
 │   ├── robots.ts, sitemap.ts, sw.js/
 │   └── blocked/, oferta/, privacy/
-├── components/                      Hero, карта, шаблон сайта StudioTemplate
-├── lib/                             Supabase, уведомления, слоты, шифрование, rate limit, импорт, генератор
-├── supabase/migrations/             SQL-миграции 0001–0005
-├── scripts/                         импорт Excel, миграция legacy, проверка, smoke-test
+├── общие/                           общий код проекта
+│   ├── components/                  Hero, карта, шаблон сайта StudioTemplate
+│   ├── lib/                         Supabase, уведомления, слоты, шифрование, rate limit, импорт, генератор
+│   └── types/                       общие типы
+├── главная/                        components/ и lib/ супер-админки
+├── шаблоны/detailing/              шаблон детейлинга (DetailingSite, BookingFlow, tenant)
+├── телеграмм-бот/                  логика бота (telegram*.ts)
+├── связь/                          реестр шаблонов (registry.ts)
+├── supabase/migrations/             SQL-миграции 0001–0016
+├── служебное/                       docs, patches, scripts, tests
+│   ├── scripts/                     импорт Excel, миграция legacy, проверка, smoke-test
+│   ├── tests/                       e2e Playwright
+│   ├── docs/                        design-spec, email, Telegram, FAQ, troubleshooting
+│   └── patches/                     патчи зависимостей
 ├── public/assets/                   стили шаблона и шрифты
-├── docs/                            design-spec, email, Telegram, FAQ, troubleshooting
 ├── .github/workflows/backup.yml     еженедельный pg_dump
 ├── middleware.ts                    кастомные домены, лицензия, заголовки безопасности
 └── vercel.json                      регион и cron-задачи
 ```
 
-Подробная карта и поток данных — [ARCHITECTURE.md](ARCHITECTURE.md).
+Подробная карта и поток данных — [ARCHITECTURE.md](служебное/docs/ARCHITECTURE.md).
 
 ## Статус проекта
 
@@ -154,26 +163,26 @@ saas-booking/
 
 | Документ | Для кого | О чём |
 |---|---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | разработчик | Карта проекта, поток данных, роли, схема БД |
-| [DEPLOY.md](DEPLOY.md) | оператор | Пошаговый деплой Supabase + Vercel + домен + почта |
-| [INSTALL.md](INSTALL.md) | клиент, выкупивший код | Установка single-tenant копии |
-| [TESTING.md](TESTING.md) | разработчик | Проверки, smoke-test, ручные сценарии |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | разработчик | Ветки, стиль кода, коммиты |
-| [CHANGELOG.md](CHANGELOG.md) | все | История версий |
-| [DECISIONS.md](DECISIONS.md) | разработчик | Принятые решения и отклонения от ТЗ |
-| [PROGRESS.md](PROGRESS.md) | все | Что готово и что осталось |
-| [KP.md](KP.md) | продажи | Коммерческое предложение |
-| [DEMO.md](DEMO.md) | продажи | Сценарий демо на 15 минут |
-| [docs/email-setup.md](docs/email-setup.md) | оператор | Yandex 360, SPF, DKIM, DMARC |
-| [docs/telegram-setup.md](docs/telegram-setup.md) | оператор | Два бота и webhook |
-| [docs/faq.md](docs/faq.md) | все | Частые вопросы |
-| [docs/troubleshooting.md](docs/troubleshooting.md) | оператор | Что делать при сбоях |
-| [docs/design-spec.md](docs/design-spec.md) | дизайнер | ТЗ на редизайн панелей |
+| [ARCHITECTURE.md](служебное/docs/ARCHITECTURE.md) | разработчик | Карта проекта, поток данных, роли, схема БД |
+| [DEPLOY.md](служебное/docs/DEPLOY.md) | оператор | Пошаговый деплой Supabase + Vercel + домен + почта |
+| [INSTALL.md](служебное/docs/INSTALL.md) | клиент, выкупивший код | Установка single-tenant копии |
+| [TESTING.md](служебное/docs/TESTING.md) | разработчик | Проверки, smoke-test, ручные сценарии |
+| [CONTRIBUTING.md](служебное/docs/CONTRIBUTING.md) | разработчик | Ветки, стиль кода, коммиты |
+| [CHANGELOG.md](служебное/docs/CHANGELOG.md) | все | История версий |
+| [DECISIONS.md](служебное/docs/DECISIONS.md) | разработчик | Принятые решения и отклонения от ТЗ |
+| [PROGRESS.md](служебное/docs/PROGRESS.md) | все | Что готово и что осталось |
+| [KP.md](служебное/docs/KP.md) | продажи | Коммерческое предложение |
+| [DEMO.md](служебное/docs/DEMO.md) | продажи | Сценарий демо на 15 минут |
+| [служебное/docs/email-setup.md](служебное/docs/email-setup.md) | оператор | Yandex 360, SPF, DKIM, DMARC |
+| [служебное/docs/telegram-setup.md](служебное/docs/telegram-setup.md) | оператор | Два бота и webhook |
+| [служебное/docs/faq.md](служебное/docs/faq.md) | все | Частые вопросы |
+| [служебное/docs/troubleshooting.md](служебное/docs/troubleshooting.md) | оператор | Что делать при сбоях |
+| [служебное/docs/design-spec.md](служебное/docs/design-spec.md) | дизайнер | ТЗ на редизайн панелей |
 
 ## Безопасность
 
-- `.env.local` и любые `.env.*` (кроме `.env.example`) в git не попадают.
-- `SUPABASE_SERVICE_ROLE_KEY` используется только на сервере (`lib/supabase.ts → adminClient`).
+- `.env` и любые `.env.*` (кроме `.env.example`) в git не попадают.
+- `SUPABASE_SERVICE_ROLE_KEY` используется только на сервере (`общие/lib/supabase.ts → adminClient`).
 - Пароли SMTP хранятся в `email_accounts.smtp_pass_encrypted` (AES-256-GCM, ключ `ENCRYPTION_KEY`).
   Смена `ENCRYPTION_KEY` делает сохранённые пароли нечитаемыми — ящики придётся добавить заново.
 - Cron-эндпоинты требуют `Authorization: Bearer <CRON_SECRET>`.
@@ -182,4 +191,4 @@ saas-booking/
 
 Проприетарное ПО. Все права принадлежат владельцу проекта. `package.json` содержит `"private": true`, публикация
 в npm и распространение без письменного согласия владельца запрещены. Клиент, выкупивший код, получает право
-использовать копию для одного бизнеса на доменах из своей лицензии (`LICENSE_ID`), см. [INSTALL.md](INSTALL.md).
+использовать копию для одного бизнеса на доменах из своей лицензии (`LICENSE_ID`), см. [INSTALL.md](служебное/docs/INSTALL.md).

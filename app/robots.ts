@@ -10,7 +10,9 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         // /unsubscribe/ — персональные токены отписки не должны попадать в индекс (страница ещё и noindex).
-        disallow: ['/preview/', '/panel', '/api/', '/booking/', '/unsubscribe/'],
+        // /admin и /dev — служебные экраны (раньше админка была на /panel, и правило устарело:
+        // /admin и предпросмотры шаблонов оставались открытыми для обхода).
+        disallow: ['/preview/', '/panel', '/admin', '/dev/', '/partner', '/api/', '/booking/', '/unsubscribe/'],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

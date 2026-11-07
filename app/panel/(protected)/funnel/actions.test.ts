@@ -1,6 +1,6 @@
 // Тесты действий воронки: права, один условный UPDATE, отчёт о пропущенных, генерация пачкой без N+1, очередь.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { argOf, createFakeDb } from '../_lib/fake-db';
+import { argOf, createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

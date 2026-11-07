@@ -1,0 +1,12 @@
+{
+  "name": "Репетитор / курсы",
+  "slug": "tutor",
+  "urlPrefix": "t",
+  "description": "Школа, ЕГЭ/ОГЭ, языки, проф. направления",
+  "entry": "app",
+  "env": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY"
+  ]
+}

@@ -12,36 +12,53 @@ const HSTS_MAX_AGE = 31_536_000;
 //   рендера всех страниц и убил бы ISR публичных сайтов (revalidate = 60).
 // - 'unsafe-eval' только в `next dev` (React Refresh). В production его нет.
 // - img-src https:: логотипы берутся из og:image сайтов клиентов (домены заранее неизвестны), плитки OSM.
-const csp_directives = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${is_dev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
-  `connect-src 'self'${is_dev ? ' ws:' : ''}`,
-  "manifest-src 'self'",
-  "worker-src 'self'",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "object-src 'none'",
-  ...(is_dev ? [] : ['upgrade-insecure-requests']),
-];
+// CSP собирается функцией, а не константой: origin Supabase берётся из env в момент вызова headers().
+// Так конфиг тестируется (общие/lib/security-headers.test.ts) и не зависит от порядка загрузки env.
+function buildSecurityHeaders() {
+  // Origin Supabase нужен в connect-src: браузер сам заливает фото по подписанной ссылке
+  // в Storage (PUT на <project>.supabase.co). Без него CSP блокировала загрузку — фото не доходили,
+  // интерфейс показывал «Загружено 0 из 1».
+  const supabaseOrigin = (() => {
+    try {
+      return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').origin;
+    } catch {
+      return '';
+    }
+  })();
+  const supabaseWs = supabaseOrigin ? supabaseOrigin.replace(/^https:/, 'wss:') : '';
+  const connectSrc = ["'self'", supabaseOrigin, supabaseWs, is_dev ? 'ws:' : ''].filter(Boolean).join(' ');
 
-const security_headers = [
-  { key: 'Content-Security-Policy', value: csp_directives.join('; ') },
-  { key: 'Strict-Transport-Security', value: `max-age=${HSTS_MAX_AGE}; includeSubDomains` },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // geolocation=(): по ТЗ §17.1 (строже промта), геолокация в коде не используется.
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
-  { key: 'X-DNS-Prefetch-Control', value: 'on' },
-  // Изоляция окна от чужих вкладок (tabnabbing, XS-Leaks). Popup/OAuth не используются; внешние ссылки — rel=noreferrer.
-  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-  // Запрет Flash/PDF-плагинам читать кросс-доменные политики.
-  { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
-];
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${is_dev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connectSrc}`,
+    "manifest-src 'self'",
+    "worker-src 'self'",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+    ...(is_dev ? [] : ['upgrade-insecure-requests']),
+  ].join('; ');
+
+  return [
+    { key: 'Content-Security-Policy', value: csp },
+    { key: 'Strict-Transport-Security', value: `max-age=${HSTS_MAX_AGE}; includeSubDomains` },
+    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+    { key: 'X-Content-Type-Options', value: 'nosniff' },
+    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    // geolocation=(): по ТЗ §17.1 (строже промта), геолокация в коде не используется.
+    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+    { key: 'X-DNS-Prefetch-Control', value: 'on' },
+    // Изоляция окна от чужих вкладок (tabnabbing, XS-Leaks). Popup/OAuth не используются; внешние ссылки — rel=noreferrer.
+    { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+    // Запрет Flash/PDF-плагинам читать кросс-доменные политики.
+    { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
+  ];
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -83,7 +100,7 @@ const nextConfig = {
   },
   async headers() {
     // Cache-Control и Service-Worker-Allowed для /sw.js ставит сам route handler (app/sw.js/route.ts).
-    return [{ source: '/:path*', headers: security_headers }];
+    return [{ source: '/:path*', headers: buildSecurityHeaders() }];
   },
 };
 

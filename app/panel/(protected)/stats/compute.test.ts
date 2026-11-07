@@ -1,6 +1,6 @@
 // Тесты кэша статистики и постраничного чтения (лимит PostgREST 1000 строк).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '../_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 vi.mock('@/lib/supabase', () => ({ adminClient: () => fake.client }));

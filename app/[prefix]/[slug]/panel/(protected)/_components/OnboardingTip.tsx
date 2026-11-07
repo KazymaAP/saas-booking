@@ -43,7 +43,7 @@ export function OnboardingTip({ slug, tip, title, children }: { slug: string; ti
       <button
         type="button"
         onClick={dismiss}
-        className="!min-h-[44px] shrink-0 !border-[#bfdbfe] !bg-white !text-[#1e3a8a]"
+        className="!min-h-[44px] shrink-0 !border-[#bfdbfe] !bg-[var(--surface)] !text-[#1e3a8a]"
       >
         Понятно
       </button>

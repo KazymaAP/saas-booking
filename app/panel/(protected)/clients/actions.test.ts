@@ -1,6 +1,6 @@
 // Тесты server actions «Клиенты»: права, валидация, условные UPDATE, audit без ПД, пароль не в cookie.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb, argOf } from '../_lib/fake-db';
+import { createFakeDb, argOf } from '@/главная/lib/fake-db';
 
 const createUser = vi.fn();
 const deleteUser = vi.fn();

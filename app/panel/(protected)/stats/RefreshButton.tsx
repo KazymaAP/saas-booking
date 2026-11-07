@@ -1,6 +1,6 @@
 'use client';
 // Кнопка «Пересчитать» статистики: server action, тост с результатом, без перезагрузки страницы.
-import { ActionForm, SubmitButton } from '../_components/ActionForm';
+import { ActionForm, SubmitButton } from '@/главная/components/ActionForm';
 import { refreshStats } from './actions';
 
 export function RefreshButton({ period }: { period: number }) {

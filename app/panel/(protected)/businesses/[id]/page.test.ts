@@ -1,6 +1,6 @@
 // Тесты загрузки карточки бизнеса: сбой любой связанной выборки — исключение (error.tsx), а не «пусто».
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '../../_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const notFound = vi.fn(() => {

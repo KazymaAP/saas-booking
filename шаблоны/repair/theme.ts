@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'repair',
+  prefix: 'r',
+  accent: '#ef4444',
+  accent2: '#f97316',
+  mode: 'dark',
+  bg: '#140a0a',
+  surface: '#211010',
+  border: '#3d1e1e',
+  borderHover: '#542a2a',
+  text: '#fff2f2',
+  textMuted: '#c2a0a0',
+  textSubtle: '#a17f7f',
+  glyph: 'wrench',
+  businessNoun: 'сервис',
+  tagline: 'Сервис по ремонту техники',
+  intro: 'Ремонт ноутбуков, смартфонов, бытовой и цифровой техники. Выезд мастера, оригинальные запчасти и гарантия на работы.',
+  asideTitle: 'Починим быстро и надёжно',
+  asideText: 'Выберите неисправность и удобное время — мастер подтвердит визит.',
+  ctaPrimary: 'Записаться на ремонт',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Сервис всегда под рукой.',
+  installText: 'Записывайтесь на ремонт за несколько касаний.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'мастер',
+  resourceType: 'master',
+  resourceCount: 2,
+  infoCards: [
+    { id: 'on-site', title: 'Выезд мастера', description: 'Починим дома или в офисе либо в сервисе.', icon: 'wrench' },
+    { id: 'warranty', title: 'Гарантия на работы', description: 'Фиксируем срок и отвечаем за результат.', icon: 'shield' },
+    { id: 'parts', title: 'Оригинальные запчасти', description: 'Используем проверенные комплектующие.', icon: 'cpu' },
+  ],
+  defaultServices: [
+    { name: 'Диагностика', price: 500, duration: 30 },
+    { name: 'Ремонт ноутбука', price: 4500, duration: 90 },
+    { name: 'Ремонт смартфона', price: 3500, duration: 60 },
+    { name: 'Замена экрана', price: 6000, duration: 90 },
+  ],
+  detailField: {
+    title: 'Техника и неисправность',
+    label: 'Техника / неисправность',
+    placeholder: 'Ноутбук, не включается',
+    optional: true,
+    hint: 'Ускорит диагностику и подбор запчастей.',
+  },
+};
+
+export default theme;

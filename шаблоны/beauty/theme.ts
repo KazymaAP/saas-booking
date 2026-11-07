@@ -1,0 +1,51 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'beauty',
+  prefix: 'b',
+  accent: '#ec4899',
+  accent2: '#f59e0b',
+  mode: 'light',
+  bg: '#fff7fa',
+  surface: '#ffffff',
+  border: '#f3d7e3',
+  borderHover: '#e9bfd2',
+  text: '#3a2230',
+  textMuted: '#826573',
+  textSubtle: '#7c6772',
+  glyph: 'sparkle',
+  businessNoun: 'салон',
+  tagline: 'Салон красоты и ухода за собой',
+  intro: 'Стрижки, окрашивание, маникюр, брови, ресницы и косметология. Работают опытные мастера на профессиональной косметике.',
+  asideTitle: 'Будьте собой — ярче',
+  asideText: 'Выберите услугу и удобное время — мастер всё подготовит к вашему визиту.',
+  ctaPrimary: 'Записаться в салон',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Салон всегда под рукой.',
+  installText: 'Записывайтесь на услуги за несколько касаний, без звонков и ожидания.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'мастер',
+  resourceType: 'master',
+  resourceCount: 3,
+  infoCards: [
+    { id: 'masters', title: 'Опытные мастера', description: 'Команда с портфолио и регулярным обучением.', icon: 'users' },
+    { id: 'sterile', title: 'Стерильность', description: 'Одноразовые расходники и контроль чистоты.', icon: 'shield' },
+    { id: 'range', title: 'Широкий прайс', description: 'От экспресс-ухода до сложного окрашивания.', icon: 'sparkle' },
+  ],
+  defaultServices: [
+    { name: 'Стрижка и укладка', price: 3500, duration: 60 },
+    { name: 'Маникюр с покрытием', price: 2800, duration: 90 },
+    { name: 'Окрашивание', price: 7500, duration: 180 },
+    { name: 'Уход для лица', price: 4500, duration: 60 },
+  ],
+  detailField: {
+    title: 'Ваши пожелания',
+    label: 'Пожелания',
+    placeholder: 'Услуга или мастер (необязательно)',
+    optional: true,
+    hint: 'Можно указать мастера или желаемую услугу — или оставить пустым.',
+  },
+  serviceGlyph: { маникюр: 'pen-nib', педикюр: 'pen-nib', бров: 'pen-nib', ресниц: 'pen-nib', массаж: 'heart', окрашив: 'paint-brush' },
+};
+
+export default theme;

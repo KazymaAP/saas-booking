@@ -7,8 +7,8 @@ import { currentOwner } from '@/lib/owner-session';
 import { adminClient } from '@/lib/supabase';
 import { hitRateLimit } from '@/lib/rate-limit';
 import { audit } from '@/lib/audit';
-import { issueCode } from '@/lib/telegram-connect';
-import { logTelegramError } from '@/lib/telegram';
+import { issueCode } from '@/телеграмм-бот/telegram-connect';
+import { logTelegramError } from '@/телеграмм-бот/telegram';
 import { loadTelegramState } from './telegram-state';
 import { DISCONNECTED_STATE, type ActionResult } from './telegram-view';
 

@@ -60,7 +60,7 @@ export function SettingsForm({ slug, defaults }: { slug: string; defaults: Setti
       <HoursSection ctx={ctx} />
       <BookingSection ctx={ctx} />
       {/* Кнопка прилипает к низу экрана на телефоне: длинная форма, сохранить можно с любого места. */}
-      <div className="sticky bottom-0 -mx-4 border-t border-[#e5e5e5] bg-white/95 px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="sticky bottom-0 -mx-4 border-t border-[#e5e5e5] bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
         <button type="submit" disabled={formState.isSubmitting || !formState.isDirty} className="w-full !min-h-[44px] sm:w-auto">
           {formState.isSubmitting ? 'Сохраняем…' : 'Сохранить'}
         </button>
@@ -99,7 +99,7 @@ function BrandColor({ ctx }: { ctx: Ctx }) {
   const error = ctx.err('brand_color');
   return (
     <FieldFrame id={id} label="Цвет сайта" hint={COLOR_HINT} error={error}>
-      <input type="color" {...ctx.register('brand_color')} {...fieldA11y(id, error, COLOR_HINT)} className="h-11 w-24 cursor-pointer rounded-md border border-[#e5e5e5] bg-white p-1" />
+      <input type="color" {...ctx.register('brand_color')} {...fieldA11y(id, error, COLOR_HINT)} className="h-11 w-24 cursor-pointer rounded-md border border-[#e5e5e5] bg-[var(--surface)] p-1" />
     </FieldFrame>
   );
 }

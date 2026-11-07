@@ -1,7 +1,7 @@
 // notifications/actions.test.ts — Vitest: server actions подключения Telegram (ТЗ §18.3, §36).
 // Supabase — in-memory (lib/telegram.fake-db.ts), сессия владельца и revalidatePath — моки.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '@/lib/telegram.fake-db';
+import { createFakeDb } from '@/телеграмм-бот/telegram.fake-db';
 
 const fake = createFakeDb();
 vi.mock('@/lib/supabase', () => ({ adminClient: () => fake.client() }));
@@ -11,7 +11,7 @@ vi.mock('@/lib/owner-session', () => ({ currentOwner: async () => owner.value })
 
 import { checkTelegramStatus, createTelegramCode, disconnectTelegram } from './actions';
 import { deepLink, formatLeft } from './telegram-view';
-import { CODE_TTL_MS, resetConnectState } from '@/lib/telegram-connect';
+import { CODE_TTL_MS, resetConnectState } from '@/телеграмм-бот/telegram-connect';
 
 const BUSINESS = 'b1';
 

@@ -13,7 +13,7 @@ import { notifyAdmin } from '@/lib/admin-notify';
 import { sendMail } from '@/lib/notify';
 import { errorMessage, logError } from '@/lib/log';
 import { SITE_URL } from '@/lib/site';
-import { fail, formObject, guarded, ok, zodFail, type ActionResult } from '../_lib/action';
+import { fail, formObject, guarded, ok, zodFail, type ActionResult } from '@/главная/lib/action';
 import {
   DEFAULT_INITIAL, DEFAULT_MONTHLY, NOT_PAYABLE, clientOpSchema, extendFrom, predictPatch,
   accessSchema, type ClientOp, type ClientPatch,

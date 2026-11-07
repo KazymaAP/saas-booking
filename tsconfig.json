@@ -30,6 +30,24 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@/lib": [
+        "./общие/lib"
+      ],
+      "@/lib/*": [
+        "./общие/lib/*"
+      ],
+      "@/components": [
+        "./общие/components"
+      ],
+      "@/components/*": [
+        "./общие/components/*"
+      ],
+      "@/types": [
+        "./общие/types"
+      ],
+      "@/types/*": [
+        "./общие/types/*"
+      ],
       "@/*": [
         "./*"
       ]
@@ -37,11 +55,12 @@
   },
   "include": [
     "next-env.d.ts",
-    "types/**/*.d.ts",
+    "общие/types/**/*.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "dist/types/**/*.ts"
+    "dist/types/**/*.ts",
+    ".next-prod/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

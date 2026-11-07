@@ -102,7 +102,7 @@ export function BookingList({ slug, rows, emptyText, now, groupHeading: DayHeadi
       )}
 
       {filtered.length === 0 ? (
-        <p className="!mb-0 rounded-xl border border-dashed border-[#d4d4d4] bg-white p-6 text-center text-[14px]">По запросу «{deferredQuery.trim()}» ничего не найдено</p>
+        <p className="!mb-0 rounded-xl border border-dashed border-[#d4d4d4] bg-[var(--surface)] p-6 text-center text-[14px]">По запросу «{deferredQuery.trim()}» ничего не найдено</p>
       ) : (
         <>
           {/* < 768px: карточки, сгруппированные по дням («Сегодня», «Завтра», …). */}
@@ -112,7 +112,7 @@ export function BookingList({ slug, rows, emptyText, now, groupHeading: DayHeadi
                 <DayHeading className="!mb-0 text-[15px] font-semibold text-[#333333]">{g.title} <span className="font-normal text-[#595959]">· {g.rows.length}</span></DayHeading>
                 <ul className="grid gap-3">
                   {g.rows.map((row) => (
-                    <li key={row.id} className="rounded-xl border border-[#e5e5e5] bg-white p-4 text-[14px]">
+                    <li key={row.id} className="rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4 text-[14px]">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-semibold">{row.when}</span>
                         <StatusBadge status={row.status} />
@@ -208,7 +208,7 @@ function PhoneLink({ phone }: { phone: string | null }) {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-white p-8 text-center">
+    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-[var(--surface)] p-8 text-center">
       <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.6"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
       <p className="!mb-0 font-medium">{text}</p>
       <p className="!mb-0 text-[14px] text-[#595959]">Новые записи появятся здесь автоматически.</p>

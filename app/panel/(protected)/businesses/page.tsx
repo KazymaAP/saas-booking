@@ -2,11 +2,11 @@
 // импорт 2GIS, экспорт CSV/XLSX, ручное добавление (ТЗ §13.1).
 // Фильтры и страница — в searchParams: ссылки пагинации и экспорта сохраняют все фильтры (раньше терялись city и q).
 import { adminClient } from '@/lib/supabase';
-import { BulkTable, type BulkAction, type BulkRow } from '../_components/BulkTable';
-import { Pager } from '../_components/Pager';
-import { BUSINESS_STATUSES, MASS_STATUSES, STATUS_LABEL } from '../_lib/statuses';
-import { applyBusinessFilters, readBusinessFilters, type BusinessFilters } from '../_lib/business-filters';
-import { withParams, type Params } from '../_lib/url';
+import { BulkTable, type BulkAction, type BulkRow } from '@/главная/components/BulkTable';
+import { Pager } from '@/главная/components/Pager';
+import { BUSINESS_STATUSES, MASS_STATUSES, STATUS_LABEL } from '@/главная/lib/statuses';
+import { applyBusinessFilters, readBusinessFilters, type BusinessFilters } from '@/главная/lib/business-filters';
+import { withParams, type Params } from '@/главная/lib/url';
 import { massSetStatus } from './actions';
 import { ImportForm } from './ImportForm';
 import { AddBusinessForm } from './AddBusinessForm';

@@ -3,10 +3,10 @@
 // переключатель «Активна» в списке (optimistic, откат при ошибке).
 import { useCallback, useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { ActionForm, CheckField, Field, FormError, SubmitButton } from '../_components/ActionForm';
-import { useToast } from '../_components/Toast';
-import type { ActionResult } from '../_lib/action';
-import { orNetworkError } from '../_lib/network';
+import { ActionForm, CheckField, Field, FormError, SubmitButton } from '@/главная/components/ActionForm';
+import { useToast } from '@/главная/components/Toast';
+import type { ActionResult } from '@/главная/lib/action';
+import { orNetworkError } from '@/главная/lib/network';
 import { importVerticals, saveVertical, setVerticalActive, type ImportResult } from './actions';
 import { JsonEditor } from './JsonEditor';
 import { JSON_EMPTY, JSON_HINT, type JsonField } from './schema';

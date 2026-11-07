@@ -200,7 +200,7 @@ function AltEditor({ row, slug }: { row: PhotoRow; slug: string }) {
 
 function EmptyState({ canEdit }: { canEdit: boolean }) {
   return (
-    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-white p-8 text-center">
+    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-[var(--surface)] p-8 text-center">
       <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 8" /></svg>
       <p className="!mb-0 font-medium">Фото пока нет</p>
       <p className="!mb-0 text-[14px] text-[#595959]">{canEdit ? 'Добавьте подпись и нажмите «Выбрать фото» выше.' : 'Фото добавляет владелец.'}</p>

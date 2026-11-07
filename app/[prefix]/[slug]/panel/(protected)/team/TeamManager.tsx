@@ -65,7 +65,7 @@ export function TeamManager({ slug, members, currentMemberId }: { slug: string; 
         </ul>
       </section>
 
-      <section aria-labelledby="team-invite-title" className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-white p-4">
+      <section aria-labelledby="team-invite-title" className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4">
         <h2 id="team-invite-title" className="!mb-0">Добавить менеджера</h2>
         {limitReached
           ? <p className="!mb-0 text-[14px] text-[#595959]">Достигнут лимит: {MAX_MANAGERS} менеджеров. Удалите кого-то, чтобы добавить нового.</p>
@@ -78,7 +78,7 @@ export function TeamManager({ slug, members, currentMemberId }: { slug: string; 
 function MemberItem({ member, isSelf, onRemove }: { member: MemberRow; isSelf: boolean; onRemove: (m: MemberRow) => void }) {
   const onClick = useCallback(() => onRemove(member), [member, onRemove]);
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e5e5e5] bg-white p-3 text-[14px]">
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-3 text-[14px]">
       <span className="min-w-0 break-all">
         <span className="font-medium">{member.email ?? 'без email'}</span>
         <span className="text-[#595959]"> · {ROLE_LABEL[member.role]}{isSelf ? ' (вы)' : ''}</span>

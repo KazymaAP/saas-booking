@@ -2,7 +2,7 @@
 // каналы, дни, шаблоны. Данные — снимок из кэша (stats/compute.ts, TTL 15 минут), пересчёт — кнопкой.
 // Таблицы с <caption> и scope, числа выровнены вправо; столбики по дням — с текстовой подписью (не только цвет/длина).
 import Link from 'next/link';
-import { one, withParams, type Params } from '../_lib/url';
+import { one, withParams, type Params } from '@/главная/lib/url';
 import { PERIODS, getStats, type Period } from './compute';
 import type { Count, DayStat, TemplateStat } from './aggregate';
 import { RefreshButton } from './RefreshButton';

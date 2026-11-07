@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/panel/(protected)/notifications/page.tsx — подключение Telegram (ТЗ §18.3, §36).
 // Сервер отдаёт начальное состояние (подключён / действующий код), дальше — клиентский TelegramConnect.
 import { currentOwner } from '@/lib/owner-session';
-import { botUsername } from '@/lib/telegram';
+import { botUsername } from '@/телеграмм-бот/telegram';
 import { loadTelegramState } from './telegram-state';
 import { DISCONNECTED_STATE } from './telegram-view';
 import TelegramConnect from './TelegramConnect';
@@ -20,6 +20,7 @@ export default async function NotificationsPage({ params }: { params: { prefix: 
       <section aria-labelledby="tg-title" className="grid gap-3">
         <h2 id="tg-title" className="text-[18px] font-semibold">Telegram</h2>
         <p className="text-[14px] text-[#6b6b6b]">Мгновенные уведомления о новых записях, отменах и переносах.</p>
+        <p className="text-[14px] text-[#6b6b6b]">В этот же чат можно написать команде платформы — сообщение попадёт в поддержку, ответ придёт сюда.</p>
         {state === null && (
           <p role="alert" className="text-[14px] text-[#dc2626]">Не удалось загрузить статус. Обновите страницу.</p>
         )}

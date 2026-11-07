@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'cleaning',
+  prefix: 'c',
+  accent: '#38bdf8',
+  accent2: '#22d3ee',
+  mode: 'light',
+  bg: '#f3fbff',
+  surface: '#ffffff',
+  border: '#d3ebf7',
+  borderHover: '#bfe0f0',
+  text: '#12303d',
+  textMuted: '#567682',
+  textSubtle: '#5c707a',
+  glyph: 'broom',
+  businessNoun: 'служба',
+  tagline: 'Клининговая служба',
+  intro: 'Генеральная и поддерживающая уборка квартир, офисов и после ремонта. Эко-химия, страховка и проверенные бригады.',
+  asideTitle: 'Чистота без усилий',
+  asideText: 'Выберите объём работ и удобное время — бригада всё сделает.',
+  ctaPrimary: 'Заказать уборку',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Служба всегда под рукой.',
+  installText: 'Заказывайте уборку за несколько касаний.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'бригада',
+  resourceType: 'master',
+  resourceCount: 2,
+  infoCards: [
+    { id: 'eco', title: 'Эко-химия', description: 'Безопасно для детей и животных.', icon: 'plant' },
+    { id: 'insured', title: 'Страховка', description: 'Отвечаем за сохранность вещей.', icon: 'shield' },
+    { id: 'checked', title: 'Проверенные бригады', description: 'Контроль качества после каждого выезда.', icon: 'medal' },
+  ],
+  defaultServices: [
+    { name: 'Поддерживающая уборка', price: 3500, duration: 90 },
+    { name: 'Генеральная уборка', price: 8000, duration: 180 },
+    { name: 'Уборка после ремонта', price: 12000, duration: 240 },
+    { name: 'Мытьё окон', price: 4000, duration: 120 },
+  ],
+  detailField: {
+    title: 'Объект и площадь',
+    label: 'Объект / площадь',
+    placeholder: 'Квартира, ~60 м²',
+    optional: true,
+    hint: 'Поможет рассчитать время и состав бригады.',
+  },
+};
+
+export default theme;

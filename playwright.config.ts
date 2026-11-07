@@ -26,7 +26,7 @@ function serverEnv(): Record<string, string> {
 }
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: './служебное/tests',
   testMatch: '**/*.spec.ts',
   // Тесты создают свои бизнесы и брони (уникальный slug и IP на тест), поэтому параллельны по файлам.
   fullyParallel: false,
@@ -36,7 +36,7 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   forbidOnly: IS_CI,
   reporter: IS_CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  globalSetup: './tests/support/global-setup.ts',
+  globalSetup: './служебное/tests/support/global-setup.ts',
   use: {
     baseURL: BASE_URL,
     locale: 'ru-RU',

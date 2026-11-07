@@ -114,7 +114,7 @@ export type DefaultPrice = z.infer<typeof defaultPriceSchema>;
 export const rateLimitsSchema = z.object({ booking_per_10min: limit('Броней'), cancel_per_15min: limit('Отмен') });
 export type RateLimits = z.infer<typeof rateLimitsSchema>;
 
-export const flagsSchema = z.object({ ai_assistant: z.boolean(), telegram_clients: z.boolean() });
+export const flagsSchema = z.object({ telegram_clients: z.boolean() });
 export type Flags = z.infer<typeof flagsSchema>;
 
 // Значения по умолчанию совпадают с seed (миграция 0004_features.sql).
@@ -123,7 +123,7 @@ export const DEFAULTS = {
   tariffs: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Про', price: 2500 } } satisfies Tariffs,
   default_price: { initial: 5000, monthly: 1000 } satisfies DefaultPrice,
   rate_limits: { booking_per_10min: 5, cancel_per_15min: 10 } satisfies RateLimits,
-  feature_flags: { ai_assistant: false, telegram_clients: false } satisfies Flags,
+  feature_flags: { telegram_clients: false } satisfies Flags,
 };
 
 export type PlatformSettings = {

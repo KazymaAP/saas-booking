@@ -20,3 +20,13 @@ scripts/import/
 check-log.txt
 tsconfig.tsbuildinfo
 supabase/.temp/
+
+# локальные бэкапы сборки и временные каталоги (не в git)
+.next-prod/
+.next-prod_bak_*/
+.next_bak_*/
+build_out/
+.tmp-vitest/
+coverage/
+public/uploads/
+*.timestamp-*.mjs

@@ -1,0 +1,50 @@
+import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
+
+const theme: NicheTheme = {
+  key: 'vet',
+  prefix: 'v',
+  accent: '#14b8a6',
+  accent2: '#22c55e',
+  mode: 'light',
+  bg: '#f2fbf8',
+  surface: '#ffffff',
+  border: '#d3ece4',
+  borderHover: '#bfe2d7',
+  text: '#17342c',
+  textMuted: '#56766b',
+  textSubtle: '#5c716a',
+  glyph: 'paw',
+  businessNoun: 'клиника',
+  tagline: 'Ветеринарная клиника для питомцев',
+  intro: 'Приём, вакцинация, чипирование, диагностика и хирургия. Заботимся о здоровье кошек, собак и мелких животных.',
+  asideTitle: 'Забота о вашем питомце',
+  asideText: 'Выберите услугу и удобное время — врач подтвердит приём.',
+  ctaPrimary: 'Записаться на приём',
+  ctaBook: 'Выбрать время',
+  installTitle: 'Клиника всегда под рукой.',
+  installText: 'Записывайтесь на приём питомца за несколько касаний.',
+  installCta: 'Добавить на экран',
+  resourceLabel: 'кабинет',
+  resourceType: 'cabinet',
+  resourceCount: 3,
+  infoCards: [
+    { id: '24', title: 'Круглосуточно', description: 'Принимаем в экстренных случаях в любое время.', icon: 'clock' },
+    { id: 'docs', title: 'Опытные врачи', description: 'Терапевты, хирурги и диагносты в штате.', icon: 'stethoscope' },
+    { id: 'lab', title: 'Своя лаборатория', description: 'Анализы и диагностика на месте.', icon: 'shield' },
+  ],
+  defaultServices: [
+    { name: 'Приём терапевта', price: 1500, duration: 30 },
+    { name: 'Вакцинация', price: 2000, duration: 20 },
+    { name: 'Чипирование', price: 2500, duration: 20 },
+    { name: 'УЗИ-диагностика', price: 3500, duration: 40 },
+  ],
+  detailField: {
+    title: 'Ваш питомец',
+    label: 'Питомец',
+    placeholder: 'Вид, порода, кличка',
+    optional: true,
+    hint: 'Поможет врачу подготовиться к приёму.',
+  },
+};
+
+export default theme;

@@ -5,7 +5,7 @@
 // ▸ «Только проверить» — dry run, без записи. После реального импорта — router.refresh() списка.
 import { useCallback, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '../_components/Toast';
+import { useToast } from '@/главная/components/Toast';
 import { interpret } from './import-result';
 
 type Phase = { kind: 'idle' } | { kind: 'upload'; pct: number } | { kind: 'process' } | { kind: 'done'; text: string; ok: boolean };

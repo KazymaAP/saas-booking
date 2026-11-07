@@ -1,6 +1,6 @@
 // Тесты server actions «Настройки»: права, ошибки под полем, audit без ПД, пропуск неизменённых значений.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeDb } from '../_lib/fake-db';
+import { createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();
@@ -72,9 +72,9 @@ describe('settings actions', () => {
   });
 
   it('флаги: снятый чекбокс → false', async () => {
-    fake.reply('settings', { data: { value: { ai_assistant: true, telegram_clients: false } } });
+    fake.reply('settings', { data: { value: { telegram_clients: false } } });
     const res = await saveFlags(null, form({ telegram_clients: '1' }));
-    expect(res.ok && res.data.changed).toEqual(['ai_assistant', 'telegram_clients']);
+    expect(res.ok && res.data.changed).toEqual(['telegram_clients']);
   });
 
   it('ошибка БД при записи — общий отказ, не исключение', async () => {

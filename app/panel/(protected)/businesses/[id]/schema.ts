@@ -1,7 +1,7 @@
 // app/panel/(protected)/businesses/[id]/schema.ts — zod-схемы карточки бизнеса (вынесены из 'use server' ради тестов).
 import { z } from 'zod';
 import { MAX_SLUG_LENGTH } from '@/lib/slug';
-import { MASS_STATUSES } from '../../_lib/statuses';
+import { MASS_STATUSES } from '@/главная/lib/statuses';
 
 export const MAX_NOTES = 5000;
 const DOMAIN_RE = /^(?=.{4,253}$)(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$/;

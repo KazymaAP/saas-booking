@@ -1,6 +1,6 @@
 // Тесты экспорта бизнесов: права, фильтры как у списка, постраничное чтение, стриминг CSV, audit без ПД.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { argOf, createFakeDb } from '@/app/panel/(protected)/_lib/fake-db';
+import { argOf, createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 const isSuperAdmin = vi.fn();

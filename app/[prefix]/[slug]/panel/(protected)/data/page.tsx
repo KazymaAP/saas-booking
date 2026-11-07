@@ -16,7 +16,7 @@ export default async function DataPage({ params }: { params: { prefix: string; s
     <div className="grid max-w-[640px] gap-6">
       <h1 className="!mb-0">Данные</h1>
 
-      <section aria-labelledby="data-export-title" className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-white p-4">
+      <section aria-labelledby="data-export-title" className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4">
         <h2 id="data-export-title" className="!mb-0">Выгрузка броней</h2>
         <p className="!mb-0 text-[14px] text-[#595959]">
           Файл CSV для Excel: дата, статус, клиент, телефон, email, услуга, цена, комментарий. Содержит персональные данные клиентов — не пересылайте его третьим лицам.
@@ -27,7 +27,7 @@ export default async function DataPage({ params }: { params: { prefix: string; s
         </a>
       </section>
 
-      <section aria-labelledby="data-delete-title" className="grid gap-2 rounded-xl border border-[#fca5a5] bg-white p-4">
+      <section aria-labelledby="data-delete-title" className="grid gap-2 rounded-xl border border-[#fca5a5] bg-[var(--surface)] p-4">
         <h2 id="data-delete-title" className="!mb-0">Удаление аккаунта</h2>
         {b.status === 'pending_deletion' ? (
           <p role="status" className="!mb-0 text-[14px]">

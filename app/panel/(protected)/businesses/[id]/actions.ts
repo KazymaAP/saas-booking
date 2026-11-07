@@ -7,7 +7,7 @@ import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
 import { errorMessage, logError } from '@/lib/log';
 import { SITE_URL } from '@/lib/site';
-import { fail, guarded, ok, type ActionResult } from '../../_lib/action';
+import { fail, guarded, ok, type ActionResult } from '@/главная/lib/action';
 import { cardStatusSchema, domainSchema, idSchema, notesSchema, slugSchema } from './schema';
 
 type Result = ActionResult<null>;

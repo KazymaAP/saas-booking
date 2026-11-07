@@ -57,7 +57,7 @@ export function ServiceList({ slug, rows, canEdit }: { slug: string; rows: Servi
       <p className="sr-only" aria-live="polite">{announce}</p>
 
       {canEdit && (
-        <section id={ADD_FORM_ID} aria-labelledby="add-service-title" className="rounded-xl border border-[#e5e5e5] bg-white p-4 sm:p-5">
+        <section id={ADD_FORM_ID} aria-labelledby="add-service-title" className="rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4 sm:p-5">
           <h2 id="add-service-title">Добавить услугу</h2>
           <div className="max-w-[560px]">
             <ServiceForm defaults={EMPTY_SERVICE} submitLabel="Добавить" onSubmit={add} onDone={onAdded} resetOnDone />
@@ -112,7 +112,7 @@ function ServiceCard({ row, slug, canEdit, editingId, isBusy, onEdit, onStopEdit
   const save = useCallback((values: ServiceFormValues) => updateService(slug, row.id, values), [slug, row.id]);
 
   return (
-    <li className={`rounded-xl border border-[#e5e5e5] bg-white p-4 ${row.is_active ? '' : 'bg-[#fafafa]'}`}>
+    <li className={`rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4 ${row.is_active ? '' : 'bg-[#fafafa]'}`}>
       {editing ? (
         <ServiceForm defaults={toFormValues(row)} submitLabel="Сохранить" onSubmit={save} onDone={onStopEdit} onCancel={onStopEdit} />
       ) : (
@@ -149,7 +149,7 @@ function focusAddForm(): void {
 // ТЗ §19.3: иконка + заголовок + кнопка «Добавить» (ведёт к форме выше).
 function EmptyState({ canEdit }: { canEdit: boolean }) {
   return (
-    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-white p-8 text-center">
+    <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-[var(--surface)] p-8 text-center">
       <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.6"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
       <p className="!mb-0 font-medium">Услуг на сайте пока нет</p>
       {canEdit

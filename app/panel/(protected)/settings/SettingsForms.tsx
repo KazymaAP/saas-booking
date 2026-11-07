@@ -1,7 +1,7 @@
 'use client';
 // Формы настроек платформы. Клиентский компонент нужен для useFormState: ошибки zod — под полем
 // (aria-invalid + aria-describedby), итог — тост, без перезагрузки страницы.
-import { ActionForm, CheckField, Field, FormError, SubmitButton } from '../_components/ActionForm';
+import { ActionForm, CheckField, Field, FormError, SubmitButton } from '@/главная/components/ActionForm';
 import { saveDefaultPrice, saveFlags, saveRateLimits, saveRequisites, saveTariffs } from './actions';
 import type { PlatformSettings } from './schema';
 
@@ -108,7 +108,6 @@ export function FlagsForm({ value }: { value: PlatformSettings['feature_flags'] 
       <ActionForm action={saveFlags} className="grid gap-2" label="Функции">
         <fieldset className="grid gap-1">
           <legend className="sr-only">Включённые функции</legend>
-          <CheckField name="ai_assistant" label="ИИ-помощник" defaultChecked={value.ai_assistant} />
           <CheckField name="telegram_clients" label="Telegram для клиентов" defaultChecked={value.telegram_clients} />
         </fieldset>
         <SubmitButton>Сохранить</SubmitButton>

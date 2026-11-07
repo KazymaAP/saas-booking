@@ -1,7 +1,7 @@
 // notifications/telegram-state.ts — загрузка состояния подключения Telegram из БД (только сервер).
 import { adminClient } from '@/lib/supabase';
-import { activeCode } from '@/lib/telegram-connect';
-import { logTelegramError } from '@/lib/telegram';
+import { activeCode } from '@/телеграмм-бот/telegram-connect';
+import { logTelegramError } from '@/телеграмм-бот/telegram';
 import type { TelegramState } from './telegram-view';
 
 /** Свежий статус: привязан ли чат и есть ли действующий код. null — БД недоступна. */

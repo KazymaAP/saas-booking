@@ -3,7 +3,7 @@
 // Синтаксис проверяется в браузере сразу (без запроса), структура — zod на сервере; обе ошибки выводятся
 // под полем и связаны с ним через aria-describedby / aria-invalid (ТЗ §19.6).
 import { useCallback, useId, useMemo, useState } from 'react';
-import { useFieldError } from '../_components/ActionForm';
+import { useFieldError } from '@/главная/components/ActionForm';
 
 type Props = { name: string; label: string; hint: string; defaultValue: string; rows?: number; empty: string };
 

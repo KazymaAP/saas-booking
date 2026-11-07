@@ -12,7 +12,7 @@ import { queueApproved } from '@/lib/outreach';
 import { audit, auditMany } from '@/lib/audit';
 import { errorMessage, logError } from '@/lib/log';
 import type { Business, BusinessStatus, VerticalTemplate } from '@/lib/database.types';
-import { bulkReport, fail, guarded, guardedBulk, ok, uuid, type ActionResult, type BulkResult } from '../_lib/action';
+import { bulkReport, fail, guarded, guardedBulk, ok, uuid, type ActionResult, type BulkResult } from '@/главная/lib/action';
 import { GENERATE_CHUNK, GENERATE_MAX } from './constants';
 
 const FUNNEL_PATH = '/panel/funnel';

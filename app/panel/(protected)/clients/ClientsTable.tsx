@@ -5,12 +5,12 @@
 // ▸ Опасные действия (отключить, отказ, передать код) — через ConfirmDialog.
 // ▸ На < 768px — карточки вместо таблицы (ТЗ §13.11).
 import { useCallback, useOptimistic, useState, useTransition } from 'react';
-import { useToast } from '../_components/Toast';
-import { ConfirmDialog } from '../_components/ConfirmDialog';
-import { PrefetchLink } from '../_components/PrefetchLink';
-import { StatusBadge } from '../_components/StatusBadge';
+import { useToast } from '@/главная/components/Toast';
+import { ConfirmDialog } from '@/главная/components/ConfirmDialog';
+import { PrefetchLink } from '@/главная/components/PrefetchLink';
+import { StatusBadge } from '@/главная/components/StatusBadge';
 import { clientAction } from './actions';
-import { orNetworkError } from '../_lib/network';
+import { orNetworkError } from '@/главная/lib/network';
 import { AccessForm } from './AccessForm';
 import { DEFAULT_MONTHLY, OP_CONFIRM, OP_LABEL, allowedOps, predictPatch, type ClientOp, type ClientPatch, type ClientRow } from './schema';
 

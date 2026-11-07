@@ -4,14 +4,24 @@
 import { NextResponse } from 'next/server';
 import { adminClient } from '@/lib/supabase';
 import { checkEnv } from '@/lib/env';
+import { jwtSecretTrusted } from '@/lib/auth-provider';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Бюджет ответа ≤ 200 мс: БД, не ответившая за 150 мс, считается деградировавшей.
-const DB_TIMEOUT_MS = 150;
+// Порог настраивается через HEALTH_DB_TIMEOUT_MS — локально и на удалённой БД 150 мс мало.
+const DB_TIMEOUT_DEFAULT_MS = 150;
+const DB_TIMEOUT_MIN_MS = 50;
+const DB_TIMEOUT_MAX_MS = 5000;
 const MS_IN_SECOND = 1000;
 const STARTED_AT = Date.now();
+
+function dbTimeoutMs(): number {
+  const raw = Number(process.env.HEALTH_DB_TIMEOUT_MS);
+  if (!Number.isFinite(raw) || raw <= 0) return DB_TIMEOUT_DEFAULT_MS;
+  return Math.min(DB_TIMEOUT_MAX_MS, Math.max(DB_TIMEOUT_MIN_MS, Math.round(raw)));
+}
 
 type CheckResult = 'ok' | 'timeout' | 'error' | 'misconfigured';
 
@@ -19,7 +29,7 @@ type CheckResult = 'ok' | 'timeout' | 'error' | 'misconfigured';
 async function checkDatabase(): Promise<{ result: CheckResult; latency_ms: number }> {
   const started = Date.now();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DB_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), dbTimeoutMs());
   try {
     const { error } = await adminClient()
       .from('settings')
@@ -44,10 +54,17 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json(
     {
       status: healthy ? 'ok' : 'degraded',
-      version: process.env.APP_VERSION ?? process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev',
+      version: process.env.APP_VERSION || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
       uptime_s: Math.round((Date.now() - STARTED_AT) / MS_IN_SECOND),
       time: new Date().toISOString(),
-      checks: { env: env_ok ? 'ok' : 'misconfigured', db: db.result, db_latency_ms: db.latency_ms },
+      checks: {
+        env: env_ok ? 'ok' : 'misconfigured',
+        db: db.result,
+        db_latency_ms: db.latency_ms,
+        // Слабый секрет не роняет сервис, но означает, что локальная проверка токенов отключена:
+        // видно в мониторинге, без раскрытия самого значения.
+        security: jwtSecretTrusted() ? 'ok' : 'weak_jwt_secret',
+      },
     },
     { status: healthy ? 200 : 503, headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } },
   );

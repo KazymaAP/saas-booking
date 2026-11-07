@@ -49,7 +49,7 @@ export default async function SubscriptionPage({ params }: { params: { prefix: s
         <p className="!mb-0 text-[14px]">{status.text}</p>
       </section>
 
-      <dl className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-white p-4 text-[14px] sm:grid-cols-[160px_1fr]">
+      <dl className="grid gap-2 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4 text-[14px] sm:grid-cols-[160px_1fr]">
         <dt className="text-[#595959]">Тариф</dt>
         <dd className="!m-0 font-medium">{b.plan_type ?? b.plan} · {formatPrice(b.subscription_price)}</dd>
         <dt className="text-[#595959]">Подключена</dt>
@@ -58,7 +58,7 @@ export default async function SubscriptionPage({ params }: { params: { prefix: s
         <dd className="!m-0">{b.subscription_until ? formatDate(b.subscription_until) : '—'}</dd>
       </dl>
 
-      <section aria-labelledby="sub-pay-title" className="grid gap-3 rounded-xl border border-[#e5e5e5] bg-white p-4 text-[14px]">
+      <section aria-labelledby="sub-pay-title" className="grid gap-3 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4 text-[14px]">
         <h2 id="sub-pay-title" className="!mb-0">Продление</h2>
         <p className="!mb-0">Переведите сумму тарифа по реквизитам и нажмите «Я оплатил». Подписка продлевается на 30 дней после проверки.</p>
         {requisitesFailed

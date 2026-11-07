@@ -1,7 +1,7 @@
 // Фильтры шага 1 воронки (ТЗ §13.2: city, vertical_template_id, has_email). GET-форма без JS:
 // значения в URL, страница сбрасывается на первую, выбранный шаблон шага 4 сохраняется.
 import Link from 'next/link';
-import { one, type Params } from '../_lib/url';
+import { one, type Params } from '@/главная/lib/url';
 
 type Props = { params: Params; city: string; vertical: string; email: boolean; verticals: { id: string; name: string }[] };
 

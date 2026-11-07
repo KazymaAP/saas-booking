@@ -49,7 +49,7 @@ export function PaidReport({ slug, defaultAmount }: { slug: string; defaultAmoun
   const commentId = `${uid}-comment`;
   return (
     <form onSubmit={handleSubmit(submit)} noValidate aria-labelledby={`${uid}-title`} aria-busy={isSubmitting}
-      className="grid gap-3 rounded-xl border border-[#e5e5e5] bg-white p-4">
+      className="grid gap-3 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-4">
       <h2 id={`${uid}-title`} className="!mb-0">Уже оплатили?</h2>
       <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
         <FieldFrame id={amountId} label="Сумма, ₽" hint={AMOUNT_HINT} error={errors.amount?.message}>

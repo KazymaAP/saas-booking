@@ -9,7 +9,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateBatch, generationProgress } from './actions';
 import { GENERATE_CHUNK, GENERATE_MAX, POLL_MS } from './constants';
-import { useToast } from '../_components/Toast';
+import { useToast } from '@/главная/components/Toast';
 
 type Item = { id: string; name: string };
 type Phase = 'idle' | 'running' | 'done';

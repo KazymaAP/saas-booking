@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
-import { fail, guarded, ok, type ActionResult, type FieldErrors } from '../_lib/action';
+import { fail, guarded, ok, type ActionResult, type FieldErrors } from '@/главная/lib/action';
 import { JSON_EMPTY, JSON_FIELDS, issuePath, parseJsonSafe, validateImport, verticalSchema, type VerticalInput } from './schema';
 
 const PATH = '/panel/verticals';

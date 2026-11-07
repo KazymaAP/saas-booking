@@ -1,6 +1,6 @@
 // История изменений бизнеса из audit_log (ТЗ §13.3, промт: «карточка с полной историей»).
 // payload уже замаскирован при записи (lib/audit). Подписи и детали — общие с /panel/logs (_lib/audit-labels.ts).
-import { actionLabel, auditDetails } from '../../_lib/audit-labels';
+import { actionLabel, auditDetails } from '@/главная/lib/audit-labels';
 
 export type AuditRow = { id: string; action: string; payload: Record<string, unknown> | null; created_at: string };
 

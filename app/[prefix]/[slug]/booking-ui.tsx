@@ -14,22 +14,27 @@ const SKELETON_ITEMS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const
 const CLS = {
   strip: 'flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]',
   chip:
-    'flex min-w-[56px] shrink-0 flex-col items-center rounded-lg border border-[#e5e5e5] bg-white px-2 py-1 text-[13px] leading-tight ' +
+    // text-[#111] обязателен: чип белый, а внутри тёмной карточки (нишевые темы) он наследовал
+    // светлый цвет текста — даты становились невидимыми (контраст 1.3:1).
+    'flex min-w-[56px] shrink-0 flex-col items-center rounded-lg border border-[#e5e5e5] bg-white px-2 py-1 text-[13px] leading-tight text-[#111] ' +
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111] ' +
     'disabled:cursor-not-allowed disabled:opacity-40 aria-pressed:border-[var(--brand-color)] aria-pressed:bg-[var(--brand-color)] aria-pressed:font-semibold aria-pressed:text-white',
   chipDay: 'text-[17px] font-semibold',
   slots: 'grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2',
   slot:
-    'h-11 rounded-lg border border-[#e5e5e5] bg-white px-2 text-[15px] tabular-nums ' +
+    'h-11 rounded-lg border border-[#e5e5e5] bg-white px-2 text-[15px] tabular-nums text-[#111] ' +
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111] ' +
     'aria-pressed:border-[var(--brand-color)] aria-pressed:bg-[var(--brand-color)] aria-pressed:font-semibold aria-pressed:text-white',
   skeleton: 'h-11 animate-pulse rounded-lg bg-[#efefef]',
   // min-h резервирует место под одну строку слотов: смена «загрузка → список» не сдвигает форму.
   wrap: 'min-h-[52px]',
-  status: 'text-[14px] text-[#595959]',
+  // #767676 — единственный серый, который держит AA и на белом (4.5:1), и на тёмной теме сайта (4.6:1).
+  status: 'text-[14px] text-[color:var(--booking-muted,#595959)]',
 } as const;
 const ERROR_COLOR = '#b91c1c'; // контраст 6.5:1 на белом (WCAG AA)
-const MUTED_COLOR = '#595959'; // контраст 7:1 на белом
+// Приглушённый текст: значение приходит из темы сайта (--booking-muted), по умолчанию — тёмно-серый
+// для светлых страниц. Один фиксированный серый не может дать AA и на белом, и на чёрном.
+const MUTED_COLOR = 'var(--booking-muted, #595959)';
 
 export const fieldStyles = {
   error: { color: ERROR_COLOR, fontSize: 14, margin: '4px 0 0' },

@@ -1,6 +1,6 @@
 // Тесты выборки журнала: условия SQL по вкладке и фильтрам, ровно 50 строк, повторное маскирование ПД.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { argOf, createFakeDb } from '../_lib/fake-db';
+import { argOf, createFakeDb } from '@/главная/lib/fake-db';
 
 const fake = createFakeDb();
 vi.mock('@/lib/supabase', () => ({ adminClient: () => fake.client }));

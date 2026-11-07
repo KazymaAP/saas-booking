@@ -225,12 +225,12 @@ function ContactFields({ form, ids }: PartProps) {
         <FieldError id={ids.phone.error} message={errors.phone?.message} />
       </div>
       <div>
-        <label htmlFor={ids.email.input} className={LABEL}>Email <span className="font-normal text-[#595959]">(необязательно)</span></label>
+        <label htmlFor={ids.email.input} className={LABEL}>Email <span className="font-normal text-[color:var(--booking-muted,#595959)]">(необязательно)</span></label>
         <input type="email" autoComplete="email" className={INPUT} {...aria(form, ids, 'email')} {...form.register('email')} />
         <FieldError id={ids.email.error} message={errors.email?.message} />
       </div>
       <div>
-        <label htmlFor={ids.comment.input} className={LABEL}>Комментарий <span className="font-normal text-[#595959]">(необязательно)</span></label>
+        <label htmlFor={ids.comment.input} className={LABEL}>Комментарий <span className="font-normal text-[color:var(--booking-muted,#595959)]">(необязательно)</span></label>
         <textarea rows={3} className={`${INPUT} h-auto py-2`} {...aria(form, ids, 'comment')} {...form.register('comment')} />
         <FieldError id={ids.comment.error} message={errors.comment?.message} />
       </div>

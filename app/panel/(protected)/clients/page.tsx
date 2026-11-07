@@ -3,8 +3,8 @@
 // Server Component: одна выборка страницы + тарифы параллельно; действия — ClientsTable (optimistic).
 import Link from 'next/link';
 import { adminClient } from '@/lib/supabase';
-import { Pager } from '../_components/Pager';
-import { one, pageNumber, searchTerm, withParams, type Params } from '../_lib/url';
+import { Pager } from '@/главная/components/Pager';
+import { one, pageNumber, searchTerm, withParams, type Params } from '@/главная/lib/url';
 import { ClientsTable } from './ClientsTable';
 import { CANDIDATE_STATUSES, DAY_MS, isoDate, type ClientRow } from './schema';
 

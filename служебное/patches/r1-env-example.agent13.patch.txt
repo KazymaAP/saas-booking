@@ -1,0 +1,17 @@
+diff --git a/.env.example b/.env.example
+index dbe56f3..f97c082 100644
+--- a/.env.example
++++ b/.env.example
+@@ -52,3 +52,12 @@ TELEGRAM_ADMIN_WEBHOOK_SECRET=
+ VERCEL_API_TOKEN=
+ VERCEL_PROJECT_ID=
+ VERCEL_TEAM_ID=
++
++# --- Юридический слой (зона 5): ТЗ §9.5, §12.3, §15 ---
++# Секрет токенов отписки (AES-256-GCM). Смена секрета делает недействительными ссылки в уже отправленных письмах.
++UNSUBSCRIBE_SECRET=
++# Соль для SHA-256 хэшей IP и User-Agent в cookie_consents. Без соли хэши не пишутся.
++HASH_SALT=
++# Контакты для юридических запросов, если реквизиты в /panel/settings не заполнены.
++LEGAL_EMAIL=
++LEGAL_ADDRESS=

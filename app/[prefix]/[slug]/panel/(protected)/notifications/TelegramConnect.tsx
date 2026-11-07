@@ -222,13 +222,13 @@ function Connected({ focusRef, connectedAt, confirming, busy, onAsk, onCancel, o
           <button type="button" className="btn-primary" onClick={onConfirm} disabled={busy} data-testid="telegram-disconnect-confirm">
             Да, отключить
           </button>
-          <button type="button" className="h-10 rounded-md border border-[#e5e5e5] bg-white px-4" onClick={onCancel} disabled={busy}>
+          <button type="button" className="h-10 rounded-md border border-[#e5e5e5] bg-[var(--surface)] px-4" onClick={onCancel} disabled={busy}>
             Отмена
           </button>
         </div>
       ) : (
         <div>
-          <button type="button" className="h-10 rounded-md border border-[#e5e5e5] bg-white px-4" onClick={onAsk} disabled={busy} data-testid="telegram-disconnect">
+          <button type="button" className="h-10 rounded-md border border-[#e5e5e5] bg-[var(--surface)] px-4" onClick={onAsk} disabled={busy} data-testid="telegram-disconnect">
             Отключить
           </button>
         </div>
@@ -261,7 +261,7 @@ function NotConnected({ focusRef, botName, code, expired, left, copied, busy, cr
         <li>Страница сама покажет «Подключено», когда бот примет код.</li>
       </ol>
       {code && (
-        <div className="grid gap-2 rounded-md border border-[#e5e5e5] bg-white p-4" data-testid="telegram-code-block">
+        <div className="grid gap-2 rounded-md border border-[#e5e5e5] bg-[var(--surface)] p-4" data-testid="telegram-code-block">
           <h3 ref={focusRef} tabIndex={-1} className="text-[15px] font-semibold">Ваш код</h3>
           <p className="text-[14px]">
             <code className="select-all text-[18px] font-semibold tracking-wider" data-testid="telegram-code">/start {code}</code>

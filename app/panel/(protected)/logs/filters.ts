@@ -1,8 +1,8 @@
 // app/panel/(protected)/logs/filters.ts — разбор фильтров журнала /panel/logs из searchParams (ТЗ §13.7).
 // Всё, что не прошло проверку, игнорируется: фильтр не применяется, страница не падает.
 import type { LogSource } from '@/lib/log';
-import { ACTION_LABEL, ENTITY_LABEL, isLogSource } from '../_lib/audit-labels';
-import { one, pageNumber, searchTerm, uuidParam, type Params } from '../_lib/url';
+import { ACTION_LABEL, ENTITY_LABEL, isLogSource } from '@/главная/lib/audit-labels';
+import { one, pageNumber, searchTerm, uuidParam, type Params } from '@/главная/lib/url';
 
 export type LogTab = 'errors' | 'audit';
 

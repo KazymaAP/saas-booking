@@ -81,7 +81,7 @@ function Preview({ control, fallbacks }: { control: Control<TextsValues>; fallba
   return (
     <aside aria-labelledby="texts-preview-title" className="grid gap-2 lg:sticky lg:top-24">
       <h2 id="texts-preview-title" className="!mb-0 text-[14px] font-semibold uppercase tracking-wide text-[#595959]">Превью</h2>
-      <div className="grid gap-3 overflow-hidden rounded-xl border border-[#e5e5e5] bg-white p-5">
+      <div className="grid gap-3 overflow-hidden rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-5">
         <p className="!mb-0 break-words text-[24px] font-bold leading-tight">{title}</p>
         {subtitle && <p className="!mb-0 whitespace-pre-line break-words text-[15px] text-[#555555]">{subtitle}</p>}
         <span className="inline-flex min-h-[44px] w-fit items-center rounded-lg px-4 font-semibold text-white" style={{ background: 'var(--brand-color)' }}>

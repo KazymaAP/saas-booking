@@ -54,7 +54,7 @@ export default async function BookingsPage({ params, searchParams }: { params: {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="!mb-0">Брони</h1>
         <nav aria-label="Фильтр броней">
-          <ul className="flex gap-1 rounded-lg border border-[#e5e5e5] bg-white p-1">
+          <ul className="flex gap-1 rounded-lg border border-[#e5e5e5] bg-[var(--surface)] p-1">
             {FILTERS.map((f) => (
               <li key={f}>
                 <Link

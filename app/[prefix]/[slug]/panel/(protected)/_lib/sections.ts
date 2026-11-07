@@ -6,7 +6,7 @@ export type PanelParams = { prefix: string; slug: string };
 
 export type SectionKey =
   | 'home' | 'bookings' | 'services' | 'photos' | 'texts'
-  | 'notifications' | 'settings' | 'subscription' | 'team' | 'data';
+  | 'notifications' | 'settings' | 'appearance' | 'subscription' | 'team' | 'data';
 
 export type Section = {
   key: SectionKey;
@@ -26,6 +26,9 @@ export const SECTIONS: readonly Section[] = [
   { key: 'notifications', path: 'notifications', label: 'Уведомления', ownerOnly: false, eagerPrefetch: false },
   // Биллинг, настройки, команда и выгрузка ПД — только владелец (manager «без биллинга и настроек»).
   { key: 'settings', path: 'settings', label: 'Настройки', ownerOnly: true, eagerPrefetch: false },
+  // Оформление вынесено в отдельный раздел: владелец меняет стиль кабинета и сайта,
+  // не пролистывая длинную форму настроек (раньше блок был внизу «Настроек»).
+  { key: 'appearance', path: 'appearance', label: 'Оформление', ownerOnly: true, eagerPrefetch: false },
   { key: 'subscription', path: 'subscription', label: 'Подписка', ownerOnly: true, eagerPrefetch: false },
   { key: 'team', path: 'team', label: 'Команда', ownerOnly: true, eagerPrefetch: false },
   { key: 'data', path: 'data', label: 'Данные', ownerOnly: true, eagerPrefetch: false },

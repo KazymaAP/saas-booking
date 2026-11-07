@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import type { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
-import { guarded, ok, zodFail, type ActionResult } from '../_lib/action';
+import { guarded, ok, zodFail, type ActionResult } from '@/главная/lib/action';
 import {
   changedPaths,
   defaultPriceSchema,
@@ -84,7 +84,7 @@ export async function saveRateLimits(_prev: Result | null, fd: FormData): Promis
 // Флаги: чекбоксы (снятый чекбокс в FormData отсутствует → false).
 export async function saveFlags(_prev: Result | null, fd: FormData): Promise<Result> {
   return await guarded('settings.flags', async () => {
-    const p = parse(flagsSchema, { ai_assistant: fd.get('ai_assistant') === '1', telegram_clients: fd.get('telegram_clients') === '1' });
+    const p = parse(flagsSchema, { telegram_clients: fd.get('telegram_clients') === '1' });
     if (!p.ok) return p.res;
     return await saveKey('feature_flags', p.data, true);
   });
