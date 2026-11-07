@@ -2,7 +2,7 @@
 // Функции чистые и без внешних ссылок: их исходный текст вставляется в service worker через toString()
 // (см. lib/sw-source.ts), поэтому внутри них нельзя обращаться к переменным модуля — только к параметрам.
 
-export const SW_CACHE = 'booking-shell-v2';
+export const SW_CACHE = 'booking-shell-v3';
 
 // Первые сегменты пути, которые никогда не кэшируются: персональные, токенные и служебные маршруты.
 export const RESERVED_SEGMENTS = [

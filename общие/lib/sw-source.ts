@@ -34,8 +34,12 @@ self.addEventListener('fetch', (e) => {
   if (url.search || url.origin !== self.location.origin || !isShellPathWith(url.pathname, SHELL, RESERVED)) return;
 
   e.respondWith((async () => {
+    // Сеть ограничена по времени: подвисший ответ не должен вешать навигацию
+    // (иначе браузер показывает белый экран и бесконечную загрузку).
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
     try {
-      const res = await fetch(req);
+      const res = await fetch(req, { signal: ctrl.signal });
       const cacheable = isCacheableResponse({
         ok: res.ok,
         status: res.status,
@@ -44,14 +48,18 @@ self.addEventListener('fetch', (e) => {
         setCookie: res.headers.get('set-cookie'),
       });
       if (cacheable) {
-        const cache = await caches.open(CACHE);
-        await cache.put(url.pathname, res.clone());
+        // Кэшируем В ФОНЕ. Раньше ответ ждал await cache.put() — то есть полной вычитки тела,
+        // и при медленном ответе страница не рендерилась вовсе (белый экран, вечная загрузка).
+        const copy = res.clone();
+        e.waitUntil(caches.open(CACHE).then((c) => c.put(url.pathname, copy)).catch(() => undefined));
       }
       return res;
     } catch (err) {
-      // Офлайн: только из публичной оболочки (по проверке выше сюда попадают лишь такие пути).
+      // Офлайн/таймаут: только из публичной оболочки (по проверке выше сюда попадают лишь такие пути).
       const cached = await caches.match(url.pathname);
       return cached || Response.error();
+    } finally {
+      clearTimeout(timer);
     }
   })());
 });

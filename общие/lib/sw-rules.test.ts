@@ -85,7 +85,7 @@ describe('swRulesSource: вставленный в service worker код вед�
 
   it('полный текст worker содержит обработчики и версию кэша', () => {
     const sw = buildServiceWorker();
-    expect(sw).toContain("const CACHE = \"booking-shell-v2\"");
+    expect(sw).toContain("const CACHE = \"booking-shell-v3\"");
     expect(sw).toContain("addEventListener('fetch'");
     expect(sw).toContain('isCacheableResponse(');
     expect(sw).not.toContain('${');
