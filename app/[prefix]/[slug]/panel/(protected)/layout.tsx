@@ -8,7 +8,6 @@ import { panelBase, visibleSections } from './_lib/sections';
 import { accentColor } from './_lib/color';
 import { PANEL_THEME_KEY, appearanceVars, resolveAppearance } from '@/lib/appearance';
 import { nicheOfTemplate } from '@/lib/business';
-import { isDemoBusiness } from '@/lib/demo-constants';
 import { subscriptionAttention } from './_lib/subscription';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +37,6 @@ export default async function OwnerLayout({ children, params }: { children: Reac
   // Manager не получает пункты «Настройки», «Подписка», «Команда», «Данные» (ТЗ §13.10). Страницы и actions проверяют роль сами.
   // Отметка у «Подписки» — из уже загруженного бизнеса, без лишних запросов.
   const b = access.business;
-  const demo = isDemoBusiness(b.slug);
   const niche = await nicheOfTemplate(b.vertical_template_id);
   const panelTheme = resolveAppearance(
     (b.custom_texts as Record<string, string> | null | undefined)?.[PANEL_THEME_KEY],
@@ -54,15 +52,6 @@ export default async function OwnerLayout({ children, params }: { children: Reac
       <a href="#panel-main" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-[var(--surface)] focus:px-3 focus:py-2">
         К содержимому
       </a>
-      {demo && (
-        <div
-          className="fixed bottom-4 right-4 z-50 rounded-full px-3 py-1 text-caption font-semibold shadow-lg"
-          style={{ background: 'var(--surface, #fff)', color: 'var(--brand-color, #111)', border: '1px solid var(--border, #e5e5e5)' }}
-          title="Демо-бизнес: данные изолированы и не влияют на реальные сайты"
-        >
-          ДЕМО
-        </div>
-      )}
       <ToastProvider>
         <PanelNav base={base} businessName={access.business.name} items={items} logout={logout} />
         <main id="panel-main" tabIndex={-1} className="mx-auto max-w-[1100px] px-4 py-6 outline-none">{children}</main>

@@ -109,13 +109,8 @@ export function PartnerShell({
           <div className="flex items-center gap-2 rounded-full px-2 py-2">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-accent-solid text-[15px] font-semibold text-brand-accent-on">P</span>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px] font-semibold tracking-[-0.01em]">Кабинет партнёра</div>
+              <div className="truncate text-[15px] font-semibold tracking-[-0.01em]">Кабинет партнёра{demo ? ' — DEMO' : ''}</div>
               <div className="truncate text-caption text-brand-text-subtle">{partner.name ?? partner.email}</div>
-              {demo && (
-                <div className="mt-1 inline-flex rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-caption text-brand-accent">
-                  Демо-режим
-                </div>
-              )}
             </div>
           </div>
 
@@ -139,11 +134,6 @@ export function PartnerShell({
                 <List size={20} weight="bold" aria-hidden="true" />
               </button>
               <h1 className="text-heading-md">{TITLES[section]}</h1>
-              {demo && (
-                <span className="rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-caption text-brand-accent">
-                  ДЕМО
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-2 text-caption text-brand-text-subtle">
               <span className="hidden sm:inline">К выплате:</span>
