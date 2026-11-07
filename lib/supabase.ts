@@ -21,8 +21,18 @@ const SERVER_AUTH = { persistSession: false, autoRefreshToken: false, detectSess
 // Реальный HTTP-пулер подключается только если явно задан SUPABASE_POOLER_URL (полный URI из Dashboard).
 export function poolerUrl(base: string = requireEnv('NEXT_PUBLIC_SUPABASE_URL')): string {
   const override = process.env.SUPABASE_POOLER_URL?.trim();
-  if (override) return override;
-  return base;
+  const url = override || base;
+  // supabase-js ходит поверх HTTPS/REST (порт 443). Postgres-пулер (postgresql://…:6543)
+  // — это протокол Postgres, его нельзя передавать в createClient(): fetch() упадёт с
+  // «Request cannot be constructed from a URL that includes credentials».
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(
+      `Supabase URL должен начинаться с https://, получено: «${url.slice(0, 14)}…». ` +
+        `Проверьте переменные NEXT_PUBLIC_SUPABASE_URL и SUPABASE_POOLER_URL в окружении — ` +
+        `туда попал Postgres connection string вместо проектного URL (https://<project>.supabase.co).`
+    );
+  }
+  return url;
 }
 
 function cached(slot: CachedClient | null, url: string, key: string): CachedClient {
