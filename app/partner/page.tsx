@@ -4,6 +4,7 @@ import { getPartnerById, listLeads, partnerSummary, listCheckouts, listReadySite
 import { listPartnerReadyServices, listPartnerMessages, outreachForRows } from '@/lib/ready-services';
 import { SITE_URL } from '@/lib/site';
 import { listReferrals } from '@/lib/referrals';
+import { isDemoPartner } from '@/lib/demo-constants';
 import { PartnerShell } from './PartnerShell';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,7 @@ export default async function PartnerDashboard() {
       outreach={outreach}
       earnings={earnings}
       yookassaReady={yookassaConfigured()}
+      demo={isDemoPartner(partner.email)}
     />
   );
 }

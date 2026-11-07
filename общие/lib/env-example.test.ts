@@ -14,7 +14,7 @@ const SOURCE_RE = /\.(?:ts|tsx|mjs)$/;
 const ENV_RE = /process\.env\.([A-Z][A-Z0-9_]*)/g;
 
 // Выставляются платформой (Next, Vercel), в .env.example не нужны.
-const PLATFORM_ENV = new Set(['NODE_ENV', 'NEXT_RUNTIME', 'VERCEL_GIT_COMMIT_SHA']);
+const PLATFORM_ENV = new Set(['NODE_ENV', 'NEXT_RUNTIME', 'VERCEL', 'VERCEL_GIT_COMMIT_SHA']);
 
 function sourceFiles(dir: string): string[] {
   const files: string[] = [];

@@ -47,7 +47,7 @@ const TITLES: Record<Section, string> = {
 const rub = (n: number) => `${Math.round(n).toLocaleString('ru-RU')} ₽`;
 
 export function PartnerShell({
-  partner, summary, leads, checkouts, readySites, ready, messages, referrals, outreach, earnings, yookassaReady,
+  partner, summary, leads, checkouts, readySites, ready, messages, referrals, outreach, earnings, yookassaReady, demo = false,
 }: {
   partner: Partner;
   summary: PartnerSummary;
@@ -60,6 +60,8 @@ export function PartnerShell({
   outreach: Record<string, string>;
   earnings: Earning[];
   yookassaReady: boolean;
+  /** Демо-аккаунт: показываем бейдж «ДЕМО» и предупреждение о песочнице. */
+  demo?: boolean;
 }) {
   const [section, setSection] = useState<Section>('overview');
   const [navOpen, setNavOpen] = useState(false);
@@ -109,6 +111,11 @@ export function PartnerShell({
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-semibold tracking-[-0.01em]">Кабинет партнёра</div>
               <div className="truncate text-caption text-brand-text-subtle">{partner.name ?? partner.email}</div>
+              {demo && (
+                <div className="mt-1 inline-flex rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-caption text-brand-accent">
+                  Демо-режим
+                </div>
+              )}
             </div>
           </div>
 
@@ -132,6 +139,11 @@ export function PartnerShell({
                 <List size={20} weight="bold" aria-hidden="true" />
               </button>
               <h1 className="text-heading-md">{TITLES[section]}</h1>
+              {demo && (
+                <span className="rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-caption text-brand-accent">
+                  ДЕМО
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-caption text-brand-text-subtle">
               <span className="hidden sm:inline">К выплате:</span>
