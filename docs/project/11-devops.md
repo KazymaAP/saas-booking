@@ -31,9 +31,9 @@ pnpm preflight                     # env → install → typecheck → тест�
 pnpm cron:check                    # сверка расписаний pg_cron
 ```
 
-Фактические результаты на дату составления: `npx tsc --noEmit` — exit 0; `npx vitest run` — 99 test files passed / 1 skipped, 1501 tests passed / 7 skipped, 0 failed.
+Фактические результаты: `npx tsc --noEmit` — exit 0. Последние запуски `npx vitest run`: 08.11.2026 — 99 файлов passed / 1 skipped, 1501 тестов passed / 7 skipped; 09.11.2026 — 97 файлов passed / 1 skipped, 1409 тестов passed / 7 skipped, 2 unhandled errors (не влияют на exit code, код возврата 0).
 
-> `TESTING.md` начинается с «Автотестов (unit, e2e) в проекте нет: ТЗ §0.4 — Тесты не пишем». Это утверждение устарело: в проекте 155 файлов `*.test.ts` и 23 `*.spec.ts`. `PROGRESS.md` от 30.10.2026 фиксирует 1296 passed / 85 файлов; по факту на 08.11.2026 — 1501 / 99.
+> `TESTING.md` начинается с «Автотестов (unit, e2e) в проекте нет: ТЗ §0.4 — Тесты не пишем». Это утверждение устарело: в проекте 155 файлов `*.test.ts` + 14 `*.test.mts` (юнит) и 23 `*.spec.ts` в `tests/` (Playwright e2e; ещё 23 копии в `служебное/tests`, в run не входят). Vitest по `include`-паттерну собирает 98 файлов. `PROGRESS.md` от 30.10.2026 фиксирует 1296 passed / 85 файлов; по факту на 08.11.2026 — 1501 / 99, на 09.11.2026 — 1409 / 97+1 skipped.
 
 ## 2. Скрипты `scripts/` и `служебное/scripts/`
 
