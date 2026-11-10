@@ -311,10 +311,10 @@ describe('team', () => {
     expect(authAdmin.deleteUser).toHaveBeenCalledWith('auth-2');
   });
 
-  it('removeMember: владельца не удалить — role=manager в WHERE', async () => {
+  it('removeMember: владельца не удалить — role!=owner в WHERE (защита владельца, но можно удалять менеджеров и кастомные роли)', async () => {
     queueResult('admin_users', { data: [] });
     expect(await team.removeMember(SLUG, ROW_ID)).toMatchObject({ ok: false });
-    expect(hasOp('admin_users', 'eq', 'role', 'manager')).toBe(true);
+    expect(hasOp('admin_users', 'neq', 'role', 'owner')).toBe(true);
     expect(hasOp('admin_users', 'eq', 'business_id', BUSINESS_ID)).toBe(true);
     expect(authAdmin.deleteUser).not.toHaveBeenCalled();
   });

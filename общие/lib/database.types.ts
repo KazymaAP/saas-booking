@@ -36,5 +36,6 @@ export type Photo = Row<'photos'>;
 export type Booking = Omit<Row<'bookings'>, 'status'> & { status: BookingStatus };
 
 export type AdminUser = Row<'admin_users'>;
+export type BusinessCustomRole = Row<'business_custom_roles'>;
 export type EmailAccount = Row<'email_accounts'>;
 export type RateLimit = Row<'rate_limits'>;

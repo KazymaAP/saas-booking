@@ -9,6 +9,8 @@ import { audit } from '@/lib/audit';
 import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { InviteSchema, MAX_MANAGERS, type InviteInput, type InviteResult, type MemberRow } from './schema';
+import { z } from 'zod';
+import { SECTION_KEYS, isCustomRole, customRoleId } from '@/lib/sections';
 
 // 12 байт → 16 символов base64url: ~96 бит энтропии, легко продиктовать/скопировать.
 const PASSWORD_BYTES = 12;
@@ -30,6 +32,13 @@ export async function inviteManager(slug: string, input: InviteInput): Promise<A
   if (access.member.role !== 'owner' && role === 'owner') return fail(ERR.ownerOnly);
   const businessId = access.business.id;
   const db = adminClient();
+
+  // Кастомную роль можно назначить, только если она принадлежит этому бизнесу.
+  if (isCustomRole(role)) {
+    const cid = customRoleId(role);
+    const { data: cr } = await db.from('business_custom_roles').select('id').eq('id', cid).eq('business_id', businessId).maybeSingle();
+    if (!cr) return fail(ERR.invalid, { role: 'Роль не найдена' });
+  }
 
   // Один запрос: и проверка дубля, и лимит менеджеров.
   const { data: members, error: listError } = await db
@@ -68,13 +77,14 @@ export async function removeMember(slug: string, id: string): Promise<ActionResu
   if (!access) return fail(ERR.ownerOnly);
   if (!UUID_RE.test(id)) return fail(ERR.invalid);
 
-  // Один DELETE … RETURNING: business_id и role в WHERE — чужого участника и владельца удалить нельзя.
+  // Один DELETE … RETURNING: business_id и «не владелец» в WHERE — чужого участника и владельца удалить нельзя,
+  // но менеджеров и кастомные роли удалять можно.
   const { data, error } = await adminClient()
     .from('admin_users')
     .delete()
     .eq('id', id)
     .eq('business_id', access.business.id)
-    .eq('role', 'manager')
+    .neq('role', 'owner')
     .select('auth_user_id')
     .returns<{ auth_user_id: string | null }[]>();
   if (error) return fail(ERR.server);
@@ -89,4 +99,63 @@ export async function removeMember(slug: string, id: string): Promise<ActionResu
   await audit('manager_remove', 'business', access.business.id, { member_id: id }).catch(() => undefined);
   revalidatePath(TEAM_PATH, 'page');
   return ok('Доступ менеджера закрыт');
+}
+
+// ---------- Пользовательские роли (шаг 5) ----------
+
+// Матрица прав кастомной роли: раздел → 'read' | 'write'. Только известные разделы.
+const CustomRoleSchema = z.object({
+  name: z.string().trim().min(1, 'Укажите название').max(60, 'Слишком длинное название'),
+  matrix: z.record(z.enum(['read', 'write']))
+    .refine((m) => Object.keys(m).every((k) => (SECTION_KEYS as readonly string[]).includes(k)), 'Неизвестный раздел'),
+});
+export type CustomRoleInput = z.infer<typeof CustomRoleSchema>;
+
+export async function createCustomRole(slug: string, input: CustomRoleInput): Promise<ActionResult<{ id: string }>> {
+  const access = await writeAccess(slug, 'team');
+  if (!access) return fail(ERR.ownerOnly);
+  const parsed = CustomRoleSchema.safeParse(input);
+  if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));
+  const businessId = access.business.id;
+  const { data, error } = await adminClient()
+    .from('business_custom_roles')
+    .insert({ business_id: businessId, name: parsed.data.name, matrix: parsed.data.matrix })
+    .select('id').single<{ id: string }>();
+  if (error) return fail(ERR.server);
+  await audit('custom_role_create', 'business', businessId, { role_id: data.id }).catch(() => undefined);
+  revalidatePath(TEAM_PATH, 'page');
+  return ok('Роль создана', { id: data.id });
+}
+
+export async function updateCustomRole(slug: string, id: string, input: CustomRoleInput): Promise<ActionResult> {
+  const access = await writeAccess(slug, 'team');
+  if (!access) return fail(ERR.ownerOnly);
+  if (!UUID_RE.test(id)) return fail(ERR.invalid);
+  const parsed = CustomRoleSchema.safeParse(input);
+  if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));
+  const { error } = await adminClient()
+    .from('business_custom_roles')
+    .update({ name: parsed.data.name, matrix: parsed.data.matrix })
+    .eq('id', id).eq('business_id', access.business.id);
+  if (error) return fail(ERR.server);
+  await audit('custom_role_update', 'business', access.business.id, { role_id: id }).catch(() => undefined);
+  revalidatePath(TEAM_PATH, 'page');
+  return ok('Роль обновлена');
+}
+
+export async function deleteCustomRole(slug: string, id: string): Promise<ActionResult> {
+  const access = await writeAccess(slug, 'team');
+  if (!access) return fail(ERR.ownerOnly);
+  if (!UUID_RE.test(id)) return fail(ERR.invalid);
+  // Не даём удалить роль, пока есть сотрудники с ней: сначала переназначьте.
+  const { data: used } = await adminClient()
+    .from('admin_users').select('id').eq('business_id', access.business.id).eq('role', `custom:${id}`).limit(1)
+    .returns<{ id: string }[]>();
+  if ((used ?? []).length) return fail('Сначала переназначьте сотрудников с этой ролью');
+  const { error } = await adminClient()
+    .from('business_custom_roles').delete().eq('id', id).eq('business_id', access.business.id);
+  if (error) return fail(ERR.server);
+  await audit('custom_role_delete', 'business', access.business.id, { role_id: id }).catch(() => undefined);
+  revalidatePath(TEAM_PATH, 'page');
+  return ok('Роль удалена');
 }

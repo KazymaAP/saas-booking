@@ -2,6 +2,7 @@
 // Чистый модуль: используется формой (клиент), action (сервер) и тестами.
 import { z } from 'zod';
 import { BUILTIN_ROLES, isRole, ROLE_LABELS } from '@/lib/auth-roles';
+import { isCustomRole } from '@/lib/sections';
 import type { AdminUser } from '@/lib/database.types';
 
 // Сотрудников немного (студия, салон) — лимит защищает от массового создания аккаунтов.
@@ -13,7 +14,7 @@ export const InviteSchema = z.object({
     .min(1, 'Укажите email')
     .max(EMAIL_MAX, 'Слишком длинный email')
     .email('Неверный формат email'),
-  role: z.string().refine(isRole, 'Неизвестная роль').default('manager'),
+  role: z.string().refine((v) => isRole(v) || isCustomRole(v), 'Неизвестная роль').default('manager'),
 });
 
 export type InviteInput = z.input<typeof InviteSchema>;

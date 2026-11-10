@@ -1,5 +1,5 @@
 'use client';
-// team/TeamManager.tsx — список участников, приглашение и удаление менеджера (ТЗ §5.6, §13.10).
+// team/TeamManager.tsx — список участников, приглашение и удаление менеджера, а также кастомные роли (ТЗ §5.6, §13.10, шаг 5).
 // Клиентский: optimistic-удаление с откатом, пароль нового менеджера хранится только в состоянии
 // компонента (исчезает при уходе со страницы) — без cookie и без URL.
 import { useCallback, useOptimistic, useState, useTransition } from 'react';
@@ -9,19 +9,27 @@ import { callAction } from '../_lib/client-action';
 import { removeMember } from './actions';
 import { InviteForm } from './InviteForm';
 import { CredentialsCard } from './CredentialsCard';
+import { CustomRolesManager } from './CustomRolesManager';
 import { MAX_MANAGERS, ROLE_LABEL, canRemove, managersCount, type InviteResult, type MemberRow } from './schema';
+import type { BusinessCustomRole } from '@/lib/database.types';
 
-function withoutMember(rows: MemberRow[], id: string): MemberRow[] {
-  return rows.filter((m) => m.id !== id);
-}
+type RoleOption = { key: string; label: string };
 
-export function TeamManager({ slug, members, currentMemberId }: { slug: string; members: MemberRow[]; currentMemberId: string }) {
+export function TeamManager({
+  slug, members, currentMemberId, roleOptions, roleLabels, customRoles, canManageRoles,
+}: {
+  slug: string; members: MemberRow[]; currentMemberId: string;
+  roleOptions: RoleOption[]; roleLabels: Record<string, string>; customRoles: BusinessCustomRole[];
+  canManageRoles: boolean;
+}) {
   const [rows, removeOptimistic] = useOptimistic(members, withoutMember);
   const [, startTransition] = useTransition();
   const [credentials, setCredentials] = useState<InviteResult | null>(null);
   const [announce, setAnnounce] = useState('');
   const toast = useToast();
   const [confirm, dialog] = useConfirm();
+
+  const roleLabel = useCallback((role: string): string => roleLabels[role] ?? ROLE_LABEL[role] ?? role, [roleLabels]);
 
   const remove = useCallback(async (member: MemberRow) => {
     const who = member.email ?? 'менеджер';
@@ -60,7 +68,7 @@ export function TeamManager({ slug, members, currentMemberId }: { slug: string; 
         <h2 id="team-list-title" className="!mb-0">Участники <span className="font-normal text-[#595959]">({rows.length})</span></h2>
         <ul className="grid gap-2">
           {rows.map((m) => (
-            <MemberItem key={m.id} member={m} isSelf={m.id === currentMemberId} onRemove={remove} />
+            <MemberItem key={m.id} member={m} isSelf={m.id === currentMemberId} roleLabel={roleLabel} onRemove={remove} />
           ))}
         </ul>
       </section>
@@ -69,19 +77,25 @@ export function TeamManager({ slug, members, currentMemberId }: { slug: string; 
         <h2 id="team-invite-title" className="!mb-0">Добавить менеджера</h2>
         {limitReached
           ? <p className="!mb-0 text-[14px] text-[#595959]">Достигнут лимит: {MAX_MANAGERS} менеджеров. Удалите кого-то, чтобы добавить нового.</p>
-          : <InviteForm slug={slug} onInvited={onInvited} />}
+          : <InviteForm slug={slug} roleOptions={roleOptions} onInvited={onInvited} />}
       </section>
+
+      <CustomRolesManager slug={slug} customRoles={customRoles} canManage={canManageRoles} />
     </div>
   );
 }
 
-function MemberItem({ member, isSelf, onRemove }: { member: MemberRow; isSelf: boolean; onRemove: (m: MemberRow) => void }) {
+function withoutMember(rows: MemberRow[], id: string): MemberRow[] {
+  return rows.filter((m) => m.id !== id);
+}
+
+function MemberItem({ member, isSelf, roleLabel, onRemove }: { member: MemberRow; isSelf: boolean; roleLabel: (r: string) => string; onRemove: (m: MemberRow) => void }) {
   const onClick = useCallback(() => onRemove(member), [member, onRemove]);
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e5e5e5] bg-[var(--surface)] p-3 text-[14px]">
       <span className="min-w-0 break-all">
         <span className="font-medium">{member.email ?? 'без email'}</span>
-        <span className="text-[#595959]"> · {ROLE_LABEL[member.role]}{isSelf ? ' (вы)' : ''}</span>
+        <span className="text-[#595959]"> · {roleLabel(member.role)}{isSelf ? ' (вы)' : ''}</span>
       </span>
       {canRemove(member) && (
         <button type="button" onClick={onClick} aria-label={`Удалить ${member.email ?? 'менеджера'}`} className="!min-h-[44px] !border-[#b91c1c] !text-[#b91c1c]">

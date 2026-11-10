@@ -119,6 +119,38 @@ export type Database = {
           },
         ];
       };
+      business_custom_roles: {
+        Row: {
+          id: string;
+          business_id: string;
+          name: string;
+          matrix: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          name: string;
+          matrix: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          name?: string;
+          matrix?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "business_custom_roles_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       analytics_events: {
         Row: {
           business_id: string | null;

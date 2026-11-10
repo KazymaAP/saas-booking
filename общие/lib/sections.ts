@@ -69,15 +69,56 @@ export function isBuiltinRole(value: string): value is Role {
   return (BUILTIN_ROLES as readonly string[]).includes(value);
 }
 
+export function canReadMatrix(matrix: RoleMatrix, section: SectionKey): boolean {
+  return matrix[section] !== undefined;
+}
+
+export function canWriteMatrix(matrix: RoleMatrix, section: SectionKey): boolean {
+  return matrix[section] === 'write';
+}
+
+export function sectionsForMatrix(matrix: RoleMatrix): readonly SectionKey[] {
+  return SECTION_KEYS.filter((key) => canReadMatrix(matrix, key));
+}
+
 export function canRead(role: Role, section: SectionKey): boolean {
-  return ROLE_MATRIX[role][section] !== undefined;
+  return canReadMatrix(ROLE_MATRIX[role], section);
 }
 
 export function canWrite(role: Role, section: SectionKey): boolean {
-  return ROLE_MATRIX[role][section] === 'write';
+  return canWriteMatrix(ROLE_MATRIX[role], section);
 }
 
 // Разделы, видимые роли в меню.
 export function sectionsForRole(role: Role): readonly SectionKey[] {
   return SECTION_KEYS.filter((key) => canRead(role, key));
+}
+
+// ---------- Пользовательские роли (шаг 5) ----------
+export const CUSTOM_ROLE_PREFIX = 'custom:';
+const CUSTOM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Роль в admin_users.role: 'custom:<uuid>'.
+export function isCustomRole(value: string): boolean {
+  if (typeof value !== 'string' || !value.startsWith(CUSTOM_ROLE_PREFIX)) return false;
+  return CUSTOM_UUID_RE.test(value.slice(CUSTOM_ROLE_PREFIX.length));
+}
+
+export function customRoleId(value: string): string | null {
+  if (typeof value !== 'string' || !value.startsWith(CUSTOM_ROLE_PREFIX)) return null;
+  const id = value.slice(CUSTOM_ROLE_PREFIX.length);
+  return CUSTOM_UUID_RE.test(id) ? id : null;
+}
+
+// Проверяет и очищает произвольный jsonb в RoleMatrix: неизвестные разделы/права отбрасываются.
+export function parseMatrix(raw: unknown): RoleMatrix {
+  const out: Record<string, SectionGrant> = {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    for (const [key, value] of Object.entries(raw)) {
+      if ((SECTION_KEYS as readonly string[]).includes(key) && (value === 'read' || value === 'write')) {
+        out[key] = value;
+      }
+    }
+  }
+  return out as RoleMatrix;
 }
