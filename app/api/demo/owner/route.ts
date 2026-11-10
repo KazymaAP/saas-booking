@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       return NextResponse.redirect(new URL('/demo/business?error=auth', req.url));
     }
     startSession('owner', session);
-    return NextResponse.redirect(new URL(`/${DEMO_PREFIX}/${DEMO_SLUG}/panel`, req.url));
+    return NextResponse.redirect(new URL(`/${DEMO_PREFIX}/${DEMO_SLUG}/admin`, req.url));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'demo unavailable';
     return NextResponse.redirect(new URL(`/demo/business?error=${encodeURIComponent(message)}`, req.url));

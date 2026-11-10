@@ -153,7 +153,7 @@ export function sanitizeNext(raw: unknown, allowedPrefix: string): string | null
   if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return null;
   if (/[\u0000-\u001f\u007f]/.test(raw)) return null;
   const path = raw.split(/[?#]/)[0] ?? '';
-  // Парсер URL браузера понимает %2e как точку: /panel/%2e%2e/api — это выход из префикса.
+  // Парсер URL браузера понимает %2e как точку: /admin/%2e%2e/api — это выход из префикса.
   // Закодированные слэши (%2f, %5c) в пути панели не нужны и тоже отсекаются.
   if (/%(2e|2f|5c)/i.test(path)) return null;
   if (path.split('/').some((seg) => seg === '..' || seg === '.')) return null;
@@ -292,10 +292,11 @@ export function verifyJwtHs256(token: string, secret: string, now: Date): JwtCla
   return claims;
 }
 
-const OWNER_PANEL_RE = /^\/[a-z0-9-]+\/[a-z0-9-]+\/panel(?=\/|$)/i;
+const OWNER_PANEL_RE = /^\/[a-z0-9-]+\/[a-z0-9-]+\/admin(?=\/|$)/i;
 
-// Корень панели, к которой относится путь: '/panel' (супер-админ или кастомный домен)
-// либо '/{prefix}/{slug}/panel' (кабинет владельца на основном домене). null — путь не из панели.
+// Корень панели, к которой относится путь: '/panel' (старая супер-админка)
+// либо '/{prefix}/{slug}/admin' (кабинет владельца на основном домене). null — путь не из панели.
+// Имя функции сохранено для обратной совместимости с вызывающими модулями и тестами.
 export function panelRootOf(path: string): string | null {
   const owner = OWNER_PANEL_RE.exec(path);
   if (owner) return owner[0];

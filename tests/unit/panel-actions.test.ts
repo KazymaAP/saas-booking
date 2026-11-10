@@ -24,7 +24,7 @@ vi.mock('@/lib/audit', () => ({ audit: vi.fn(async () => undefined) }));
 vi.mock('@/lib/log', () => ({ logError: vi.fn(async () => undefined) }));
 vi.mock('@/lib/rate-limit', () => ({ hitRateLimit: rateLimit }));
 
-const P = '../../app/[prefix]/[slug]/panel/(protected)';
+const P = '../../app/[prefix]/[slug]/admin/(protected)';
 const bookings = await import(`${P}/bookings/actions`);
 const services = await import(`${P}/services/actions`);
 const settings = await import(`${P}/settings/actions`);

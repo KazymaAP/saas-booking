@@ -7,7 +7,7 @@ test.describe('вход и навигация', () => {
 
   test('без сессии кабинет ведёт на логин', async ({ page }) => {
     await page.goto(panelUrl('bookings'));
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
   test('неверный пароль — понятная ошибка', async ({ page }) => {
@@ -67,9 +67,9 @@ test.describe('вход и навигация', () => {
   test('выход завершает сессию', async ({ page }) => {
     await login(page, OWNER);
     await page.getByRole('button', { name: 'Выйти' }).first().click();
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await expect(page).toHaveURL(/\/admin\/login/);
     await page.goto(panelUrl());
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 });
 

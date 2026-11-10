@@ -40,17 +40,17 @@ describe('auth-magic: запрос ссылки', () => {
   });
 
   it('владелец: письмо только участнику активного бизнеса из returnTo', async () => {
-    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel/bookings', ip: IP })).toBe('sent');
+    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin/bookings', ip: IP })).toBe('sent');
     expect(harness.sentMails).toHaveLength(1);
-    expect(tokenRow()).toMatchObject({ realm: 'owner', return_to: '/s/tire/panel/bookings' });
+    expect(tokenRow()).toMatchObject({ realm: 'owner', return_to: '/s/tire/admin/bookings' });
   });
 
   it('чужой адрес, неактивный бизнес, нет slug: ответ тот же, письма нет (нельзя выяснить, кто зарегистрирован)', async () => {
-    expect(await magic.requestMagicLink({ email: 'nobody@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP })).toBe('sent');
+    expect(await magic.requestMagicLink({ email: 'nobody@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP })).toBe('sent');
     expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: null, ip: IP })).toBe('sent');
     expect(await magic.requestMagicLink({ email: 'stranger@example.com', realm: 'admin', returnTo: null, ip: IP })).toBe('sent');
     seedOwnerBusiness('lead');
-    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP })).toBe('sent');
+    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP })).toBe('sent');
     expect(harness.sentMails).toHaveLength(0);
     expect(harness.auditCalls.filter((c) => c.action === 'auth:magic_link_rejected')).toHaveLength(4);
   });
@@ -58,7 +58,7 @@ describe('auth-magic: запрос ссылки', () => {
   it('open redirect: супер-админ не уходит за пределы /panel, владелец — за пределы кабинета', async () => {
     await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '//evil.com/panel', ip: IP });
     expect(tokenRow()?.return_to).toBe('/admin');
-    await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '/s/tire/panel', ip: '198.51.100.2' });
+    await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '/s/tire/admin', ip: '198.51.100.2' });
     expect(tokenRow()?.return_to).toBe('/admin');
     expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/panel/funnel', ip: IP })).toBe('sent');
     expect(harness.sentMails).toHaveLength(2);
@@ -87,8 +87,8 @@ describe('auth-magic: запрос ссылки', () => {
   });
 
   it('slugFromPanelPath', () => {
-    expect(magic.slugFromPanelPath('/s/tire/panel')).toBe('tire');
-    expect(magic.slugFromPanelPath('/s/tire/panel/bookings?x=1')).toBe('tire');
+    expect(magic.slugFromPanelPath('/s/tire/admin')).toBe('tire');
+    expect(magic.slugFromPanelPath('/s/tire/admin/bookings?x=1')).toBe('tire');
     expect(magic.slugFromPanelPath('/panel/funnel')).toBeNull();
     expect(magic.slugFromPanelPath(null)).toBeNull();
   });
@@ -106,7 +106,7 @@ describe('auth-magic: погашение ссылки', () => {
   });
 
   it('владелец: вход в свой кабинет; неактивный бизнес — inactive, cookie нет', async () => {
-    await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP });
+    await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP });
     const token = tokenFromLastMail();
     vi.mocked(provider.sessionWithoutPassword).mockResolvedValue(sessionFor('owner@biz.ru', 'owner-1'));
     seedOwnerBusiness('archived');
@@ -115,9 +115,9 @@ describe('auth-magic: погашение ссылки', () => {
   });
 
   it('владелец: успешный вход ведёт в returnTo', async () => {
-    await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel/bookings', ip: IP });
+    await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin/bookings', ip: IP });
     vi.mocked(provider.sessionWithoutPassword).mockResolvedValue(sessionFor('owner@biz.ru', 'owner-1'));
-    expect(await magic.consumeMagicLink(tokenFromLastMail(), IP)).toEqual({ kind: 'ok', redirectTo: '/s/tire/panel/bookings' });
+    expect(await magic.consumeMagicLink(tokenFromLastMail(), IP)).toEqual({ kind: 'ok', redirectTo: '/s/tire/admin/bookings' });
     expect(harness.jar.get('biz_session')?.value).toBe('access-owner-1');
   });
 

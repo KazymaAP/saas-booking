@@ -11,15 +11,15 @@ import { startSession } from './auth-session';
 // Стартовая страница супер-админки (как у входа по паролю).
 export const ADMIN_HOME = '/admin';
 
-const OWNER_PANEL_SLUG_RE = /^\/[a-z0-9-]+\/([a-z0-9-]+)\/panel(?:\/|$)/i;
+const OWNER_PANEL_SLUG_RE = /^\/[a-z0-9-]+\/([a-z0-9-]+)\/admin(?:\/|$)/i;
 
-// slug бизнеса из пути кабинета: /{prefix}/{slug}/panel/...
+// slug бизнеса из пути кабинета: /{prefix}/{slug}/admin/...
 export function slugFromPanelPath(path: string | null): string | null {
   if (!path) return null;
   return OWNER_PANEL_SLUG_RE.exec(path)?.[1] ?? null;
 }
 
-// Куда вернуть после входа. Супер-админ — только внутрь /panel, владелец — только в /{prefix}/{slug}/panel.
+// Куда вернуть после входа. Супер-админ — только внутрь /panel, владелец — только в /{prefix}/{slug}/admin.
 // Для владельца null означает «кабинет не определён»: письмо не отправляется.
 export function normalizeReturnTo(realm: AuthRealm, raw: string | null): string | null {
   const safe = sanitizePanelNext(raw);

@@ -26,7 +26,7 @@ export function uniqueEmail(tag: string): string {
 
 export type StandBusiness = { readonly id: string; readonly slug: string; readonly prefix: string; readonly panel: string };
 
-// Бизнес-клиент с шаблоном ниши: кабинет доступен по /{prefix}/{slug}/panel.
+// Бизнес-клиент с шаблоном ниши: кабинет доступен по /{prefix}/{slug}/admin.
 export async function createBusiness(status: 'client' | 'lead' = 'client'): Promise<StandBusiness> {
   const client = db();
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1e4)}`;
@@ -38,7 +38,7 @@ export async function createBusiness(status: 'client' | 'lead' = 'client'): Prom
   const { data: biz, error } = await client.from('businesses')
     .insert({ name: 'E2E бизнес', slug, status, vertical_template_id: tpl.id }).select('id').single<{ id: string }>();
   if (error || !biz) throw new Error(`e2e: бизнес не создан: ${error?.message ?? ''}`);
-  return { id: biz.id, slug, prefix, panel: `/${prefix}/${slug}/panel` };
+  return { id: biz.id, slug, prefix, panel: `/${prefix}/${slug}/admin` };
 }
 
 export async function createUser(email: string, password: string): Promise<string> {

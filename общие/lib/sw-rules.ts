@@ -6,7 +6,7 @@ export const SW_CACHE = 'booking-shell-v3';
 
 // Первые сегменты пути, которые никогда не кэшируются: персональные, токенные и служебные маршруты.
 export const RESERVED_SEGMENTS = [
-  'api', 'panel', 'booking', 'invite', 'magic-link', 'reset-password', 'unsubscribe',
+  'api', 'panel', 'admin', 'booking', 'invite', 'magic-link', 'reset-password', 'unsubscribe',
   'data-request', 'blocked', 'preview', 'domain-site', 'sw.js', 'robots.txt', 'sitemap.xml', '_next',
 ];
 

@@ -41,7 +41,7 @@
   `DEMO_PARTNER_EMAIL = demo-partner@zapishisya.ru`, `DEMO_PARTNER_NAME = DEMO Партнёр`, `DEMO_PARTNER_REF = PR-DEMO01`, `DEMO_OWNER_EMAIL = demo-owner@zapishisya.ru`, `DEMO_PASSWORD = demo12345`, `DEMO_PREFIX = m`, `DEMO_SLUG = demo`, `DEMO_BUSINESS_NAME = DEMO — Студия маникюра «Любава»`; функции `isDemoPartner(email)`, `isDemoBusiness(slug)`.
 - `общие/lib/demo.ts` — серверная часть (только сервер: `crypto` + service_role): `ensureDemoPartner()`, `ensureDemoBusiness()`, идемпотентно создаёт данные при первом входе.
 - `app/api/demo/partner/route.ts` (GET) — `ensureDemoPartner()` → `createPartnerSession()` → cookie `partner_session` → редирект `/partner`; при ошибке — `/partner/demo?error=…`.
-- `app/api/demo/owner/route.ts` (GET) — `ensureDemoBusiness()` → `passwordSignIn(DEMO_OWNER_EMAIL, DEMO_PASSWORD)` → `startSession('owner', …)` → редирект `/m/demo/panel`; при ошибке — `/demo/business?error=…`.
+- `app/api/demo/owner/route.ts` (GET) — `ensureDemoBusiness()` → `passwordSignIn(DEMO_OWNER_EMAIL, DEMO_PASSWORD)` → `startSession('owner', …)` → редирект `/m/demo/admin`; при ошибке — `/demo/business?error=…`.
 - `app/demo/page.tsx` — лаунчер в оболочке настоящей панели (сайдбар, шапка, 2 карточки).
 - `app/demo/business/page.tsx` → `redirect('/api/demo/owner')`; `app/partner/demo/page.tsx` → `redirect('/api/demo/partner')`.
 - `app/partner/page.tsx` передаёт `demo={isDemoPartner(partner.email)}` в `PartnerShell`; в сайдбаре заголовок «Кабинет партнёра — DEMO».

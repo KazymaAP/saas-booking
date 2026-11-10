@@ -1,6 +1,6 @@
 # Том 04. Все маршруты App Router
 
-Источник: полный обход `app/` (список файлов `page.tsx`, `layout.tsx`, `route.ts`, `actions.ts`, `loading/error/not-found.tsx`), `middleware.ts`, `app/panel/(protected)/layout.tsx`, `app/[prefix]/[slug]/panel/(protected)/_lib/sections.ts`.
+Источник: полный обход `app/` (список файлов `page.tsx`, `layout.tsx`, `route.ts`, `actions.ts`, `loading/error/not-found.tsx`), `middleware.ts`, `app/panel/(protected)/layout.tsx`, `app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts`.
 
 Ниже перечислены **все** маршруты проекта. Для страниц указаны файл и назначение. Для `/api/**` — том 06.
 
@@ -52,13 +52,13 @@
 | — | `SwRegister.tsx` | Регистрация `/sw.js` в production |
 | — | `booking/booking-page-ui.tsx`, `booking/error.tsx` | UI страниц отмены/переноса |
 
-## 3. Кабинет владельца `app/[prefix]/[slug]/panel/`
+## 3. Кабинет владельца `app/[prefix]/[slug]/admin/`
 
 | Путь | Файл | Назначение |
 |---|---|---|
-| `/panel/login` | `login/page.tsx` | Вход владельца/менеджера. На кастомном домене middleware переписывает `/panel/login` сюда |
-| `/panel/export` | `export/route.ts` + `csv.ts` | Выгрузка броней в CSV |
-| `/panel/(protected)` | `layout.tsx` | Проверка `currentOwner`, `PanelNav`, toast, оформление панели по нише/`PANEL_THEME_KEY`, бейдж подписки |
+| `/admin/login` | `login/page.tsx` | Вход владельца/менеджера. На кастомном домене middleware переписывает `/admin/login` сюда |
+| `/admin/export` | `export/route.ts` + `csv.ts` | Выгрузка броней в CSV |
+| `/admin/(protected)` | `layout.tsx` | Проверка `currentOwner`, `PanelNav`, toast, оформление панели по нише/`PANEL_THEME_KEY`, бейдж подписки |
 | | `page.tsx` | Главная: «Добро пожаловать!», «Платежи платформе», онбординг |
 | | `loading.tsx`, `error.tsx`, `not-found.tsx` | Состояния |
 | `/bookings` | `bookings/page.tsx` + `actions.ts` + `BookingList.tsx` + `rows.ts` + `status.ts` + `tel.ts` + `view.ts` + `loading.tsx` | Список броней, фильтры, смена статуса, ручная запись |
@@ -132,7 +132,7 @@ NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Кли
 | `/demo/business` | `redirect('/api/demo/owner')` |
 | `/partner/demo` | `redirect('/api/demo/partner')` |
 | `/api/demo/partner` | Создаёт демо-партнёра (идемпотентно), ставит `partner_session`, редиректит `/partner` |
-| `/api/demo/owner` | Создаёт демо-бизнес + владельца, `passwordSignIn`, `startSession('owner')`, редиректит `/m/demo/panel` |
+| `/api/demo/owner` | Создаёт демо-бизнес + владельца, `passwordSignIn`, `startSession('owner')`, редиректит `/m/demo/admin` |
 
 ## 8. Middleware-маршрутизация (`middleware.ts`)
 
@@ -147,7 +147,7 @@ NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Кли
    - `path === '/'` без cookie → `rewrite('/domain-site/by-domain?domain=<host>')`;
    - остальные подпути без cookie → `rewrite('/api/resolve-domain')` с заголовками `x-resolve-host`, `x-resolve-next`, `x-resolve-retry`.
 4. На основном хосте `path.startsWith('/domain-site')` → 404.
-5. Иначе `NextResponse.next()` + `X-Robots-Tag: noindex, nofollow` для `/preview/`, `/panel`, `/admin`, `/dev`, `/partner`, `/{prefix}/{slug}/panel`, всех `/api/`.
+5. Иначе `NextResponse.next()` + `X-Robots-Tag: noindex, nofollow` для `/preview/`, `/panel`, `/admin`, `/dev`, `/partner`, `/{prefix}/{slug}/admin`, всех `/api/`.
 
 `isMainHost` (`общие/lib/site.ts`): `MAIN_HOSTS` = `[apex, www.apex, 'localhost', '127.0.0.1']` из `NEXT_PUBLIC_SITE_URL` + `NEXT_PUBLIC_MAIN_HOSTS`; любой `*.vercel.app` тоже основной. Пустой/некорректный host считается основным.
 
@@ -162,7 +162,7 @@ NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Кли
 | `/partner/demo` | `/api/demo/partner` | всегда |
 | `/demo/business` | `/api/demo/owner` | всегда |
 | `/panel/*` | `/panel/login` | не супер-админ |
-| `/{prefix}/{slug}/panel/*` | `…/panel/login` | нет membership/рефреш сессии |
+| `/{prefix}/{slug}/admin/*` | `…/admin/login` | нет membership/рефреш сессии |
 | `/partner` | `/partner/login` | нет партнёрской сессии |
 | `/{prefix}/{slug}` | новый URL | `resolveBusiness` вернул `redirect` (slug_history) → `permanentRedirect` (308) |
 | `/{prefix}/{slug}` | 404 | `notfound` |

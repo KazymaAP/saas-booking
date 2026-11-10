@@ -1,7 +1,7 @@
 // tests/owner-helpers.ts — общие шаги e2e кабинета владельца (Playwright).
 // Нужен тестовый бизнес в Supabase. Переменные окружения:
 //   E2E_BASE_URL       — адрес приложения (по умолчанию http://localhost:3000)
-//   E2E_PANEL_PATH     — путь кабинета без /panel, например /s/e2e-studio
+//   E2E_PANEL_PATH     — путь кабинета без /admin, например /s/e2e-studio
 //   E2E_OWNER_EMAIL / E2E_OWNER_PASSWORD     — владелец тестового бизнеса
 //   E2E_MANAGER_EMAIL / E2E_MANAGER_PASSWORD — менеджер (необязательно, тесты ролей пропускаются)
 // Без E2E_PANEL_PATH и данных владельца спеки помечаются skipped, а не падают.
@@ -15,7 +15,7 @@ export const hasOwner = Boolean(PANEL_PATH && OWNER.email && OWNER.password);
 export const hasManager = Boolean(PANEL_PATH && MANAGER.email && MANAGER.password);
 
 export function panelUrl(section = ''): string {
-  return section ? `${PANEL_PATH}/panel/${section}` : `${PANEL_PATH}/panel`;
+  return section ? `${PANEL_PATH}/admin/${section}` : `${PANEL_PATH}/admin`;
 }
 
 export function requireOwner(): void {

@@ -58,7 +58,7 @@ export function TenantPreview() {
         <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--soft)] px-4 py-3 text-[13px] text-[var(--muted)]">
           <b className="text-[var(--ink)]">Это статичный макет для показа интерфейса.</b> Кнопки здесь намеренно
           не работают и данные не сохраняются. Боевой кабинет со всеми действиями —{' '}
-          <a className="text-[var(--brand-color)] underline" href="/m/lyubava/panel">/m/lyubava/panel</a>{' '}
+          <a className="text-[var(--brand-color)] underline" href="/m/lyubava/admin">/m/lyubava/admin</a>{' '}
           (нужен вход владельцем).
           <br />Меню кликабельно: «Оформление» — отдельный раздел со стилями, остальные пункты показывают главную. Выбор стиля работает локально.
         </div>

@@ -194,7 +194,7 @@ curl -s https://zapishisya.ru/robots.txt | grep Sitemap     # Sitemap: https://z
 2. Клиент ставит DNS-записи на Vercel (как для основного домена).
 3. Кнопка **Проверить SSL** или ночной cron `check-domains` меняет `ssl_status` на `active`.
 
-**Проверка:** `curl -sI https://<домен-клиента>` → 200, страница — сайт бизнеса; `https://<домен-клиента>/panel` —
+**Проверка:** `curl -sI https://<домен-клиента>` → 200, страница — сайт бизнеса; `https://<домен-клиента>/admin` —
 вход в кабинет этого бизнеса.
 
 ## Шаг 7. Yandex 360: почтовые ящики

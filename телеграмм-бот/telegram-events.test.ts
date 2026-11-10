@@ -94,7 +94,7 @@ describe('события бизнеса', () => {
 
   it('небезопасная ссылка (javascript:, относительная) пропускается, сообщение без неё', () => {
     expect(newBooking({ ...booking, panelUrl: 'javascript:alert(1)' })).not.toContain('<a ');
-    expect(newBooking({ ...booking, panelUrl: '/m/studio/panel' })).not.toContain('<a ');
+    expect(newBooking({ ...booking, panelUrl: '/m/studio/admin' })).not.toContain('<a ');
     expect(newBooking({ ...booking, panelUrl: ' https://x.ru ' })).toContain('<a href="https://x.ru">');
   });
 

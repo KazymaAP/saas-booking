@@ -77,7 +77,7 @@ export function withQuery(path: string, params: Readonly<Record<string, string |
   return s ? `${path}?${s}` : path;
 }
 
-// Область входа по пути возврата: кабинет владельца (/{prefix}/{slug}/panel...) или супер-админка.
+// Область входа по пути возврата: кабинет владельца (/{prefix}/{slug}/admin...) или супер-админка.
 // Используется страницами /magic-link и /panel/forgot-password, которые общие для обеих областей.
 export function realmFromNext(raw: unknown): { realm: AuthRealm; next: string | null } {
   const next = sanitizePanelNext(raw);

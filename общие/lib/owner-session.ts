@@ -124,7 +124,7 @@ export async function requireOwnerAction(slug: string, roles: readonly OwnerRole
 
 export type OwnerPanelInfo = { readonly name: string };
 
-// Существует ли кабинет по адресу /{prefix}/{slug}/panel: бизнес со slug и шаблоном с этим url_prefix.
+// Существует ли кабинет по адресу /{prefix}/{slug}/admin: бизнес со slug и шаблоном с этим url_prefix.
 // Статус не раскрывается: форма входа одинакова для активных и неактивных бизнесов.
 async function ownerPanelInfoUncached(prefix: string, slug: string): Promise<OwnerPanelInfo | null> {
   const db = adminClient();

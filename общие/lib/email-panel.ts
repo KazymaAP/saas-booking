@@ -255,7 +255,7 @@ export function sampleClientVars(site: string): TemplateVars {
     name: 'Шиномонтаж «Колесо»', business_name: 'Шиномонтаж «Колесо»', city: 'Казань', url: `${site}/shinomontazh/koleso`,
     phone: '+7 900 000-00-00', rating: '4.8', vertical_name_lower: 'шиномонтаж', client_name: 'Анна',
     service_name: 'Сезонная замена шин', scheduled_at_local: '20 октября, 14:30', business_address: 'ул. Примерная, 1',
-    cancel_url: `${site}/b/demo/cancel`, reschedule_url: `${site}/b/demo/reschedule`, panel_url: `${site}/shinomontazh/koleso/panel`,
+    cancel_url: `${site}/b/demo/cancel`, reschedule_url: `${site}/b/demo/reschedule`, panel_url: `${site}/shinomontazh/koleso/admin`,
     email: 'owner@example.com', password: '••••••••', support_until: '20 ноября 2026', download_url: `${site}/download/demo`,
     unsubscribe_url: `${site}/unsubscribe/preview`,
   };

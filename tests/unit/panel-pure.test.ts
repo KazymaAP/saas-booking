@@ -1,18 +1,18 @@
 // tests/unit/panel-pure.test.ts — чистые модули кабинета: CSV, чек-лист, разделы и роли, статусы, фото, время, команда.
 import { describe, expect, it } from 'vitest';
-import { buildCsv, csvCell, exportFilename, type ExportBooking } from '../../app/[prefix]/[slug]/panel/export/csv';
-import { buildChecklist, progressPercent } from '../../app/[prefix]/[slug]/panel/(protected)/_lib/onboarding';
-import { SECTIONS, isActiveSection, sectionHref, visibleSections } from '../../app/[prefix]/[slug]/panel/(protected)/_lib/sections';
-import { availableActions, canApply, isActiveStatus, isBookingAction } from '../../app/[prefix]/[slug]/panel/(protected)/bookings/status';
-import { altForIndex, isOwnPhotoPath, remainingSlots, sourceFileError, uploadFileError } from '../../app/[prefix]/[slug]/panel/(protected)/photos/rules';
-import { businessDayStart, DAY_MS } from '../../app/[prefix]/[slug]/panel/(protected)/_lib/time';
-import { callAction } from '../../app/[prefix]/[slug]/panel/(protected)/_lib/client-action';
-import { zodFieldErrors } from '../../app/[prefix]/[slug]/panel/(protected)/_lib/result';
-import { confirmationMatches } from '../../app/[prefix]/[slug]/panel/(protected)/data/rules';
-import { InviteSchema, canRemove, managersCount } from '../../app/[prefix]/[slug]/panel/(protected)/team/schema';
-import { PaidSchema } from '../../app/[prefix]/[slug]/panel/(protected)/subscription/schema';
-import { mergeTexts, TextsSchema } from '../../app/[prefix]/[slug]/panel/(protected)/texts/schema';
-import { ServiceSchema, formatDuration, formatPrice } from '../../app/[prefix]/[slug]/panel/(protected)/services/schema';
+import { buildCsv, csvCell, exportFilename, type ExportBooking } from '../../app/[prefix]/[slug]/admin/export/csv';
+import { buildChecklist, progressPercent } from '../../app/[prefix]/[slug]/admin/(protected)/_lib/onboarding';
+import { SECTIONS, isActiveSection, sectionHref, visibleSections } from '../../app/[prefix]/[slug]/admin/(protected)/_lib/sections';
+import { availableActions, canApply, isActiveStatus, isBookingAction } from '../../app/[prefix]/[slug]/admin/(protected)/bookings/status';
+import { altForIndex, isOwnPhotoPath, remainingSlots, sourceFileError, uploadFileError } from '../../app/[prefix]/[slug]/admin/(protected)/photos/rules';
+import { businessDayStart, DAY_MS } from '../../app/[prefix]/[slug]/admin/(protected)/_lib/time';
+import { callAction } from '../../app/[prefix]/[slug]/admin/(protected)/_lib/client-action';
+import { zodFieldErrors } from '../../app/[prefix]/[slug]/admin/(protected)/_lib/result';
+import { confirmationMatches } from '../../app/[prefix]/[slug]/admin/(protected)/data/rules';
+import { InviteSchema, canRemove, managersCount } from '../../app/[prefix]/[slug]/admin/(protected)/team/schema';
+import { PaidSchema } from '../../app/[prefix]/[slug]/admin/(protected)/subscription/schema';
+import { mergeTexts, TextsSchema } from '../../app/[prefix]/[slug]/admin/(protected)/texts/schema';
+import { ServiceSchema, formatDuration, formatPrice } from '../../app/[prefix]/[slug]/admin/(protected)/services/schema';
 
 const B = '11111111-1111-4111-8111-111111111111';
 const U = '33333333-3333-4333-8333-333333333333';
@@ -229,19 +229,19 @@ describe('схемы форм', () => {
 
 describe('_lib/color — контраст акцента', () => {
   it('тёмный цвет не меняется', async () => {
-    const { accentColor } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/color');
+    const { accentColor } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/color');
     expect(accentColor('#1d4ed8')).toBe('#1d4ed8');
   });
 
   it('светлый цвет затемняется до 4.5:1', async () => {
-    const { accentColor, contrastWithWhite, MIN_CONTRAST } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/color');
+    const { accentColor, contrastWithWhite, MIN_CONTRAST } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/color');
     for (const c of ['#facc15', '#a7f3d0', '#ffffff', '#FF9900']) {
       expect(contrastWithWhite(accentColor(c))).toBeGreaterThanOrEqual(MIN_CONTRAST);
     }
   });
 
   it('мусор → цвет по умолчанию', async () => {
-    const { accentColor, DEFAULT_ACCENT } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/color');
+    const { accentColor, DEFAULT_ACCENT } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/color');
     expect(accentColor(null)).toBe(DEFAULT_ACCENT);
     expect(accentColor('red')).toBe(DEFAULT_ACCENT);
     expect(accentColor('#12345')).toBe(DEFAULT_ACCENT);
@@ -253,7 +253,7 @@ describe('_lib/subscription', () => {
   const inDays = (d: number) => new Date(now + d * 86_400_000).toISOString();
 
   it('статусы по сроку', async () => {
-    const { subscriptionStatus } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/subscription');
+    const { subscriptionStatus } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/subscription');
     expect(subscriptionStatus(true, inDays(30), now).tone).toBe('ok');
     expect(subscriptionStatus(true, inDays(3), now)).toMatchObject({ tone: 'warn', label: 'Скоро закончится' });
     expect(subscriptionStatus(true, inDays(-1), now).tone).toBe('bad');
@@ -263,7 +263,7 @@ describe('_lib/subscription', () => {
   });
 
   it('отметка в меню только когда нужно внимание', async () => {
-    const { subscriptionAttention } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/subscription');
+    const { subscriptionAttention } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/subscription');
     expect(subscriptionAttention(true, inDays(30), now)).toBeNull();
     expect(subscriptionAttention(true, inDays(2), now)).toBe('скоро закончится');
   });
@@ -271,7 +271,7 @@ describe('_lib/subscription', () => {
 
 describe('bookings/status — отметки визита только после начала', () => {
   it('до начала записи нет «Выполнено» и «Не пришёл»', async () => {
-    const { availableActions } = await import('../../app/[prefix]/[slug]/panel/(protected)/bookings/status');
+    const { availableActions } = await import('../../app/[prefix]/[slug]/admin/(protected)/bookings/status');
     expect(availableActions('new', false)).toEqual(['confirm', 'cancel']);
     expect(availableActions('confirmed', false)).toEqual(['cancel']);
     expect(availableActions('confirmed', true)).toEqual(['done', 'no_show', 'cancel']);
@@ -279,7 +279,7 @@ describe('bookings/status — отметки визита только посл�
   });
 
   it('toBookingRow отдаёт начало записи в мс', async () => {
-    const { toBookingRow } = await import('../../app/[prefix]/[slug]/panel/(protected)/bookings/rows');
+    const { toBookingRow } = await import('../../app/[prefix]/[slug]/admin/(protected)/bookings/rows');
     const row = toBookingRow({ id: U, scheduled_at: '2026-10-20T07:00:00Z', status: 'new', client_name: null, client_phone: null, comment: null, services: null });
     expect(row.starts_at).toBe(Date.UTC(2026, 9, 20, 7, 0));
     expect(row.service).toBe('Услуга удалена');
@@ -288,7 +288,7 @@ describe('bookings/status — отметки визита только посл�
 
 describe('_lib/tips', () => {
   it('ключ подсказки: версия, slug в нижнем регистре, имя подсказки', async () => {
-    const { tipStorageKey, TIP_PREFIX } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/tips');
+    const { tipStorageKey, TIP_PREFIX } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/tips');
     expect(tipStorageKey(' My-Studio ', 'photos')).toBe(`${TIP_PREFIX}:my-studio:photos`);
     expect(tipStorageKey('a', 'dashboard')).not.toBe(tipStorageKey('b', 'dashboard'));
   });
@@ -296,7 +296,7 @@ describe('_lib/tips', () => {
 
 describe('bookings/tel', () => {
   it('tel: только из цифр, «+» сохраняется, мусор — без ссылки', async () => {
-    const { telHref } = await import('../../app/[prefix]/[slug]/panel/(protected)/bookings/tel');
+    const { telHref } = await import('../../app/[prefix]/[slug]/admin/(protected)/bookings/tel');
     expect(telHref('+7 (999) 123-45-67')).toBe('tel:+79991234567');
     expect(telHref('8 999 123 45 67')).toBe('tel:89991234567');
     expect(telHref('нет')).toBeNull();
@@ -312,7 +312,7 @@ describe('bookings/view — группы по дням и поиск', () => {
   });
 
   it('dayTitle: сегодня / завтра / вчера по Москве, а не по UTC', async () => {
-    const { dayTitle } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/time');
+    const { dayTitle } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/time');
     expect(dayTitle(Date.UTC(2026, 9, 15, 20, 30), now)).toBe('Сегодня'); // 23:30 МСК
     expect(dayTitle(Date.UTC(2026, 9, 15, 21, 30), now)).toBe('Завтра'); // 00:30 МСК 16-го, в UTC ещё 15-е
     expect(dayTitle(Date.UTC(2026, 9, 14, 10, 0), now)).toBe('Вчера');
@@ -320,7 +320,7 @@ describe('bookings/view — группы по дням и поиск', () => {
   });
 
   it('groupByDay сохраняет порядок и склеивает соседние строки одного дня', async () => {
-    const { groupByDay } = await import('../../app/[prefix]/[slug]/panel/(protected)/bookings/view');
+    const { groupByDay } = await import('../../app/[prefix]/[slug]/admin/(protected)/bookings/view');
     const groups = groupByDay([
       row('a', '2026-10-15T10:00:00Z'), row('b', '2026-10-15T15:00:00Z'), row('c', '2026-10-15T22:00:00Z'),
     ], now);
@@ -329,7 +329,7 @@ describe('bookings/view — группы по дням и поиск', () => {
   });
 
   it('matchesQuery: имя, услуга, телефон по цифрам; короткие цифры телефон не ищут', async () => {
-    const { matchesQuery } = await import('../../app/[prefix]/[slug]/panel/(protected)/bookings/view');
+    const { matchesQuery } = await import('../../app/[prefix]/[slug]/admin/(protected)/bookings/view');
     const r = row('a', '2026-10-15T10:00:00Z');
     expect(matchesQuery(r, '')).toBe(true);
     expect(matchesQuery(r, '  анна ')).toBe(true);
@@ -366,7 +366,7 @@ describe('settings/schema', () => {
   };
 
   it('телефоны: дубли в разном формате схлопываются, больше 3 — ошибка, кривой — с текстом номера', async () => {
-    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/panel/(protected)/settings/schema');
+    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/admin/(protected)/settings/schema');
     expect(SettingsSchema.parse({ ...base, phones: '8 (999) 123-45-67; +7 999 1234567' }).phones).toEqual(['+79991234567']);
     expect(SettingsSchema.safeParse({ ...base, phones: '89990000001, 89990000002, 89990000003, 89990000004' }).success).toBe(false);
     const bad = SettingsSchema.safeParse({ ...base, phones: '123' });
@@ -375,20 +375,20 @@ describe('settings/schema', () => {
   });
 
   it('email: нижний регистр, дубли, неверный формат', async () => {
-    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/panel/(protected)/settings/schema');
+    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/admin/(protected)/settings/schema');
     expect(SettingsSchema.parse({ ...base, emails: 'A@B.ru, a@b.ru' }).emails).toEqual(['a@b.ru']);
     expect(SettingsSchema.safeParse({ ...base, emails: 'a@b' }).success).toBe(false);
   });
 
   it('шаг записи только из списка, цвет только #RRGGBB', async () => {
-    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/panel/(protected)/settings/schema');
+    const { SettingsSchema } = await import('../../app/[prefix]/[slug]/admin/(protected)/settings/schema');
     expect(SettingsSchema.safeParse({ ...base, slot_step_minutes: '45' }).success).toBe(false);
     expect(SettingsSchema.safeParse({ ...base, brand_color: 'red' }).success).toBe(false);
     expect(SettingsSchema.safeParse({ ...base, max_days_ahead: '0' }).success).toBe(false);
   });
 
   it('toSettingsForm: кривой brand_color из БД не ломает форму', async () => {
-    const { toSettingsForm } = await import('../../app/[prefix]/[slug]/panel/(protected)/settings/schema');
+    const { toSettingsForm } = await import('../../app/[prefix]/[slug]/admin/(protected)/settings/schema');
     const b = { name: 'X', description: null, city: null, address: null, phones: ['+79991234567'], emails: [], brand_color: 'blue',
       working_hours: { mon: [{ open: '09:00', close: '18:00' }] }, slot_step_minutes: 30, cancel_hours_before: 2, min_hours_before: 1,
       max_days_ahead: 30, auto_confirm: true };
@@ -402,7 +402,7 @@ describe('settings/schema', () => {
 
 describe('_lib/busy — занятые строки списка', () => {
   it('добавление и снятие не затрагивают другие строки', async () => {
-    const { withBusy, withoutBusy } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/busy');
+    const { withBusy, withoutBusy } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/busy');
     const a = withBusy(new Set(), 'a');
     const ab = withBusy(a, 'b');
     // Ответ по «a» пришёл раньше — «b» остаётся занятой (раньше один busyId сбрасывал обе).
@@ -412,7 +412,7 @@ describe('_lib/busy — занятые строки списка', () => {
   });
 
   it('без изменений возвращает тот же набор (лишнего рендера нет)', async () => {
-    const { withBusy, withoutBusy } = await import('../../app/[prefix]/[slug]/panel/(protected)/_lib/busy');
+    const { withBusy, withoutBusy } = await import('../../app/[prefix]/[slug]/admin/(protected)/_lib/busy');
     const s = withBusy(new Set(), 'a');
     expect(withBusy(s, 'a')).toBe(s);
     expect(withoutBusy(s, 'zzz')).toBe(s);

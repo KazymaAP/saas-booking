@@ -1,6 +1,6 @@
 # Том 05. Панели: разделы, кнопки, формы, поля
 
-Источники: `главная/SuperAdmin.tsx`, `app/panel/(protected)/layout.tsx`, `app/[prefix]/[slug]/panel/(protected)/_lib/sections.ts`, `app/partner/PartnerShell.tsx`, `app/partner/components.tsx`, `app/partner/ready-panel.tsx`, `app/auth/AuthCard.tsx`, `app/page.tsx`, выборочные grep по текстам кнопок страниц панелей.
+Источники: `главная/SuperAdmin.tsx`, `app/panel/(protected)/layout.tsx`, `app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts`, `app/partner/PartnerShell.tsx`, `app/partner/components.tsx`, `app/partner/ready-panel.tsx`, `app/auth/AuthCard.tsx`, `app/page.tsx`, выборочные grep по текстам кнопок страниц панелей.
 
 Ниже перечислены реальные элементы интерфейса, найденные в коде. Где кнопка реализована через `<form action={...}>`, указан соответствующий server action (полный список — том 06).
 
@@ -31,7 +31,7 @@
 
 **Действия (server actions):** `registerAction`, `loginAction`, `requestCodeAction`, `resetPasswordAction`.
 
-**Результат входа:** партнёр → `/partner`; супер-админ → `/admin`; владелец бизнеса → `/{prefix}/{slug}/panel`; аккаунт без бизнеса → сообщение «Аккаунт есть, но заявка ещё не обработана».
+**Результат входа:** партнёр → `/partner`; супер-админ → `/admin`; владелец бизнеса → `/{prefix}/{slug}/admin`; аккаунт без бизнеса → сообщение «Аккаунт есть, но заявка ещё не обработана».
 
 ## 3. Админ-студия `/admin` (`главная/SuperAdmin.tsx`, 4688 строк)
 
@@ -75,7 +75,7 @@ NAV из 13 пунктов (см. том 04). Реальные кнопки/по
 
 Фильтры-селекты: «Все ниши», «Все статусы», «Все источники», «Все объекты», «Любая», «День». Таблицы: «Карточка бизнеса», «Клиенты и кандидаты в клиенты», «Последние брони», «Выданные лицензии», «Все шаблоны», «Копий пока нет.», «Писем в этом разделе нет.», «Главные показатели», «Отправлено писем и оплат по дням».
 
-## 5. Кабинет владельца `/{prefix}/{slug}/panel`
+## 5. Кабинет владельца `/{prefix}/{slug}/admin`
 
 **Панель навигации (`PanelNav`):** Главная, Брони, Услуги, Фото, Тексты, Уведомления + (только owner) Настройки, Оформление, Подписка, Команда, Данные. Кнопка `Выйти`, `Меню`, бейдж «требует внимания» у Подписки (`subscriptionAttention`).
 

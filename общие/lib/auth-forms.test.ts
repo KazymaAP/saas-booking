@@ -62,14 +62,14 @@ describe('auth-forms: коды из URL и формы', () => {
   it('withQuery пропускает пустые значения и кодирует остальные', () => {
     expect(forms.withQuery('/panel/login', { error: 'invalid', next: null })).toBe('/panel/login?error=invalid');
     expect(forms.withQuery('/panel/login', {})).toBe('/panel/login');
-    expect(forms.withQuery('/magic-link', { next: '/s/tire/panel?a=1&b=2' })).toBe('/magic-link?next=%2Fs%2Ftire%2Fpanel%3Fa%3D1%26b%3D2');
+    expect(forms.withQuery('/magic-link', { next: '/s/tire/admin?a=1&b=2' })).toBe('/magic-link?next=%2Fs%2Ftire%2Fadmin%3Fa%3D1%26b%3D2');
   });
 
   it('realmFromNext: кабинет владельца, супер-админка, мусор', () => {
-    expect(forms.realmFromNext('/s/tire/panel/bookings')).toEqual({ realm: 'owner', next: '/s/tire/panel/bookings' });
+    expect(forms.realmFromNext('/s/tire/admin/bookings')).toEqual({ realm: 'owner', next: '/s/tire/admin/bookings' });
     expect(forms.realmFromNext('/panel/clients')).toEqual({ realm: 'admin', next: '/panel/clients' });
     expect(forms.realmFromNext('https://evil.com/panel')).toEqual({ realm: 'admin', next: null });
-    expect(forms.realmFromNext('/s/tire/panel/%2e%2e/x')).toEqual({ realm: 'admin', next: null });
+    expect(forms.realmFromNext('/s/tire/admin/%2e%2e/x')).toEqual({ realm: 'admin', next: null });
   });
 
   it('param берёт первое значение повторённого ключа', () => {
@@ -90,8 +90,8 @@ describe('auth-roles: разделы кабинета', () => {
   });
 
   it('sectionOf: раздел из пути кабинета владельца и кастомного домена', () => {
-    expect(roles.sectionOf('/s/tire/panel/settings/requisites')).toBe('settings');
-    expect(roles.sectionOf('/s/tire/panel')).toBe('');
+    expect(roles.sectionOf('/s/tire/admin/settings/requisites')).toBe('settings');
+    expect(roles.sectionOf('/s/tire/admin')).toBe('');
     expect(roles.sectionOf('/panel/team?x=1')).toBe('team');
     expect(roles.sectionOf('/s/tire')).toBeNull();
     expect(roles.sectionOf(null)).toBeNull();

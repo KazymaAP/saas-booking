@@ -7,7 +7,7 @@
 | Функция | Действие |
 |---|---|
 | `registerAction(input)` | Валидация имени/email/пароля (≥8), rate limit по IP+email. Партнёр: `createPartner()` → `authenticatePartner()` → `writePartnerSessionCookie()` → `/partner`. Предприниматель: `createEntrepreneurRequest()` → `adminClient().auth.admin.createUser({ email_confirm: true })` → сообщение |
-| `loginAction(email, password)` | Партнёр (`authenticatePartner`) → cookie → `/partner`; иначе `passwordSignIn` → супер-админ (`isSuperAdminEmail`) → `/admin`; владелец (поиск `admin_users` → `businesses`) → `/{prefix}/{slug}/panel` |
+| `loginAction(email, password)` | Партнёр (`authenticatePartner`) → cookie → `/partner`; иначе `passwordSignIn` → супер-админ (`isSuperAdminEmail`) → `/admin`; владелец (поиск `admin_users` → `businesses`) → `/{prefix}/{slug}/admin` |
 | `requestCodeAction(email)` | Не раскрывает наличие аккаунта; `publicClient().auth.signInWithOtp({ shouldCreateUser: true })` |
 | `resetPasswordAction(email, code, password)` | `verifyOtp` (6 цифр) → обновление `partners.password_hash` либо пароля Supabase Auth |
 
@@ -145,13 +145,13 @@
 | Путь | Метод | Назначение |
 |---|---|---|
 | `/api/demo/partner` | GET | `ensureDemoPartner()` → `createPartnerSession()` → cookie `partner_session` → 302 `/partner` |
-| `/api/demo/owner` | GET | `ensureDemoBusiness()` → `passwordSignIn(demo-owner@…)` → `startSession('owner')` → 302 `/m/demo/panel` |
+| `/api/demo/owner` | GET | `ensureDemoBusiness()` → `passwordSignIn(demo-owner@…)` → `startSession('owner')` → 302 `/m/demo/admin` |
 
 ### Прочие route handlers (не в `app/api/`)
 | Путь | Назначение |
 |---|---|
 | `app/[prefix]/[slug]/manifest.webmanifest/route.ts` | PWA-манифест бизнеса |
-| `app/[prefix]/[slug]/panel/export/route.ts` | CSV-выгрузка броней |
+| `app/[prefix]/[slug]/admin/export/route.ts` | CSV-выгрузка броней |
 | `app/sw.js/route.ts` | Service worker с `Content-Type: application/javascript`, `Cache-Control: no-cache`, `Service-Worker-Allowed: /` |
 | `app/robots.ts`, `app/sitemap.ts` | SEO-файлы |
 

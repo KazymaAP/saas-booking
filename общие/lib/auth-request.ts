@@ -29,8 +29,8 @@ export function requestContext(): RequestContext {
   };
 }
 
-// Базовый путь кабинета владельца. На кастомном домене middleware переписывает /panel/* →
-// /{prefix}/{slug}/panel/*, поэтому ссылки и редиректы там должны вести на /panel (ТЗ §3.3, §40).
+// Базовый путь кабинета владельца. На кастомном домене middleware переписывает /admin/* →
+// /{prefix}/{slug}/admin/*, поэтому ссылки и редиректы там должны вести на /admin (ТЗ §3.3, §40).
 export function ownerBasePath(prefix: string, slug: string, ctx: RequestContext = requestContext()): string {
-  return ctx.mainHost ? `/${prefix}/${slug}/panel` : '/panel';
+  return ctx.mainHost ? `/${prefix}/${slug}/admin` : '/admin';
 }

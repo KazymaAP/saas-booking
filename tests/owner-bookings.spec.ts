@@ -47,7 +47,7 @@ test.describe('брони', () => {
     const doneBtn = page.locator('table').getByRole('button', { name: /^Выполнено:/ }).first();
     test.skip((await doneBtn.count()) === 0, 'Нет активных броней');
     // Server action — POST на ту же страницу с заголовком Next-Action: рвём его, чтобы проверить откат.
-    await page.route('**/panel/bookings**', (route) => (route.request().headers()['next-action'] ? route.abort() : route.continue()));
+    await page.route('**/admin/bookings**', (route) => (route.request().headers()['next-action'] ? route.abort() : route.continue()));
     const row = page.locator('tr', { has: doneBtn });
     const before = await row.locator('td').nth(3).innerText();
     await doneBtn.click();

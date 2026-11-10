@@ -13,7 +13,7 @@ export default defineConfig({
     include: ['lib/**/*.test.ts', 'tests/unit/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['lib/hours.ts', 'app/\\[prefix\\]/\\[slug\\]/panel/**/*.ts'],
+      include: ['lib/hours.ts', 'app/\\[prefix\\]/\\[slug\\]/admin/**/*.ts'],
       // notifications/** — зона агента 9; upload-client/usePhotoUploads — браузерный код, покрыт e2e (owner-photos).
       exclude: ['**/*.tsx', '**/*.test.ts', '**/notifications/**', '**/upload-client.ts', '**/usePhotoUploads.ts'],
     },

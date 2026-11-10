@@ -52,7 +52,7 @@ describe('auth-reset: запрос', () => {
 
   it('незнакомый адрес — тот же ответ, письма нет, событие в журнале', async () => {
     expect(await reset.requestPasswordReset({ email: 'ghost@example.com', realm: 'admin', returnTo: null, ip: IP })).toBe('sent');
-    expect(await reset.requestPasswordReset({ email: 'ghost@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP })).toBe('sent');
+    expect(await reset.requestPasswordReset({ email: 'ghost@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP })).toBe('sent');
     expect(harness.sentMails).toHaveLength(0);
     expect(harness.auditCalls.filter((c) => c.action === 'auth:reset_rejected')).toHaveLength(2);
   });
@@ -60,7 +60,7 @@ describe('auth-reset: запрос', () => {
   it('rate limit 3/15 мин/email', async () => {
     const out: string[] = [];
     for (let i = 0; i < 4; i += 1) {
-      out.push(await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: `10.1.0.${i}` }));
+      out.push(await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: `10.1.0.${i}` }));
     }
     expect(out).toEqual(['sent', 'sent', 'sent', 'rate_limited']);
   });
@@ -127,20 +127,20 @@ describe('auth-reset: установка нового пароля', () => {
   });
 
   it('владелец: вход в кабинет; бизнес стал неактивным — changed со ссылкой на вход кабинета', async () => {
-    await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP });
+    await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP });
     const token = tokenFromLastMail();
     providerHappyPath('owner@biz.ru', 'owner-1');
     seedOwnerBusiness('archived');
     const r = await reset.completePasswordReset({ token, password: NEW_PASSWORD, confirm: NEW_PASSWORD, ip: IP });
-    expect(r).toEqual({ kind: 'changed', loginPath: '/s/tire/panel/login' });
+    expect(r).toEqual({ kind: 'changed', loginPath: '/s/tire/admin/login' });
     expect(harness.jar.has('biz_session')).toBe(false);
   });
 
   it('владелец: успешный сброс ведёт в кабинет', async () => {
-    await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/panel', ip: IP });
+    await reset.requestPasswordReset({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/s/tire/admin', ip: IP });
     providerHappyPath('owner@biz.ru', 'owner-1');
     const r = await reset.completePasswordReset({ token: tokenFromLastMail(), password: NEW_PASSWORD, confirm: NEW_PASSWORD, ip: IP });
-    expect(r).toEqual({ kind: 'ok', redirectTo: '/s/tire/panel' });
+    expect(r).toEqual({ kind: 'ok', redirectTo: '/s/tire/admin' });
     expect(harness.jar.get('biz_session')?.value).toBe('access-owner-1');
   });
 
@@ -168,10 +168,10 @@ describe('auth-flow', () => {
   it('normalizeReturnTo и loginPathFor', () => {
     expect(flow.normalizeReturnTo('admin', null)).toBe('/admin');
     expect(flow.normalizeReturnTo('admin', '/panel/clients?x=1')).toBe('/panel/clients?x=1');
-    expect(flow.normalizeReturnTo('owner', '/s/tire/panel/bookings')).toBe('/s/tire/panel/bookings');
+    expect(flow.normalizeReturnTo('owner', '/s/tire/admin/bookings')).toBe('/s/tire/admin/bookings');
     expect(flow.normalizeReturnTo('owner', '/panel')).toBeNull();
     expect(flow.normalizeReturnTo('owner', 'https://evil.com/s/x/panel')).toBeNull();
-    expect(flow.loginPathFor('owner', '/s/tire/panel/bookings')).toBe('/s/tire/panel/login');
+    expect(flow.loginPathFor('owner', '/s/tire/admin/bookings')).toBe('/s/tire/admin/login');
     expect(flow.loginPathFor('admin', '/panel/clients')).toBe('/panel/login');
     expect(flow.loginPathFor('owner', null)).toBe('/panel/login');
   });

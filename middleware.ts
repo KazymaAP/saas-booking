@@ -86,7 +86,10 @@ function isForeignOrigin(req: NextRequest, host: string): boolean {
 }
 
 // ---------- Пути ----------
-function isSystemPath(path: string): boolean {
+// Host-aware: /admin на MAIN_HOSTS — студия супер-админа, системный путь (TRUE).
+// На кастомном домене /admin — кабинет предпринимателя: должен попасть в rewrite (FALSE).
+function isSystemPath(path: string, host: string): boolean {
+  if (isMainHost(host) && (path === '/admin' || path.startsWith('/admin/'))) return true;
   return path.startsWith('/_next') || path.startsWith('/api/') || /\.[a-z0-9]+$/i.test(path);
 }
 
@@ -96,7 +99,7 @@ function isNoindexPath(path: string): boolean {
     || path === '/admin' || path.startsWith('/admin/')
     || path === '/dev' || path.startsWith('/dev/')
     || path === '/partner' || path.startsWith('/partner/')
-    || /^\/[a-z]{1,4}\/[^/]+\/panel(\/|$)/.test(path);
+    || /^\/[a-z]{1,4}\/[^/]+\/admin(\/|$)/.test(path);
 }
 
 function withNoindex(res: NextResponse, noindex: boolean): NextResponse {
@@ -154,7 +157,14 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   }
   if (licenseBlocked(req, event, host)) return blockedResponse(req);
 
-  if (!isMainHost(host) && !isSystemPath(path)) return customDomain(req, host);
+  // Кабинет предпринимателя на кастомном домене теперь /admin; старый /panel/login — постоянный редирект.
+  if (!isMainHost(host) && path === '/panel/login') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/admin/login';
+    return NextResponse.redirect(url, 308);
+  }
+
+  if (!isMainHost(host) && !isSystemPath(path, host)) return customDomain(req, host);
 
   // Внутренний маршрут кастомных доменов не открывается напрямую на основном домене.
   if (path.startsWith('/domain-site')) return new NextResponse(null, { status: 404 });

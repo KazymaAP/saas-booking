@@ -26,15 +26,15 @@
 | Роль | Где работает | Источник прав | Что делает |
 |---|---|---|---|
 | Оператор (супер-админ) | `/panel/*` и `/admin` | `SUPERADMIN_EMAILS` + Supabase Auth + `admin-session.ts` | Импорт, воронка, рассылка, клиенты, лицензии, бэкап, настройки платформы |
-| Владелец бизнеса | `/{prefix}/{slug}/panel` | `admin_users.role = 'owner'` | Брони, услуги, фото, тексты, настройки, оформление, подписка, команда, данные |
-| Менеджер бизнеса | `/{prefix}/{slug}/panel` | `admin_users.role = 'manager'` | Брони, услуги, фото, тексты, уведомления, главная. Без настроек/подписки/команды/оформления/данных |
+| Владелец бизнеса | `/{prefix}/{slug}/admin` | `admin_users.role = 'owner'` | Брони, услуги, фото, тексты, настройки, оформление, подписка, команда, данные |
+| Менеджер бизнеса | `/{prefix}/{slug}/admin` | `admin_users.role = 'manager'` | Брони, услуги, фото, тексты, уведомления, главная. Без настроек/подписки/команды/оформления/данных |
 | Партнёр | `/partner` | Таблица `partners`, scrypt-пароль, HMAC-cookie `partner_session` | Лиды, счета, начисления, готовые сервисы, реферальная программа, материалы |
 | Клиент бизнеса | `/{prefix}/{slug}` или кастомный домен | Без регистрации | Выбор услуги/времени, создание брони, отмена/перенос по токену |
 | Неавторизованный посетитель | `/`, `/auth`, `/oferta`, `/privacy`, `/dogovor-porucheniya`, `/data-request`, `/blocked` | — | Лендинг, вход/регистрация, юридические страницы |
 
 Проверки доступа:
 - `app/panel/(protected)/layout.tsx` — `await isSuperAdmin()` иначе `redirect('/panel/login')`. Server actions дополнительно проверяют права сами через `главная/lib/guard.ts`.
-- `app/[prefix]/[slug]/panel/(protected)/layout.tsx` — `currentOwner(slug)` (membership в `admin_users`, бизнес в статусе `client`), иначе `redirect(`${base}/login`)`. Для server actions — `requireOwnerAction(slug, roles)` с проверкой Origin.
+- `app/[prefix]/[slug]/admin/(protected)/layout.tsx` — `currentOwner(slug)` (membership в `admin_users`, бизнес в статусе `client`), иначе `redirect(`${base}/login`)`. Для server actions — `requireOwnerAction(slug, roles)` с проверкой Origin.
 - `app/partner/page.tsx` — `readPartnerSession()` + `getPartnerById()`, иначе `redirect('/partner/login')` (который редиректит на `/auth`).
 - `app/admin/page.tsx` — `isSuperAdmin()`.
 
@@ -122,7 +122,7 @@ new → in_progress → preview_ready → approved → sent → viewed → repli
 
 **Кастомный домен:** DNS клиента → Vercel → `middleware.ts` (host не из `MAIN_HOSTS`) → либо `/api/resolve-domain` (ставит подписанную cookie `domain_map`, 307), либо `/domain-site/by-domain?domain=...` для главной без cookie → `findBusinessByDomain()` → `BusinessPage`. Подпути с cookie переписываются в `/{prefix}/{slug}/...`.
 
-**Регистрация:** `/auth` → `registerAction`: партнёр — `createPartner()` + партнёрская cookie + `/partner`; предприниматель — `createEntrepreneurRequest()` (заявка, `status='new'`) + пользователь Supabase Auth → сообщение «заявка отправлена». Вход `loginAction` проверяет сначала `partners`, затем Supabase Auth (супер-админ → `/admin`, владелец → `/{prefix}/{slug}/panel`).
+**Регистрация:** `/auth` → `registerAction`: партнёр — `createPartner()` + партнёрская cookie + `/partner`; предприниматель — `createEntrepreneurRequest()` (заявка, `status='new'`) + пользователь Supabase Auth → сообщение «заявка отправлена». Вход `loginAction` проверяет сначала `partners`, затем Supabase Auth (супер-админ → `/admin`, владелец → `/{prefix}/{slug}/admin`).
 
 **Партнёрская продажа:** партнёр берёт готовый сервис (`ready_services`) → пишет предпринимателю → создаёт счёт (`partner_checkouts`, варианты `subscription_5000` / `code_5000` / `custom`) → ссылка на оплату ЮKassa (`/pay/{id}`) → webhook → `markCheckoutPaid()` → `partner_earnings` + бонус наставнику (`referral_bonus`).
 

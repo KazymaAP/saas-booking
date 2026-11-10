@@ -147,7 +147,7 @@ export async function loginAction(emailRaw: string, password: string): Promise<A
   }
 
   startSession('owner', session);
-  return { ok: true, redirect: `/${prefix}/${business.slug}/panel` };
+  return { ok: true, redirect: `/${prefix}/${business.slug}/admin` };
 }
 
 export async function requestCodeAction(emailRaw: string): Promise<AuthActionResult> {

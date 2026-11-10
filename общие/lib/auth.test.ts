@@ -155,11 +155,11 @@ describe('auth-core: redirect, Origin, IP', () => {
   });
 
   it('sanitizePanelNext понимает кабинет владельца и супер-админку', () => {
-    expect(core.sanitizePanelNext('/s/tire/panel/bookings')).toBe('/s/tire/panel/bookings');
-    expect(core.panelRootOf('/s/tire/panel/bookings')).toBe('/s/tire/panel');
+    expect(core.sanitizePanelNext('/s/tire/admin/bookings')).toBe('/s/tire/admin/bookings');
+    expect(core.panelRootOf('/s/tire/admin/bookings')).toBe('/s/tire/admin');
     expect(core.panelRootOf('/panel/funnel')).toBe('/panel');
     expect(core.sanitizePanelNext('/s/tire')).toBeNull();
-    expect(core.sanitizePanelNext('//s/tire/panel')).toBeNull();
+    expect(core.sanitizePanelNext('//s/tire/admin')).toBeNull();
   });
 
   it('isSameOrigin: Origin, Referer, отсутствие и подмена', () => {
@@ -453,7 +453,7 @@ describe('auth-invites (задача 5)', () => {
     vi.mocked(provider.createUserWithPassword).mockResolvedValue({ kind: 'created', user: { id: 'new-1', email: 'new@biz.ru' } });
     vi.mocked(provider.passwordSignIn).mockResolvedValue(sessionFor('new@biz.ru', 'new-1'));
     const r = await invites.acceptInvite({ token, password: 'long-enough-pass', ip: '1.2.3.4' }, NOW_I);
-    expect(r).toEqual({ kind: 'ok', redirectTo: '/s/tire/panel' });
+    expect(r).toEqual({ kind: 'ok', redirectTo: '/s/tire/admin' });
     expect(harness.tables.get('admin_users')?.find((u) => u.auth_user_id === 'new-1')).toMatchObject({ role: 'manager', business_id: 'b1' });
     expect(harness.jar.get('biz_session')?.value).toBe('access-new-1');
     expect((await invites.acceptInvite({ token, password: 'long-enough-pass', ip: '1.2.3.4' }, NOW_I)).kind).toBe('used');

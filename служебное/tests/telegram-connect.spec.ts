@@ -57,16 +57,16 @@ async function sendUpdate(request: APIRequestContext, text: string, secret: stri
 }
 
 async function login(page: Page): Promise<void> {
-  await page.goto(`${env.baseUrl}${env.businessPath}/panel/login`);
+  await page.goto(`${env.baseUrl}${env.businessPath}/admin/login`);
   // У полей входа нет <label> (страница агента 6) — ищем по placeholder.
   await page.getByPlaceholder('Email').fill(env.email);
   await page.getByPlaceholder('Пароль').fill(env.password);
   await page.getByRole('button', { name: /войти/i }).click();
-  await page.waitForURL(new RegExp(`${env.businessPath}/panel(?!/login)`));
+  await page.waitForURL(new RegExp(`${env.businessPath}/admin(?!/login)`));
 }
 
 async function openNotifications(page: Page): Promise<void> {
-  await page.goto(`${env.baseUrl}${env.businessPath}/panel/notifications`);
+  await page.goto(`${env.baseUrl}${env.businessPath}/admin/notifications`);
   await expect(page.getByRole('heading', { level: 1, name: 'Уведомления' })).toBeVisible();
 }
 

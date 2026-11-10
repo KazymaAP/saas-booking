@@ -15,7 +15,7 @@ export function sectionAllowed(role: OwnerRole, section: string): boolean {
   return role === 'owner' || !(OWNER_ONLY_SECTIONS as readonly string[]).includes(section);
 }
 
-// Раздел кабинета по пути: '/s/tire/panel/settings/x' → 'settings'; '' — главная; null — путь не из кабинета.
+// Раздел кабинета по пути: '/s/tire/admin/settings/x' → 'settings'; '' — главная; null — путь не из кабинета.
 export function sectionOf(path: string | null): string | null {
   if (!path) return null;
   const clean = path.split(/[?#]/)[0] ?? '';

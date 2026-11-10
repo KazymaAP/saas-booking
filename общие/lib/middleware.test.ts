@@ -60,10 +60,28 @@ describe('middleware', () => {
 
   it('панели и прототипы — noindex', async () => {
     const { middleware } = await load();
-    for (const path of ['/panel', '/panel/funnel', '/t/tire/panel', '/t/tire/panel/bookings', '/preview/abc']) {
+    for (const path of ['/panel', '/panel/funnel', '/t/tire/admin', '/t/tire/admin/bookings', '/preview/abc']) {
       const res = await middleware(request(`https://zapishisya.ru${path}`), event);
       expect(res.headers.get('x-robots-tag'), path).toBe('noindex, nofollow');
     }
+  });
+
+  it('/admin на MAIN_HOSTS — студия без rewrite; на кастомном домене — кабинет бизнеса', async () => {
+    const { middleware } = await load();
+    const main = await middleware(request('https://zapishisya.ru/admin'), event);
+    expect(rewriteOf(main)).toBeNull();
+    const signed = await signDomainMap({ host: 'client.ru', prefix: 't', slug: 'tire', status: 'client', exp: nowSeconds() + 60 }, SECRET);
+    const custom = await middleware(request('https://client.ru/admin', { cookies: { domain_map: signed ?? '' } }), event);
+    expect(rewriteOf(custom)?.pathname).toBe('/t/tire/admin');
+  });
+
+  it('кастомный домен: старый /panel/login → 308 на /admin/login', async () => {
+    const { middleware } = await load();
+    const res = await middleware(request('https://client.ru/panel/login?next=%2Fadmin'), event);
+    expect(res.status).toBe(308);
+    const location = new URL(res.headers.get('location') ?? 'https://client.ru/');
+    expect(location.pathname).toBe('/admin/login');
+    expect(location.searchParams.get('next')).toBe('/admin');
   });
 
   it('/domain-site напрямую на основном домене — 404', async () => {
@@ -82,12 +100,12 @@ describe('middleware', () => {
   it('кастомный домен, подпуть без cookie → rewrite (не fetch) в resolve-domain', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel/bookings?x=1'), event);
+    const res = await middleware(request('https://client.ru/admin/bookings?x=1'), event);
     const target = rewriteOf(res);
     expect(target?.pathname).toBe('/api/resolve-domain');
     expect(target?.search).toBe('');
     expect(forwardedHeader(res, 'x-resolve-host')).toBe('client.ru');
-    expect(forwardedHeader(res, 'x-resolve-next')).toBe('/panel/bookings?x=1');
+    expect(forwardedHeader(res, 'x-resolve-next')).toBe('/admin/bookings?x=1');
     expect(forwardedHeader(res, 'x-resolve-retry')).toBeNull();
     expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -96,8 +114,8 @@ describe('middleware', () => {
   it('кастомный домен с валидной cookie → /{prefix}/{slug}{path}', async () => {
     const signed = await signDomainMap({ host: 'client.ru', prefix: 't', slug: 'tire', status: 'client', exp: nowSeconds() + 60 }, SECRET);
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel', { cookies: { domain_map: signed ?? '' } }), event);
-    expect(rewriteOf(res)?.pathname).toBe('/t/tire/panel');
+    const res = await middleware(request('https://client.ru/admin', { cookies: { domain_map: signed ?? '' } }), event);
+    expect(rewriteOf(res)?.pathname).toBe('/t/tire/admin');
     expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
 
     const page = await middleware(request('https://client.ru/booking/cancel/abc', { cookies: { domain_map: signed ?? '' } }), event);
@@ -108,8 +126,8 @@ describe('middleware', () => {
   it('ссылка уже с /{prefix}/{slug} не префиксуется повторно', async () => {
     const signed = await signDomainMap({ host: 'client.ru', prefix: 't', slug: 'tire', status: 'client', exp: nowSeconds() + 60 }, SECRET);
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/t/tire/panel', { cookies: { domain_map: signed ?? '' } }), event);
-    expect(rewriteOf(res)?.pathname).toBe('/t/tire/panel');
+    const res = await middleware(request('https://client.ru/t/tire/admin', { cookies: { domain_map: signed ?? '' } }), event);
+    expect(rewriteOf(res)?.pathname).toBe('/t/tire/admin');
   });
 
   it('статус не client → noindex (ТЗ §3.4 п.3)', async () => {
@@ -122,23 +140,23 @@ describe('middleware', () => {
   it('cookie чужого домена игнорируется', async () => {
     const signed = await signDomainMap({ host: 'other.ru', prefix: 't', slug: 'tire', status: 'client', exp: nowSeconds() + 60 }, SECRET);
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel', { cookies: { domain_map: signed ?? '' } }), event);
+    const res = await middleware(request('https://client.ru/admin', { cookies: { domain_map: signed ?? '' } }), event);
     expect(rewriteOf(res)?.pathname).toBe('/api/resolve-domain');
   });
 
   it('маркер __dm при валидной cookie → 307 на чистый адрес', async () => {
     const signed = await signDomainMap({ host: 'client.ru', prefix: 't', slug: 'tire', status: 'client', exp: nowSeconds() + 60 }, SECRET);
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel?__dm=1&a=2', { cookies: { domain_map: signed ?? '' } }), event);
+    const res = await middleware(request('https://client.ru/admin?__dm=1&a=2', { cookies: { domain_map: signed ?? '' } }), event);
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get('location') ?? '').search).toBe('?a=2');
   });
 
   it('маркер __dm без cookie → retry=1 (resolve-domain ответит 400, без цикла)', async () => {
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel?__dm=1'), event);
+    const res = await middleware(request('https://client.ru/admin?__dm=1'), event);
     expect(forwardedHeader(res, 'x-resolve-retry')).toBe('1');
-    expect(forwardedHeader(res, 'x-resolve-next')).toBe('/panel');
+    expect(forwardedHeader(res, 'x-resolve-next')).toBe('/admin');
   });
 
   it('поддельные x-resolve-* от клиента перезаписываются middleware', async () => {

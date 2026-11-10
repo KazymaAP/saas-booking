@@ -189,7 +189,7 @@ async function finishAccept(invite: InviteRecord, params: AcceptInviteParams): P
   }
   startSession('owner', session);
   await authEvent('invite_accepted', { realm: 'owner', email: invite.email, ip: params.ip, businessId: business.id });
-  return { kind: 'ok', redirectTo: `/${business.prefix}/${business.slug}/panel` };
+  return { kind: 'ok', redirectTo: `/${business.prefix}/${business.slug}/admin` };
 }
 
 // Ожидающие приглашения бизнеса — для страницы «Команда» (агент 6).

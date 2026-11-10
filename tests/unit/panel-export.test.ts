@@ -15,7 +15,7 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('@/lib/owner-session', () => ({ currentOwner: async () => session.current }));
 vi.mock('@/lib/audit', () => ({ audit }));
 
-const { GET } = await import('../../app/[prefix]/[slug]/panel/export/route');
+const { GET } = await import('../../app/[prefix]/[slug]/admin/export/route');
 const params = { params: { prefix: 's', slug: SLUG } };
 const req = new Request('http://localhost/s/studio-test/panel/export');
 
