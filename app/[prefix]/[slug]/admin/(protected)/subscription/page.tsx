@@ -3,7 +3,7 @@
 // Только владелец: manager получает 404 (биллинг ему не показываем даже по прямой ссылке).
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
-import { OWNER_ONLY, requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import { formatDate } from '../_lib/time';
 import { subscriptionStatus, type SubscriptionTone } from '../_lib/subscription';
 import { CopyButton } from '../_components/CopyButton';
@@ -33,7 +33,7 @@ function formatPrice(price: number | null): string {
 }
 
 export default async function SubscriptionPage({ params }: { params: { prefix: string; slug: string } }) {
-  const { business: b } = await requirePageAccess(params, OWNER_ONLY);
+  const { business: b } = await requireSectionAccess(params, 'subscription');
   const { data, error } = await adminClient().from('settings').select('value').eq('key', 'platform_requisites').maybeSingle();
   const req = Requisites.parse(data?.value ?? {});
   // Сбой чтения реквизитов не роняет страницу (статус подписки важнее), но и не выдаётся за «реквизиты не указаны».

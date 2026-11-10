@@ -1,18 +1,39 @@
-// lib/auth-roles.ts — права ролей кабинета (ТЗ §5.2). Чистые функции, покрыты unit-тестами.
-// owner — полный доступ к своему бизнесу; manager — брони и просмотр, без биллинга, настроек и команды.
+// общие/lib/auth-roles.ts — встроенные роли сотрудников бизнеса и разбор раздела из пути кабинета.
+// Чистый модуль без внешних зависимостей: матрица прав лежит в sections.ts.
 import { panelRootOf } from './auth-core';
-import type { AdminUser } from './database.types';
 
-export type OwnerRole = AdminUser['role'];
+export const BUILTIN_ROLES = [
+  'owner', 'manager', 'receptionist', 'content', 'viewer', 'finance',
+  'marketing', 'callcenter', 'analyst', 'photographer', 'copywriter',
+  'support', 'auditor', 'intern',
+] as const;
+
+export type Role = (typeof BUILTIN_ROLES)[number];
+
+// Старое имя типа сохранено для совместимости с вызывающими модулями.
+export type OwnerRole = Role;
+
+// Индексация строкой: роль приходит из БД как text и может быть кастомной (шаг 5).
+export const ROLE_LABELS: Readonly<Record<string, string>> = {
+  owner: 'Владелец', manager: 'Менеджер', receptionist: 'Администратор', content: 'Контент-менеджер',
+  viewer: 'Наблюдатель', finance: 'Финансист', marketing: 'Маркетолог', callcenter: 'Колл-центр',
+  analyst: 'Аналитик', photographer: 'Фотограф', copywriter: 'Копирайтер', support: 'Поддержка',
+  auditor: 'Аудитор', intern: 'Стажёр',
+};
 
 // Роль в родительном падеже: «с правами владельца» — для письма-приглашения и страницы /invite.
-export const ROLE_GENITIVE: Readonly<Record<OwnerRole, string>> = { owner: 'владельца', manager: 'менеджера' };
+export const ROLE_GENITIVE: Readonly<Record<string, string>> = {
+  owner: 'владельца', manager: 'менеджера', receptionist: 'администратора', content: 'контент-менеджера',
+  viewer: 'наблюдателя', finance: 'финансиста', marketing: 'маркетолога', callcenter: 'оператора колл-центра',
+  analyst: 'аналитика', photographer: 'фотографа', copywriter: 'копирайтера', support: 'специалиста поддержки',
+  auditor: 'аудитора', intern: 'стажёра',
+};
 
-// Разделы, закрытые для manager (ТЗ §5.2: «без биллинга и настроек»; команду ведёт owner, ТЗ §5.6).
-export const OWNER_ONLY_SECTIONS = ['settings', 'subscription', 'team'] as const;
+// Все роли, кроме owner, — сотрудники: их вход ведёт на /{prefix}/{slug}/{role}.
+export const STAFF_ROLES: readonly Role[] = BUILTIN_ROLES.filter((role) => role !== 'owner');
 
-export function sectionAllowed(role: OwnerRole, section: string): boolean {
-  return role === 'owner' || !(OWNER_ONLY_SECTIONS as readonly string[]).includes(section);
+export function isRole(value: string): value is Role {
+  return (BUILTIN_ROLES as readonly string[]).includes(value);
 }
 
 // Раздел кабинета по пути: '/s/tire/admin/settings/x' → 'settings'; '' — главная; null — путь не из кабинета.

@@ -6,7 +6,7 @@ import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { InviteSchema, MAX_MANAGERS, type InviteInput, type InviteResult, type MemberRow } from './schema';
 
@@ -20,11 +20,14 @@ async function logAuthError(message: string, payload: Record<string, unknown>): 
 }
 
 export async function inviteManager(slug: string, input: InviteInput): Promise<ActionResult<InviteResult>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'team');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = InviteSchema.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));
-  const { email } = parsed.data;
+  const { email, role } = parsed.data;
+  // Сотрудник не может пригласить владельца. Действия смены собственной роли в проекте нет,
+  // поэтому «повысить себя» через приглашение невозможно: writeAccess('team') пропускает только owner.
+  if (access.member.role !== 'owner' && role === 'owner') return fail(ERR.ownerOnly);
   const businessId = access.business.id;
   const db = adminClient();
 
@@ -34,7 +37,7 @@ export async function inviteManager(slug: string, input: InviteInput): Promise<A
     .returns<Pick<MemberRow, 'email' | 'role'>[]>();
   if (listError) return fail(ERR.server);
   if ((members ?? []).some((m) => m.email?.toLowerCase() === email)) return fail(ERR.invalid, { email: 'Этот человек уже в команде' });
-  if ((members ?? []).filter((m) => m.role === 'manager').length >= MAX_MANAGERS) return fail(`Не больше ${MAX_MANAGERS} менеджеров`);
+  if ((members ?? []).filter((m) => m.role !== 'owner').length >= MAX_MANAGERS) return fail(`Не больше ${MAX_MANAGERS} сотрудников`);
 
   const password = randomBytes(PASSWORD_BYTES).toString('base64url');
   const { data: created, error: authError } = await db.auth.admin.createUser({ email, password, email_confirm: true });
@@ -45,7 +48,7 @@ export async function inviteManager(slug: string, input: InviteInput): Promise<A
 
   const { data: member, error: insertError } = await db
     .from('admin_users')
-    .insert({ business_id: businessId, email, role: 'manager', auth_user_id: created.user.id })
+    .insert({ business_id: businessId, email, role: role ?? 'manager', auth_user_id: created.user.id })
     .select('id, email, role')
     .single<MemberRow>();
   if (insertError || !member) {
@@ -61,7 +64,7 @@ export async function inviteManager(slug: string, input: InviteInput): Promise<A
 }
 
 export async function removeMember(slug: string, id: string): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'team');
   if (!access) return fail(ERR.ownerOnly);
   if (!UUID_RE.test(id)) return fail(ERR.invalid);
 

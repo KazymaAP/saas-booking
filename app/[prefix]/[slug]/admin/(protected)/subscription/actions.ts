@@ -6,7 +6,7 @@ import { sendMail } from '@/lib/notify';
 import { notifyAdmin } from '@/lib/admin-notify';
 import { hitRateLimit } from '@/lib/rate-limit';
 import { audit } from '@/lib/audit';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { PaidSchema, type PaidInput } from './schema';
 
@@ -17,7 +17,7 @@ function adminEmails(): string[] {
 }
 
 export async function reportPayment(slug: string, input: PaidInput): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'subscription');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = PaidSchema.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));

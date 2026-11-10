@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, type ActionResult } from '../_lib/result';
 import { AUTO_KEY, PANEL_THEME_KEY, SITE_THEME_KEY, APPEARANCES } from '@/lib/appearance';
 
@@ -22,7 +22,7 @@ export async function saveAppearance(
   slug: string,
   input: { panel: string; site: string },
 ): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'appearance');
   if (!access) return fail(ERR.ownerOnly);
 
   // Экшен вызывается с клиента: null/undefined/объект вместо строки не должен ронять

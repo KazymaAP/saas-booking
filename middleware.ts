@@ -99,7 +99,9 @@ function isNoindexPath(path: string): boolean {
     || path === '/admin' || path.startsWith('/admin/')
     || path === '/dev' || path.startsWith('/dev/')
     || path === '/partner' || path.startsWith('/partner/')
-    || /^\/[a-z]{1,4}\/[^/]+\/admin(\/|$)/.test(path);
+    || /^\/[a-z]{1,4}\/[^/]+\/admin(\/|$)/.test(path)
+    // Разделы сотрудников /{prefix}/{slug}/{role} — служебные, не индексируются.
+    || /^\/[a-z]{1,4}\/[^/]+\/(manager|receptionist|content|viewer|finance|marketing|callcenter|analyst|photographer|copywriter|support|auditor|intern)(\/|$)/.test(path);
 }
 
 function withNoindex(res: NextResponse, noindex: boolean): NextResponse {

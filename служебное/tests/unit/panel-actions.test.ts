@@ -141,8 +141,8 @@ describe('settings.saveSettings', () => {
     brand_color: '#AA00CC', hours, slot_step_minutes: '60', cancel_hours_before: '2', min_hours_before: '1', max_days_ahead: '30', auto_confirm: true,
   };
 
-  it('только owner', async () => {
-    loginAs('manager');
+  it('роль без права settings.write не сохраняет', async () => {
+    loginAs('viewer');
     expect(await settings.saveSettings(SLUG, form)).toMatchObject({ ok: false });
     expect(opsOf('businesses')).toEqual([]);
   });
@@ -178,8 +178,8 @@ describe('texts.saveTexts', () => {
     expect(argOf('businesses', 'update')).toEqual({ custom_texts: { booking_title: 'Онлайн-запись', hero_title: 'Привет' } });
   });
 
-  it('manager — только просмотр', async () => {
-    loginAs('manager');
+  it('роль без права texts.write — только просмотр', async () => {
+    loginAs('viewer');
     expect(await texts.saveTexts(SLUG, { hero_title: 'x', hero_subtitle: '', about: '', cta: '' })).toMatchObject({ ok: false });
   });
 });
@@ -263,8 +263,8 @@ describe('photos', () => {
     expect(await photos.updatePhotoAlt(SLUG, ROW_ID, 'Педикюр')).toMatchObject({ ok: false });
   });
 
-  it('manager не загружает и не удаляет фото', async () => {
-    loginAs('manager');
+  it('роль без права photos.write не загружает и не удаляет фото', async () => {
+    loginAs('viewer');
     expect(await photos.createPhotoUpload(SLUG, { type: 'image/jpeg', size: 1000 })).toMatchObject({ ok: false });
     expect(await photos.deletePhoto(SLUG, ROW_ID)).toMatchObject({ ok: false });
     expect(opsOf('photos')).toEqual([]);

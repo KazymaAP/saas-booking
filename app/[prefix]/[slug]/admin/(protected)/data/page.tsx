@@ -1,6 +1,6 @@
 // app/[prefix]/[slug]/admin/(protected)/data/page.tsx — данные бизнеса: выгрузка CSV и удаление аккаунта (ТЗ §32).
 // Серверный, данные — из currentOwner (кэш запроса), своих запросов к БД нет. Только владелец: CSV содержит ПД клиентов.
-import { OWNER_ONLY, requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import { panelBase } from '../_lib/sections';
 import { formatDate } from '../_lib/time';
 import { DELETION_GRACE_DAYS } from './rules';
@@ -9,7 +9,7 @@ import { DeleteAccount } from './DeleteAccount';
 export const dynamic = 'force-dynamic';
 
 export default async function DataPage({ params }: { params: { prefix: string; slug: string } }) {
-  const { business: b } = await requirePageAccess(params, OWNER_ONLY);
+  const { business: b } = await requireSectionAccess(params, 'data');
   const scheduled = b.status === 'pending_deletion' && b.deletion_scheduled_at ? formatDate(b.deletion_scheduled_at) : null;
 
   return (

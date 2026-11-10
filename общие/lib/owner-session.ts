@@ -18,8 +18,9 @@ export const OWNER_COOKIE = cookieNames('owner').access;
 const ACTIVE_BUSINESS_STATUS = 'client';
 
 export type { OwnerRole } from './auth-roles';
-import type { OwnerRole } from './auth-roles';
-export type OwnerAccessData = { business: Business; member: AdminUser };
+import { isRole, type OwnerRole, type Role } from './auth-roles';
+// adminUser и role добавлены для матрицы прав; member сохранён для совместимости с существующими вызовами.
+export type OwnerAccessData = { business: Business; member: AdminUser; adminUser: AdminUser; role: Role | null };
 export type Membership =
   | { readonly kind: 'member'; readonly data: OwnerAccessData }
   | { readonly kind: 'inactive'; readonly businessId: string }
@@ -36,7 +37,7 @@ export async function findMembership(userId: string, slug: string): Promise<Memb
     .maybeSingle<AdminUser>();
   if (!member) return { kind: 'none' };
   if (business.status !== ACTIVE_BUSINESS_STATUS) return { kind: 'inactive', businessId: business.id };
-  return { kind: 'member', data: { business, member } };
+  return { kind: 'member', data: { business, member, adminUser: member, role: isRole(member.role) ? member.role : null } };
 }
 
 // Общая часть входа по паролю и по magic-link: проверка членства и выдача cookie.
@@ -119,7 +120,7 @@ export async function requireOwnerAction(slug: string, roles: readonly OwnerRole
     const membership = await findMembership(refreshed.user.id, slug);
     access = membership.kind === 'member' ? membership.data : null;
   }
-  return access && roles.includes(access.member.role) ? access : null;
+  return access && access.role !== null && roles.includes(access.role) ? access : null;
 }
 
 export type OwnerPanelInfo = { readonly name: string };

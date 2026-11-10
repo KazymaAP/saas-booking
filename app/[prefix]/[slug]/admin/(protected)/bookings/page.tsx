@@ -2,7 +2,7 @@
 // Серверный: один запрос списка, строки форматируются здесь (часовой пояс бизнеса), кнопки — в клиентском BookingList.
 import Link from 'next/link';
 import { adminClient } from '@/lib/supabase';
-import { requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import { panelBase } from '../_lib/sections';
 import { businessDayStart, DAY_MS } from '../_lib/time';
 import { OnboardingTip } from '../_components/OnboardingTip';
@@ -40,7 +40,7 @@ async function loadBookings(businessId: string, filter: Filter, now: number): Pr
 }
 
 export default async function BookingsPage({ params, searchParams }: { params: { prefix: string; slug: string }; searchParams: { filter?: string } }) {
-  const access = await requirePageAccess(params);
+  const access = await requireSectionAccess(params, 'bookings');
   const filter = parseFilter(searchParams.filter);
   // «Сейчас» — одно на сервере: и для выборки, и для кнопок (без расхождения сервер/клиент при гидрации).
   const now = Date.now();

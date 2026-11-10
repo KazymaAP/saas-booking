@@ -2,14 +2,14 @@
 // Серверный: список участников — один запрос. Только владелец: manager получает 404.
 // Пароль нового менеджера больше не читается из cookie — его показывает TeamManager из ответа action.
 import { adminClient } from '@/lib/supabase';
-import { OWNER_ONLY, requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import type { MemberRow } from './schema';
 import { TeamManager } from './TeamManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TeamPage({ params }: { params: { prefix: string; slug: string } }) {
-  const access = await requirePageAccess(params, OWNER_ONLY);
+  const access = await requireSectionAccess(params, 'team');
   const { data, error } = await adminClient()
     .from('admin_users')
     .select('id, email, role')

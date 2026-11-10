@@ -5,7 +5,7 @@ import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
 import { businessTimeZone } from '@/lib/availability';
 import { addDays, dayBoundsUtc, localDateOf } from '@/lib/slots';
-import { requirePageAccess, isOwner } from './_lib/access';
+import { isOwner, requireSectionAccess } from './_lib/access';
 import { buildChecklist, progressPercent, type ChecklistItem } from './_lib/onboarding';
 import { panelBase } from './_lib/sections';
 import { DAY_MS } from './_lib/time';
@@ -154,7 +154,7 @@ async function loadDashboard(businessId: string, now: number, timeZone: string):
 }
 
 export default async function OwnerHome({ params }: { params: { prefix: string; slug: string } }) {
-  const access = await requirePageAccess(params);
+  const access = await requireSectionAccess(params, 'home');
   const b = access.business;
   const base = panelBase(params);
   const now = Date.now();

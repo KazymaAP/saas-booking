@@ -7,7 +7,7 @@ import { normalizePhone } from '@/lib/phone';
 import { businessTimeZone } from '@/lib/availability';
 import { wallTimeToUtc } from '@/lib/slots';
 import { logError } from '@/lib/log';
-import { actionAccess } from './_lib/access';
+import { writeAccess } from './_lib/access';
 import { ERR, fail, ok, UUID_RE, type ActionResult } from './_lib/result';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -25,7 +25,7 @@ export type ManualBookingInput = {
 };
 
 export async function createManualBookingAction(slug: string, input: ManualBookingInput): Promise<ActionResult> {
-  const access = await actionAccess(slug);
+  const access = await writeAccess(slug, 'bookings');
   if (!access) return fail(ERR.forbidden);
   const b = access.business;
 

@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/admin/(protected)/settings/page.tsx — настройки бизнеса (ТЗ §4.6, §5.3).
 // Только владелец: менеджер получает 404 (requirePageAccess), а action проверяет роль ещё раз.
 import Link from 'next/link';
-import { OWNER_ONLY, requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import { panelBase } from '../_lib/sections';
 import { toSettingsForm } from './schema';
 import { SettingsForm } from './SettingsForm';
@@ -9,7 +9,7 @@ import { SettingsForm } from './SettingsForm';
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage({ params }: { params: { prefix: string; slug: string } }) {
-  const { business } = await requirePageAccess(params, OWNER_ONLY);
+  const { business } = await requireSectionAccess(params, 'settings');
   return (
     <div className="grid gap-4">
       <header>

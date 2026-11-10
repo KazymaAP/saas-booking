@@ -1,38 +1,36 @@
-// _lib/sections.ts — разделы кабинета и правила видимости по ролям (ТЗ §13.9, §13.10).
+// app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts — разделы кабинета и правила видимости по ролям.
 // Чистый модуль: используется и сервером (layout, проверки), и клиентом (меню), и тестами.
-import type { AdminUser } from '@/lib/database.types';
+// Матрица прав — единый источник истины в общие/lib/sections.ts.
+import { BUILTIN_ROLES, isRole, type Role } from '@/lib/auth-roles';
+import { canRead, SECTION_KEYS, SECTION_LABELS, type SectionKey } from '@/lib/sections';
 
 export type PanelParams = { prefix: string; slug: string };
 
-export type SectionKey =
-  | 'home' | 'bookings' | 'services' | 'photos' | 'texts'
-  | 'notifications' | 'settings' | 'appearance' | 'subscription' | 'team' | 'data';
+export type { SectionKey } from '@/lib/sections';
 
 export type Section = {
   key: SectionKey;
   path: string; // относительный путь от /admin, '' — дашборд
   label: string;
-  ownerOnly: boolean;
+  roles: readonly Role[];
   // Полный prefetch данных: только для самых частых переходов, остальные — до loading.tsx.
   eagerPrefetch: boolean;
 };
 
-export const SECTIONS: readonly Section[] = [
-  { key: 'home', path: '', label: 'Главная', ownerOnly: false, eagerPrefetch: true },
-  { key: 'bookings', path: 'bookings', label: 'Брони', ownerOnly: false, eagerPrefetch: true },
-  { key: 'services', path: 'services', label: 'Услуги', ownerOnly: false, eagerPrefetch: false },
-  { key: 'photos', path: 'photos', label: 'Фото', ownerOnly: false, eagerPrefetch: false },
-  { key: 'texts', path: 'texts', label: 'Тексты', ownerOnly: false, eagerPrefetch: false },
-  { key: 'notifications', path: 'notifications', label: 'Уведомления', ownerOnly: false, eagerPrefetch: false },
-  // Биллинг, настройки, команда и выгрузка ПД — только владелец (manager «без биллинга и настроек»).
-  { key: 'settings', path: 'settings', label: 'Настройки', ownerOnly: true, eagerPrefetch: false },
-  // Оформление вынесено в отдельный раздел: владелец меняет стиль кабинета и сайта,
-  // не пролистывая длинную форму настроек (раньше блок был внизу «Настроек»).
-  { key: 'appearance', path: 'appearance', label: 'Оформление', ownerOnly: true, eagerPrefetch: false },
-  { key: 'subscription', path: 'subscription', label: 'Подписка', ownerOnly: true, eagerPrefetch: false },
-  { key: 'team', path: 'team', label: 'Команда', ownerOnly: true, eagerPrefetch: false },
-  { key: 'data', path: 'data', label: 'Данные', ownerOnly: true, eagerPrefetch: false },
-];
+const PATHS: Readonly<Record<SectionKey, string>> = {
+  home: '', bookings: 'bookings', services: 'services', photos: 'photos', texts: 'texts',
+  notifications: 'notifications', settings: 'settings', appearance: 'appearance',
+  subscription: 'subscription', team: 'team', data: 'data',
+};
+
+// Раздел виден, если роль есть в списке (список строится из матрицы прав).
+export const SECTIONS: readonly Section[] = SECTION_KEYS.map((key) => ({
+  key,
+  path: PATHS[key],
+  label: SECTION_LABELS[key],
+  roles: BUILTIN_ROLES.filter((role) => canRead(role, key)),
+  eagerPrefetch: key === 'home' || key === 'bookings',
+}));
 
 // Пункт меню для клиента: badge — короткая отметка «требует внимания» (например, «скоро закончится»).
 export type NavItem = Pick<Section, 'key' | 'path' | 'label' | 'eagerPrefetch'> & { badge?: string | null };
@@ -45,8 +43,10 @@ export function sectionHref(base: string, section: Pick<Section, 'path'>): strin
   return section.path ? `${base}/${section.path}` : base;
 }
 
-export function visibleSections(role: AdminUser['role']): Section[] {
-  return SECTIONS.filter((s) => role === 'owner' || !s.ownerOnly);
+// Роль приходит из БД как text: неизвестное значение не получает ни одного раздела.
+export function visibleSections(role: string): Section[] {
+  const known: Role | null = isRole(role) ? role : null;
+  return known ? SECTIONS.filter((s) => s.roles.includes(known)) : [];
 }
 
 // Активный пункт по текущему пути: дашборд — только точное совпадение, остальные — по префиксу.

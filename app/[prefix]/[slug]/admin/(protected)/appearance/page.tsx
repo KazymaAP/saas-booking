@@ -2,7 +2,7 @@
 // Только владелец: стиль кабинета и стиль сайта меняются независимо.
 // Раньше этот блок был внизу «Настроек», теперь у него свой пункт меню.
 import Link from 'next/link';
-import { OWNER_ONLY, requirePageAccess } from '../_lib/access';
+import { requireSectionAccess } from '../_lib/access';
 import { panelBase } from '../_lib/sections';
 import { AppearancePicker } from './AppearancePicker';
 import { AUTO_KEY, PANEL_THEME_KEY, SITE_THEME_KEY } from '@/lib/appearance';
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Оформление', robots: { index: false, follow: false } };
 
 export default async function AppearancePage({ params }: { params: { prefix: string; slug: string } }) {
-  const { business } = await requirePageAccess(params, OWNER_ONLY);
+  const { business } = await requireSectionAccess(params, 'appearance');
   const texts = (business.custom_texts ?? {}) as Record<string, string>;
   const base = panelBase(params);
 

@@ -1,13 +1,13 @@
 // app/[prefix]/[slug]/admin/(protected)/texts/page.tsx — тексты сайта (ТЗ §5.3, §15).
 // Серверный: данные уже есть в currentOwner (кэш запроса) — дополнительных запросов к БД нет.
-import { isOwner, requirePageAccess } from '../_lib/access';
+import { isOwner, requireSectionAccess } from '../_lib/access';
 import { toTextsForm } from './schema';
 import { TextsForm } from './TextsForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TextsPage({ params }: { params: { prefix: string; slug: string } }) {
-  const access = await requirePageAccess(params);
+  const access = await requireSectionAccess(params, 'texts');
   const b = access.business;
   const canEdit = isOwner(access);
   return (

@@ -3,12 +3,12 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { SettingsSchema, type SettingsFormValues } from './schema';
 
 export async function saveSettings(slug: string, input: SettingsFormValues): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'settings');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = SettingsSchema.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));

@@ -36,6 +36,7 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0018_ready_services.sql',
   'supabase/migrations/0019_admin_query_indexes.sql',
   'supabase/migrations/0020_partner_referrals.sql',
+  'supabase/migrations/0021_staff_roles.sql',
 ] as const;
 
 export type TransferBusiness = {

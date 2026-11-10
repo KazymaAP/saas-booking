@@ -82,9 +82,9 @@ describe('_lib/onboarding', () => {
 });
 
 describe('_lib/sections — роли', () => {
-  it('manager не видит биллинг, настройки, оформление, команду, данные', () => {
+  it('manager не видит подписку, команду и оформление', () => {
     const keys = visibleSections('manager').map((s) => s.key);
-    for (const k of ['settings', 'appearance', 'subscription', 'team', 'data'] as const) expect(keys).not.toContain(k);
+    for (const k of ['subscription', 'team', 'appearance'] as const) expect(keys).not.toContain(k);
     expect(keys).toContain('bookings');
   });
 
@@ -93,14 +93,14 @@ describe('_lib/sections — роли', () => {
   });
 
   it('активный раздел: дашборд — только точно, остальные — по префиксу', () => {
-    const base = '/s/x/panel';
+    const base = '/s/x/admin';
     const home = { path: '' };
     const bookings = { path: 'bookings' };
-    expect(isActiveSection('/s/x/panel', base, home)).toBe(true);
-    expect(isActiveSection('/s/x/panel/', base, home)).toBe(true);
-    expect(isActiveSection('/s/x/panel/bookings', base, home)).toBe(false);
-    expect(isActiveSection('/s/x/panel/bookings/1', base, bookings)).toBe(true);
-    expect(isActiveSection('/s/x/panel/bookingsx', base, bookings)).toBe(false);
+    expect(isActiveSection('/s/x/admin', base, home)).toBe(true);
+    expect(isActiveSection('/s/x/admin/', base, home)).toBe(true);
+    expect(isActiveSection('/s/x/admin/bookings', base, home)).toBe(false);
+    expect(isActiveSection('/s/x/admin/bookings/1', base, bookings)).toBe(true);
+    expect(isActiveSection('/s/x/admin/bookingsx', base, bookings)).toBe(false);
     expect(sectionHref(base, home)).toBe(base);
   });
 });
@@ -202,7 +202,7 @@ describe('схемы форм', () => {
   });
 
   it('приглашение: email нормализуется', () => {
-    expect(InviteSchema.parse({ email: '  Ivan@Mail.RU ' })).toEqual({ email: 'ivan@mail.ru' });
+    expect(InviteSchema.parse({ email: '  Ivan@Mail.RU ' })).toEqual({ email: 'ivan@mail.ru', role: 'manager' });
     expect(InviteSchema.safeParse({ email: 'ivan@' }).success).toBe(false);
     expect(InviteSchema.safeParse({ email: '' }).success).toBe(false);
   });

@@ -6,13 +6,13 @@ import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { notifyAdmin } from '@/lib/admin-notify';
 import { audit } from '@/lib/audit';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { DAY_MS } from '../_lib/time';
 import { ERR, fail, ok, type ActionResult } from '../_lib/result';
 import { DELETION_GRACE_DAYS, confirmationMatches } from './rules';
 
 export async function requestDeletion(slug: string, confirmation: string): Promise<ActionResult<{ scheduledAt: string }>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'data');
   if (!access) return fail(ERR.ownerOnly);
   const b = access.business;
   if (!confirmationMatches(confirmation, b.slug)) return fail(ERR.invalid, { confirmation: `Введите ${b.slug}` });

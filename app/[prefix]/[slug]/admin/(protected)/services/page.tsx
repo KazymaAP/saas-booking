@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/admin/(protected)/services/page.tsx — услуги бизнеса (ТЗ §4.7, §5.3, §13.10).
 // Серверный: один запрос списка. Владелец редактирует, менеджер — только просмотр.
 import { adminClient } from '@/lib/supabase';
-import { isOwner, requirePageAccess } from '../_lib/access';
+import { isOwner, requireSectionAccess } from '../_lib/access';
 import { OnboardingTip } from '../_components/OnboardingTip';
 import type { ServiceRow } from './schema';
 import { ServiceList } from './ServiceList';
@@ -9,7 +9,7 @@ import { ServiceList } from './ServiceList';
 export const dynamic = 'force-dynamic';
 
 export default async function ServicesPage({ params }: { params: { prefix: string; slug: string } }) {
-  const access = await requirePageAccess(params);
+  const access = await requireSectionAccess(params, 'services');
   const { data, error } = await adminClient()
     .from('services')
     .select('id, name, description, price, duration_minutes, is_active')

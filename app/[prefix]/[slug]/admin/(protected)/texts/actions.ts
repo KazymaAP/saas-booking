@@ -5,12 +5,12 @@
 import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { TextsSchema, mergeTexts, type TextsValues } from './schema';
 
 export async function saveTexts(slug: string, input: TextsValues): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'texts');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = TextsSchema.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));

@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/admin/(protected)/photos/page.tsx — фото работ (ТЗ §4.8, §5.3, §45).
 // Серверный: один запрос списка. Владелец загружает и удаляет, менеджер — только просмотр.
 import { adminClient } from '@/lib/supabase';
-import { isOwner, requirePageAccess } from '../_lib/access';
+import { isOwner, requireSectionAccess } from '../_lib/access';
 import { OnboardingTip } from '../_components/OnboardingTip';
 import type { PhotoRow } from './actions';
 import { PhotoGallery } from './PhotoGallery';
@@ -10,7 +10,7 @@ import { MAX_PHOTOS } from './rules';
 export const dynamic = 'force-dynamic';
 
 export default async function PhotosPage({ params }: { params: { prefix: string; slug: string } }) {
-  const access = await requirePageAccess(params);
+  const access = await requireSectionAccess(params, 'photos');
   const { data, error } = await adminClient()
     .from('photos')
     .select('id, url, alt')

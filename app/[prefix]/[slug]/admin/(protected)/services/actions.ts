@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { ServiceSchema, type ServiceFormValues, type ServiceRow } from './schema';
 
@@ -28,7 +28,7 @@ function toDb(values: z.output<typeof ServiceSchema>) {
 }
 
 export async function addService(slug: string, input: ServiceFormValues): Promise<ActionResult<ServiceRow>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'services');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = ServiceSchema.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid, zodFieldErrors(parsed.error));
@@ -45,7 +45,7 @@ export async function addService(slug: string, input: ServiceFormValues): Promis
 }
 
 export async function updateService(slug: string, id: string, input: ServiceFormValues): Promise<ActionResult<ServiceRow>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'services');
   if (!access) return fail(ERR.ownerOnly);
   if (!Id.safeParse(id).success) return fail(ERR.notFound);
   const parsed = ServiceSchema.safeParse(input);
@@ -68,7 +68,7 @@ export async function updateService(slug: string, id: string, input: ServiceForm
 
 // Удаление услуги — мягкое (is_active=false): старые брони сохраняют ссылку на услугу (ТЗ §4.7).
 export async function setServiceActive(slug: string, id: string, active: boolean): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'services');
   if (!access) return fail(ERR.ownerOnly);
   if (!Id.safeParse(id).success || typeof active !== 'boolean') return fail(ERR.notFound);
 

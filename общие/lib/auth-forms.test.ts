@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import * as core from './auth-core';
 import * as forms from './auth-forms';
 import * as roles from './auth-roles';
+import * as sectionsLib from './sections';
 
 describe('auth-core: сроки в текстах', () => {
   it('ttlText берёт крупнейшую целую единицу и склоняет по-русски', () => {
@@ -80,13 +81,13 @@ describe('auth-forms: коды из URL и формы', () => {
 });
 
 describe('auth-roles: разделы кабинета', () => {
-  it('manager не видит настройки, подписку и команду; owner видит всё', () => {
-    for (const section of roles.OWNER_ONLY_SECTIONS) {
-      expect(roles.sectionAllowed('manager', section)).toBe(false);
-      expect(roles.sectionAllowed('owner', section)).toBe(true);
+  it('manager не видит подписку, команду и оформление; owner видит всё', () => {
+    for (const section of sectionsLib.OWNER_ONLY_SECTIONS) {
+      expect(sectionsLib.sectionAllowed('manager', section)).toBe(false);
+      expect(sectionsLib.sectionAllowed('owner', section)).toBe(true);
     }
-    expect(roles.sectionAllowed('manager', 'bookings')).toBe(true);
-    expect(roles.sectionAllowed('manager', '')).toBe(true);
+    expect(sectionsLib.sectionAllowed('manager', 'bookings')).toBe(true);
+    expect(sectionsLib.sectionAllowed('manager', '')).toBe(true);
   });
 
   it('sectionOf: раздел из пути кабинета владельца и кастомного домена', () => {

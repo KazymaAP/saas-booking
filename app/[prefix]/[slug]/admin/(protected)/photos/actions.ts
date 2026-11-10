@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
-import { actionAccess, OWNER_ONLY } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, UUID_RE, type ActionResult } from '../_lib/result';
 import {
   AltSchema, BUCKET, MAX_PHOTOS, MAX_UPLOAD_BYTES, PHOTO_TYPES,
@@ -39,7 +39,7 @@ async function photoCount(businessId: string): Promise<number | null> {
 
 // Шаг 1: ссылка на загрузку одного файла.
 export async function createPhotoUpload(slug: string, input: { type: string; size: number }): Promise<ActionResult<UploadTicket>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'photos');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = TicketInput.safeParse(input);
   if (!parsed.success) return fail(uploadFileError(input) ?? ERR.invalid);
@@ -60,7 +60,7 @@ export async function createPhotoUpload(slug: string, input: { type: string; siz
 
 // Шаг 2: файл уже в Storage — проверяем его и создаём запись. Неподходящий объект удаляем.
 export async function confirmPhotoUpload(slug: string, input: { path: string; alt: string }): Promise<ActionResult<PhotoRow>> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'photos');
   if (!access) return fail(ERR.ownerOnly);
   const parsed = ConfirmInput.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? ERR.invalid);
@@ -109,7 +109,7 @@ export async function confirmPhotoUpload(slug: string, input: { path: string; al
 }
 
 export async function updatePhotoAlt(slug: string, id: string, alt: string): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'photos');
   if (!access) return fail(ERR.ownerOnly);
   const parsedAlt = AltSchema.safeParse(alt);
   if (!Id.safeParse(id).success) return fail(ERR.notFound);
@@ -126,7 +126,7 @@ export async function updatePhotoAlt(slug: string, id: string, alt: string): Pro
 
 // Удаление: один DELETE ... RETURNING path (права — business_id в WHERE), затем объект из Storage.
 export async function deletePhoto(slug: string, id: string): Promise<ActionResult> {
-  const access = await actionAccess(slug, OWNER_ONLY);
+  const access = await writeAccess(slug, 'photos');
   if (!access) return fail(ERR.ownerOnly);
   if (!Id.safeParse(id).success) return fail(ERR.notFound);
 

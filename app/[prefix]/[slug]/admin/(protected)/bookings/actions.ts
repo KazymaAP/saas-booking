@@ -6,7 +6,7 @@ import { adminClient } from '@/lib/supabase';
 import { sendMail } from '@/lib/notify';
 import { logError } from '@/lib/log';
 import type { BookingStatus } from '@/lib/database.types';
-import { actionAccess } from '../_lib/access';
+import { writeAccess } from '../_lib/access';
 import { ERR, fail, ok, UUID_RE, type ActionResult } from '../_lib/result';
 import { formatDateTime } from '../_lib/time';
 import { ACTION_DONE, BOOKING_ACTIONS, TRANSITIONS } from './status';
@@ -24,7 +24,7 @@ type UpdatedBooking = { id: string; status: BookingStatus; scheduled_at: string;
 // Это и проверка прав (чужую бронь не обновить), и защита от гонки: второй клик «Подтвердить»
 // не найдёт строку со статусом new и не отправит клиенту второе письмо.
 export async function changeBookingStatus(slug: string, input: ChangeStatusInput): Promise<ActionResult<{ status: BookingStatus }>> {
-  const access = await actionAccess(slug); // owner и manager: брони — основная работа менеджера
+  const access = await writeAccess(slug, 'bookings'); // owner и manager: брони — основная работа менеджера
   if (!access) return fail(ERR.forbidden);
   const parsed = Input.safeParse(input);
   if (!parsed.success) return fail(ERR.invalid);
