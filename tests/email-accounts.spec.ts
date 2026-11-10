@@ -2,18 +2,18 @@
 import { expect, test } from '@playwright/test';
 import { E2E, E2E_READY, SKIP_REASON, loginAsAdmin, uniq } from './email-helpers';
 
-test.describe('/panel/email-accounts', () => {
+test.describe('/admin/email-accounts', () => {
   test.skip(!E2E_READY, SKIP_REASON);
 
   test('без входа — редирект на логин', async ({ page }) => {
-    await page.goto(`${E2E.baseUrl}/panel/email-accounts`);
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto(`${E2E.baseUrl}/admin/email-accounts`);
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
   test.describe('после входа', () => {
     test.beforeEach(async ({ page }) => {
       await loginAsAdmin(page);
-      await page.goto(`${E2E.baseUrl}/panel/email-accounts`);
+      await page.goto(`${E2E.baseUrl}/admin/email-accounts`);
     });
 
     test('у всех полей формы есть доступные имена', async ({ page }) => {

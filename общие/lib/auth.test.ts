@@ -147,17 +147,17 @@ describe('auth-core: JWT', () => {
 
 describe('auth-core: redirect, Origin, IP', () => {
   it('sanitizeNext отсекает open redirect', () => {
-    expect(core.sanitizeNext('/panel/clients?x=1', '/panel')).toBe('/panel/clients?x=1');
-    expect(core.sanitizeNext('/panel', '/panel')).toBe('/panel');
+    expect(core.sanitizeNext('/admin/clients?x=1', '/admin')).toBe('/admin/clients?x=1');
+    expect(core.sanitizeNext('/admin', '/admin')).toBe('/admin');
     for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', '/panelx', '/panel/../api', '/panel/\u0000', '', 7]) {
-      expect(core.sanitizeNext(bad, '/panel')).toBeNull();
+      expect(core.sanitizeNext(bad, '/admin')).toBeNull();
     }
   });
 
   it('sanitizePanelNext понимает кабинет владельца и супер-админку', () => {
     expect(core.sanitizePanelNext('/s/tire/admin/bookings')).toBe('/s/tire/admin/bookings');
     expect(core.panelRootOf('/s/tire/admin/bookings')).toBe('/s/tire/admin');
-    expect(core.panelRootOf('/panel/funnel')).toBe('/panel');
+    expect(core.panelRootOf('/admin/funnel')).toBe('/admin');
     expect(core.sanitizePanelNext('/s/tire')).toBeNull();
     expect(core.sanitizePanelNext('//s/tire/admin')).toBeNull();
   });
@@ -390,8 +390,8 @@ describe('flash (задача 4)', () => {
 
   it('writeFlash ставит httpOnly secure lax cookie на 5 минут', async () => {
     const { writeFlash, FLASH_COOKIE } = await import('./flash');
-    writeFlash({ kind: 'invite_sent', email: 'a@b.ru' }, '/panel');
-    expect(harness.jar.get(FLASH_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'lax', path: '/panel', maxAge: 300 });
+    writeFlash({ kind: 'invite_sent', email: 'a@b.ru' }, '/admin');
+    expect(harness.jar.get(FLASH_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'lax', path: '/admin', maxAge: 300 });
   });
 });
 

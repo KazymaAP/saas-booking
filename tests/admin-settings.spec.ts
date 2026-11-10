@@ -6,8 +6,8 @@ test.describe('без входа', () => {
   requireApp();
 
   test('настройки уводят на вход', async ({ page }) => {
-    await page.goto('/panel/settings');
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto('/admin/settings');
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 });
 
@@ -15,7 +15,7 @@ test.describe('супер-админ', () => {
   requireAdmin();
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto('/panel/settings');
+    await page.goto('/admin/settings');
   });
 
   test('все разделы на месте', async ({ page }) => {
@@ -67,7 +67,7 @@ test.describe('супер-админ', () => {
 
   test('сервер не ответил — тост об ошибке, раздел и введённое значение на месте', async ({ page }) => {
     // Обрываем только POST server action (у него заголовок Next-Action); обычная навигация не трогается.
-    await page.route('**/panel/settings', async (route) => {
+    await page.route('**/admin/settings', async (route) => {
       if (route.request().method() === 'POST' && route.request().headers()['next-action']) await route.abort('failed');
       else await route.continue();
     });

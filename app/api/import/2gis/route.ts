@@ -1,4 +1,4 @@
-// app/api/import/2gis/route.ts — загрузка выгрузки 2GIS из /panel/businesses (ТЗ §13.2 шаг 1). Только супер-админ.
+// app/api/import/2gis/route.ts — загрузка выгрузки 2GIS из /admin/businesses (ТЗ §13.2 шаг 1). Только супер-админ.
 // POST multipart: file (.xlsx, до 10 МБ), filter (подстрока рубрики, по умолчанию «шин»), dry_run=1 — без записи.
 // Ответ: { ok: true, stats } или { ok: false, reason, message? }. Логика — lib/import2gis-http.ts.
 import { NextResponse } from 'next/server';

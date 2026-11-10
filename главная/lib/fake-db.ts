@@ -1,4 +1,4 @@
-// app/panel/(protected)/_lib/fake-db.ts — поддельный Supabase-клиент для unit-тестов server actions (только тесты).
+// app/admin/(protected)/_lib/fake-db.ts — поддельный Supabase-клиент для unit-тестов server actions (только тесты).
 // Любая цепочка .from(t).update(...).eq(...).select(...) записывается в журнал вызовов и при await
 // возвращает ответ из очереди responder'а. Так тест проверяет и итог действия, и сами SQL-условия.
 

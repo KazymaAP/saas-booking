@@ -1,7 +1,7 @@
 // app/api/license/ping/route.ts — приём license ping от переданных клиентам копий (ТЗ 4.0 §14.6, §14.7).
 // Ответ: { status: active | unverified | unknown | blocked, license_id, domain, nonce, issued_at }
 // + заголовок X-License-Signature = HMAC-SHA256(тело ответа, ключ лицензии). Логика — lib/license-server.ts.
-// Блокировка — только вручную в /panel/licenses. Здесь сервер максимум помечает unverified/unknown.
+// Блокировка — только вручную в /admin/licenses. Здесь сервер максимум помечает unverified/unknown.
 import { SIGNATURE_HEADER } from '@/lib/license-client';
 import { clientIp, handlePing, rateLimitKey, supabaseLicenseStore, telegramAlerter } from '@/lib/license-server';
 import { hitRateLimit } from '@/lib/rate-limit';

@@ -1,4 +1,4 @@
-// app/api/backup/restore/route.ts — восстановление из JSON-копии в bucket backups (ТЗ 4.0 §16.7, §5.4 /panel/backup).
+// app/api/backup/restore/route.ts — восстановление из JSON-копии в bucket backups (ТЗ 4.0 §16.7, §5.4 /admin/backup).
 // Только супер-админ. Подтверждение: confirm === 'ВОССТАНОВИТЬ'. Логика — handleRestoreRequest (lib/backup.ts):
 // проверка дампа, порядок родители → дети, batch 500, upsert по id, отчёт по таблицам, audit.
 // Ответы: 200 — всё восстановлено; 207 — частично (отчёт); 400 — confirm/файл/формат/контрольная сумма; 401; 404;

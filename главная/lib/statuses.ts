@@ -1,4 +1,4 @@
-// app/panel/(protected)/_lib/statuses.ts — статусы бизнеса и их подписи (ТЗ §3.6). Общие для всех разделов зоны 7.
+// app/admin/(protected)/_lib/statuses.ts — статусы бизнеса и их подписи (ТЗ §3.6). Общие для всех разделов зоны 7.
 import type { BusinessStatus } from '@/lib/database.types';
 
 export const BUSINESS_STATUSES = [
@@ -6,7 +6,7 @@ export const BUSINESS_STATUSES = [
   'client', 'refused', 'archived', 'transferred_out', 'pending_deletion',
 ] as const satisfies readonly BusinessStatus[];
 
-// Статусы, которые можно выставить массово из списка. client — только через оплату в /panel/clients.
+// Статусы, которые можно выставить массово из списка. client — только через оплату в /admin/clients.
 export const MASS_STATUSES = ['new', 'in_progress', 'preview_ready', 'approved', 'refused', 'no_contact', 'archived'] as const satisfies readonly BusinessStatus[];
 export type MassStatus = (typeof MASS_STATUSES)[number];
 

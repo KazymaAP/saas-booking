@@ -2,17 +2,17 @@
 import { expect, test } from '@playwright/test';
 import { E2E, E2E_READY, SKIP_REASON, loginAsAdmin, uniq } from './email-helpers';
 
-test.describe('/panel/templates', () => {
+test.describe('/admin/templates', () => {
   test.skip(!E2E_READY, SKIP_REASON);
 
   test('без входа — редирект на логин', async ({ page }) => {
-    await page.goto(`${E2E.baseUrl}/panel/templates`);
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto(`${E2E.baseUrl}/admin/templates`);
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
   test('создание → правка (v2) → откат (v3) → удаление', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto(`${E2E.baseUrl}/panel/templates`);
+    await page.goto(`${E2E.baseUrl}/admin/templates`);
     const name = uniq('e2e-tpl');
 
     await page.getByLabel('Название').fill(name);
@@ -38,7 +38,7 @@ test.describe('/panel/templates', () => {
     await page.getByRole('button', { name: 'Откатить к версии 1' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Версия 1 восстановлена как версия 3' })).toBeVisible();
 
-    await page.goto(`${E2E.baseUrl}/panel/templates?channel=client`);
+    await page.goto(`${E2E.baseUrl}/admin/templates?channel=client`);
     page.once('dialog', (d) => d.accept());
     await page.getByRole('button', { name: `Удалить шаблон ${name}` }).click();
     await expect(page.getByRole('status').filter({ hasText: /удалён|выключен/ })).toBeVisible();

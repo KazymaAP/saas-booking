@@ -1,6 +1,6 @@
 // app/reset-password/page.tsx — новый пароль по ссылке из письма (ТЗ §5.5: /reset-password?token=...).
 // GET ссылку не гасит (почтовые сканеры), смена пароля — только POST-ом формы (actions.ts).
-// Без токена страница отправляет на форму запроса /panel/forgot-password. В Referer уходит только origin: политика strict-origin (lib/auth-forms.ts).
+// Без токена страница отправляет на форму запроса /admin/forgot-password. В Referer уходит только origin: политика strict-origin (lib/auth-forms.ts).
 import { redirect } from 'next/navigation';
 import { peekPasswordReset } from '@/lib/auth-reset';
 import { AUTH_REFERRER_POLICY, errorText, LINK_STATE_ERROR, param, type SearchParams } from '@/lib/auth-forms';
@@ -13,13 +13,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function ResetPasswordPage({ searchParams }: { searchParams: SearchParams }) {
   const token = param(searchParams, 'token');
-  if (!token) redirect('/panel/forgot-password');
+  if (!token) redirect('/admin/forgot-password');
   const state = await peekPasswordReset(token);
   if (state !== 'valid') {
     return (
       <AuthShell title="Ссылка недействительна">
         <AuthMessages error={errorText(LINK_STATE_ERROR[state])} />
-        <AuthLinks links={[{ href: '/panel/forgot-password', label: 'Запросить новую ссылку' }]} />
+        <AuthLinks links={[{ href: '/admin/forgot-password', label: 'Запросить новую ссылку' }]} />
       </AuthShell>
     );
   }

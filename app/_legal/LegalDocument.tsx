@@ -14,7 +14,7 @@ type Props = {
   lead: ReactNode;
   sections: LegalSection[];
   requisites: Requisites;
-  // Текст, введённый владельцем в /panel/settings: показывается отдельным разделом как простой текст (без HTML).
+  // Текст, введённый владельцем в /admin/settings: показывается отдельным разделом как простой текст (без HTML).
   extra_text?: string | null;
 };
 

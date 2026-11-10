@@ -58,7 +58,7 @@ export default async function TemplatePreviewPage({
   params: { key: string };
   searchParams?: { variant?: string };
 }) {
-  if (!(await isSuperAdmin())) redirect('/panel/login');
+  if (!(await isSuperAdmin())) redirect('/admin/login');
 
   const theme = getNicheThemeBySlug(params.key);
   if (!theme) notFound();

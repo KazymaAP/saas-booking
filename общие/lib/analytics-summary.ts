@@ -1,4 +1,4 @@
-// lib/analytics-summary.ts — агрегаты для дашборда /panel/stats и API /api/analytics/summary (ТЗ 4.0 §12.3, §13.8).
+// lib/analytics-summary.ts — агрегаты для дашборда /admin/stats и API /api/analytics/summary (ТЗ 4.0 §12.3, §13.8).
 // Все тяжёлые подсчёты — в Postgres (MV analytics_daily + SQL-функции из 0009_analytics.sql), в Node приходит готовый JSON.
 // Результат кэшируется на 60 секунд (unstable_cache): повторные открытия дашборда не нагружают БД.
 // Только серверный модуль: использует service_role.

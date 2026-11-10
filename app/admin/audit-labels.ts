@@ -1,7 +1,7 @@
 // app/admin/audit-labels.ts — человекочитаемые подписи событий audit_log для супер-админки.
 // Чистый модуль без серверных зависимостей: используется и в server action (обогащение данных),
 // и в клиентском компоненте (отрисовка). Старые подписи из главная/lib/audit-labels.ts не годятся:
-// они тянут @/lib/supabase и покрывают только воронку /panel.
+// они тянут @/lib/supabase и покрывают только воронку /admin.
 export const AUDIT_LABELS: Record<string, string> = {
   // платформа
   'platform.email_queued': 'Письмо поставлено в очередь',

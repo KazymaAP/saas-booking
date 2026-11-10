@@ -17,7 +17,7 @@ test.describe('супер-админ', () => {
   requireAdmin();
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto('/panel/verticals');
+    await page.goto('/admin/verticals');
   });
 
   test('экспорт — массив ниш без кэша', async ({ page }) => {

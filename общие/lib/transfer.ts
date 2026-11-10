@@ -235,7 +235,7 @@ export function supabaseTransferStore(): TransferStore {
     },
     async ensureLicense(b) {
       if (b.license_id) return b.license_id;
-      // Лицензия могла быть создана в /panel/licenses без записи в businesses.license_id.
+      // Лицензия могла быть создана в /admin/licenses без записи в businesses.license_id.
       const { data: found } = await db.from('licenses').select('license_id').eq('business_id', b.id).limit(1);
       let license_id: string | null = found?.[0]?.license_id ?? null;
       if (!license_id) {

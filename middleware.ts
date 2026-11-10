@@ -95,7 +95,6 @@ function isSystemPath(path: string, host: string): boolean {
 
 function isNoindexPath(path: string): boolean {
   return path.startsWith('/preview/')
-    || path === '/panel' || path.startsWith('/panel/')
     || path === '/admin' || path.startsWith('/admin/')
     || path === '/dev' || path.startsWith('/dev/')
     || path === '/partner' || path.startsWith('/partner/')
@@ -159,12 +158,8 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   }
   if (licenseBlocked(req, event, host)) return blockedResponse(req);
 
-  // Кабинет предпринимателя на кастомном домене теперь /admin; старый /panel/login — постоянный редирект.
-  if (!isMainHost(host) && path === '/panel/login') {
-    const url = req.nextUrl.clone();
-    url.pathname = '/admin/login';
-    return NextResponse.redirect(url, 308);
-  }
+  // Старая супер-админка /panel/* удалена: 404 без редиректа (ТЗ NEW-4).
+  if (path === '/panel' || path.startsWith('/panel/')) return new NextResponse(null, { status: 404 });
 
   if (!isMainHost(host) && !isSystemPath(path, host)) return customDomain(req, host);
 

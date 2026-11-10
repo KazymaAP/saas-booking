@@ -1,4 +1,4 @@
-// app/panel/(protected)/_lib/action.ts — общий каркас server actions супер-админки.
+// app/admin/(protected)/_lib/action.ts — общий каркас server actions супер-админки.
 // Каждое действие: проверка прав → валидация zod → ≤ 1–2 SQL → audit → revalidatePath → типизированный результат.
 // Результат всегда сериализуемый объект: клиент показывает toast и откатывает optimistic при ok=false.
 import { z } from 'zod';

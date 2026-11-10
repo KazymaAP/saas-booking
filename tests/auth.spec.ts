@@ -13,17 +13,17 @@ async function fillLogin(page: Page, email: string, password: string): Promise<v
 
 test.describe('вход: без стенда', () => {
   test('форма супер-админа доступна: подписи полей, автофокус, ссылки на сброс и magic-link', async ({ page }) => {
-    await page.goto('/panel/login');
+    await page.goto('/admin/login');
     await expect(page.getByRole('heading', { level: 1, name: 'Вход в панель' })).toBeVisible();
     await expect(page.getByLabel('Почта')).toBeFocused();
     await expect(page.getByLabel('Почта')).toHaveAttribute('autocomplete', 'username');
     await expect(page.getByLabel('Пароль')).toHaveAttribute('autocomplete', 'current-password');
-    await expect(page.getByRole('link', { name: 'Забыли пароль?' })).toHaveAttribute('href', /\/panel\/forgot-password/);
+    await expect(page.getByRole('link', { name: 'Забыли пароль?' })).toHaveAttribute('href', /\/admin\/forgot-password/);
     await expect(page.getByRole('link', { name: 'Войти по ссылке из письма' })).toHaveAttribute('href', /\/magic-link/);
   });
 
   test('неверный пароль: сообщение role=alert, поля aria-invalid, в URL нет почты и пароля', async ({ page }) => {
-    await page.goto('/panel/login');
+    await page.goto('/admin/login');
     await fillLogin(page, 'nobody@example.test', 'wrong-password-123');
     await expect(formAlert(page)).toHaveText(/Неверная почта или пароль/);
     await expect(page.getByLabel('Почта')).toHaveAttribute('aria-invalid', 'true');
@@ -33,29 +33,29 @@ test.describe('вход: без стенда', () => {
   });
 
   test('код ошибки из URL: неизвестный не отображается (нельзя подсунуть свой текст)', async ({ page }) => {
-    await page.goto('/panel/login?error=%3Cscript%3E');
+    await page.goto('/admin/login?error=%3Cscript%3E');
     await expect(formAlert(page)).toHaveCount(0);
-    await page.goto('/panel/login?error=rate_limited');
+    await page.goto('/admin/login?error=rate_limited');
     await expect(formAlert(page)).toHaveText(/Слишком много попыток/);
   });
 
   test('защищённые страницы без сессии ведут на вход', async ({ page }) => {
-    await page.goto('/panel/funnel');
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto('/admin/funnel');
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
   test('refresh без сессии и с внешним next: только внутренний редирект (open redirect закрыт)', async ({ request }) => {
-    for (const next of ['//evil.com', 'https://evil.com/panel', '/\\evil.com', '/panel/../evil']) {
+    for (const next of ['//evil.com', 'https://evil.com/admin', '/\\evil.com', '/admin/../evil']) {
       const res = await request.get(`/api/auth/refresh?realm=admin&next=${encodeURIComponent(next)}`, { maxRedirects: 0 });
       expect(res.status()).toBe(303);
       const location = res.headers()['location'] ?? '';
       expect(new URL(location, 'http://localhost').hostname).toBe('localhost');
-      expect(location).toContain('/panel/login');
+      expect(location).toContain('/admin/login');
     }
   });
 
   test('cookie сессии не выставляется без входа; страница входа не индексируется', async ({ page }) => {
-    await page.goto('/panel/login');
+    await page.goto('/admin/login');
     const cookies = await page.context().cookies();
     expect(cookies.find((c) => c.name === 'sa_session')).toBeUndefined();
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
@@ -68,7 +68,7 @@ test.describe('вход: без JavaScript', () => {
   test('форма отправляется обычным POST с Origin своего сайта и получает код ошибки', async ({ page }) => {
     const origins: string[] = [];
     page.on('request', (r) => { if (r.method() === 'POST') origins.push(r.headers()['origin'] ?? ''); });
-    await page.goto('/panel/login');
+    await page.goto('/admin/login');
     await fillLogin(page, 'nobody@example.test', 'wrong-password-123');
     await expect(page).toHaveURL(/error=invalid/);
     await expect(formAlert(page)).toHaveText(/Неверная почта или пароль/);
@@ -117,7 +117,7 @@ test.describe('вход: стенд', () => {
   });
 
   test('rate limit: 11-я попытка с одного IP за 15 минут блокируется', async ({ page }) => {
-    await page.goto('/panel/login');
+    await page.goto('/admin/login');
     for (let i = 0; i < 11; i += 1) await fillLogin(page, uniqueEmail('rl'), 'wrong-password-123');
     await expect(formAlert(page)).toHaveText(/Слишком много попыток/);
   });

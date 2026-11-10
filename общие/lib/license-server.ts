@@ -161,7 +161,7 @@ async function maybeAlert(store: LicenseStore, alert: Alerter, input: PingInput,
   // Проверяем ДО записи текущего ping, иначе он сам себя «задедуплицирует».
   if (await store.hasRecentSignal(licId, input.domain, status, since)) return;
   const icon = status === 'unknown' ? '🚨 Неизвестный запуск' : '⚠️ Запуск на неразрешённом домене';
-  await alert(`${icon}: лицензия ${maskId(input.license_id)}, домен ${maskDomain(input.domain)}. Подробности: /panel/licenses`);
+  await alert(`${icon}: лицензия ${maskId(input.license_id)}, домен ${maskDomain(input.domain)}. Подробности: /admin/licenses`);
 }
 
 // ---------- Основной обработчик ----------
@@ -263,7 +263,7 @@ export async function purgeOldPings(now: Date = new Date()): Promise<number> {
   return count ?? 0;
 }
 
-// ---------- Ручные операции супер-админа (route revoke и server actions /panel/licenses) ----------
+// ---------- Ручные операции супер-админа (route revoke и server actions /admin/licenses) ----------
 
 export type LicenseKey = { by: 'id' | 'license_id'; value: string };
 export type AdminResult = { ok: true; changed: boolean } | { ok: false; reason: 'not_found' | 'db' };

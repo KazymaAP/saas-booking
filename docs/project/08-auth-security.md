@@ -13,7 +13,7 @@
 
 ### Супер-админ (`admin-session.ts`)
 
-`signInAdmin` / `signOut` / `isSuperAdmin`. Проверка `sameOrigin` (CSRF), rate limit по IP и email, `passwordSignIn`, `isSuperAdminEmail` (список из `SUPERADMIN_EMAILS`), `startSession('admin', session)`, запись в `auth-audit`. Парольный вход — `/panel/login`. Сброс — `/panel/forgot-password` → письмо → `/reset-password?token=`.
+`signInAdmin` / `signOut` / `isSuperAdmin`. Проверка `sameOrigin` (CSRF), rate limit по IP и email, `passwordSignIn`, `isSuperAdminEmail` (список из `SUPERADMIN_EMAILS`), `startSession('admin', session)`, запись в `auth-audit`. Парольный вход — `/admin/login`. Сброс — `/admin/forgot-password` → письмо → `/reset-password?token=`.
 
 ### Владелец (`owner-session.ts`)
 

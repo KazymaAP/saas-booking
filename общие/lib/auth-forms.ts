@@ -78,12 +78,12 @@ export function withQuery(path: string, params: Readonly<Record<string, string |
 }
 
 // Область входа по пути возврата: кабинет владельца (/{prefix}/{slug}/admin...) или супер-админка.
-// Используется страницами /magic-link и /panel/forgot-password, которые общие для обеих областей.
+// Используется страницами /magic-link и /admin/forgot-password, которые общие для обеих областей.
 export function realmFromNext(raw: unknown): { realm: AuthRealm; next: string | null } {
   const next = sanitizePanelNext(raw);
   if (!next) return { realm: 'admin', next: null };
   const root = panelRootOf(next.split(/[?#]/)[0] ?? '');
-  return { realm: root && root !== '/panel' ? 'owner' : 'admin', next };
+  return { realm: root && root !== '/admin' ? 'owner' : 'admin', next };
 }
 
 export type SearchParams = Readonly<Record<string, string | string[] | undefined>>;

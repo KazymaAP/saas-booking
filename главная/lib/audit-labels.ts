@@ -1,5 +1,5 @@
-// app/panel/(protected)/_lib/audit-labels.ts — человекочитаемые подписи событий audit_log.
-// Общие для истории в карточке бизнеса и журнала /panel/logs (раньше подписи были только в карточке).
+// app/admin/(protected)/_lib/audit-labels.ts — человекочитаемые подписи событий audit_log.
+// Общие для истории в карточке бизнеса и журнала /admin/logs (раньше подписи были только в карточке).
 import { LOG_SOURCES, type LogSource } from '@/lib/log';
 import { statusLabel } from './statuses';
 

@@ -294,13 +294,13 @@ export function verifyJwtHs256(token: string, secret: string, now: Date): JwtCla
 
 const OWNER_PANEL_RE = /^\/[a-z0-9-]+\/[a-z0-9-]+\/admin(?=\/|$)/i;
 
-// Корень панели, к которой относится путь: '/panel' (старая супер-админка)
+// Корень панели, к которой относится путь: '/admin' (студия супер-админа)
 // либо '/{prefix}/{slug}/admin' (кабинет владельца на основном домене). null — путь не из панели.
 // Имя функции сохранено для обратной совместимости с вызывающими модулями и тестами.
 export function panelRootOf(path: string): string | null {
   const owner = OWNER_PANEL_RE.exec(path);
   if (owner) return owner[0];
-  return path === '/panel' || path.startsWith('/panel/') ? '/panel' : null;
+  return path === '/admin' || path.startsWith('/admin/') ? '/admin' : null;
 }
 
 // Безопасный путь «вернуться после входа» для любого кабинета: относительный и внутри панели.

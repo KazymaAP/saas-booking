@@ -8,7 +8,7 @@
 
 - **Ящики** (`email_accounts`): SMTP/IMAP-хосты и порты, `smtp_pass_encrypted` (AES-256-GCM), `daily_limit` = 50, `sent_today`, `last_reset`, `active`. Ротация ящиков и учёт лимитов — `email-accounts.ts`; сброс `sent_today` в 00:00 МСК (cron `reset-email-limits` в 21:00 UTC).
 - **Очередь** (`email_queue`): до 50 писем за запуск, бюджет времени, `retry_count`/`max_retries=3`, `next_retry_at`, retry через 1 ч и 4 ч → `failed` + алерт. Обработчик — `email-queue.ts`, точка входа `GET /api/cron/send-emails` (раз в минуту).
-- **Рендер** (`email-render.ts`): тема, текст, HTML с inline-CSS; переменные шаблонов экранируются; `email-template-types.ts` — каналы и типы шаблонов; `templates` + `templates_versions` — версионирование; `app/panel/(protected)/templates/` — предпросмотр и восстановление версий.
+- **Рендер** (`email-render.ts`): тема, текст, HTML с inline-CSS; переменные шаблонов экранируются; `email-template-types.ts` — каналы и типы шаблонов; `templates` + `templates_versions` — версионирование; `app/admin/(protected)/templates/` — предпросмотр и восстановление версий.
 - **Холодная рассылка** (`outreach.ts`): `buildEmail()`, `queueApproved()`, трекинг, `List-Unsubscribe`, защита от open redirect.
 - **Трекинг**: `GET /api/track/open/[token]` — пиксель, всегда 204; `GET /api/track/click/[token]` — 302 на целевой URL; идемпотентность, legacy-токены, fail open. `email-tracking.ts`.
 - **Отписка**: `unsubscribes`, One-Click RFC 8058 (`POST /api/unsubscribe/[token]`), страница `/unsubscribe/[token]` с причиной, `List-Unsubscribe` в заголовках писем.
@@ -46,12 +46,12 @@
 
 ## 7. Аналитика
 
-`analytics.ts` (собственная аналитика сайтов клиентов: хэширование, сессия, DNT, валидация), `analytics-summary.ts` (агрегаты для `/panel/stats` и `GET /api/analytics/summary`), `components/Analytics.tsx`, `API POST /api/track/page`. БД: партиционированная `analytics_events`, materialized view `analytics_daily`, `analytics_refresh_log`, функции `analytics_refresh*`, `analytics_business_summary`, `analytics_outreach_summary`, `analytics_traffic_summary`, `analytics_series`, `analytics_rate_hit`, `analytics_purge_rate_limits`. 4 SQL-cron из миграции 0011 (`analytics-refresh`, `analytics-partitions`, `analytics-retention`, `analytics-rate-purge`).
+`analytics.ts` (собственная аналитика сайтов клиентов: хэширование, сессия, DNT, валидация), `analytics-summary.ts` (агрегаты для `/admin/stats` и `GET /api/analytics/summary`), `components/Analytics.tsx`, `API POST /api/track/page`. БД: партиционированная `analytics_events`, materialized view `analytics_daily`, `analytics_refresh_log`, функции `analytics_refresh*`, `analytics_business_summary`, `analytics_outreach_summary`, `analytics_traffic_summary`, `analytics_series`, `analytics_rate_hit`, `analytics_purge_rate_limits`. 4 SQL-cron из миграции 0011 (`analytics-refresh`, `analytics-partitions`, `analytics-retention`, `analytics-rate-purge`).
 
 ## 8. Бэкапы
 
 - `backup.ts`, `backup-shared.ts`, `backup-deps.ts`: JSON-выгрузка 9 ключевых таблиц в приватный bucket `backups`, восстановление (`POST /api/backup/restore`), ретеншн 30 дней, пагинация, порядок restore, идемпотентность.
-- `/api/cron/backup` (Vercel Cron, воскресенье 03:00 UTC) и `runBackupNow` из `/panel/backup`.
+- `/api/cron/backup` (Vercel Cron, воскресенье 03:00 UTC) и `runBackupNow` из `/admin/backup`.
 - `.github/workflows/backup.yml`: еженедельный `pg_dump` на Ubuntu-раннере (воскресенье 00:00 UTC), артефакт `db-backup-<run_id>`, хранение 60 дней, секрет `SUPABASE_DB_URL`.
 - `INSTALL.md` — установка копии для одного бизнеса (выкуп кода); `transfer.ts` + `/api/transfer/[id]` — передача одним `.txt` без ZIP и без исходников.
 

@@ -167,12 +167,12 @@ describe('auth-reset: установка нового пароля', () => {
 describe('auth-flow', () => {
   it('normalizeReturnTo и loginPathFor', () => {
     expect(flow.normalizeReturnTo('admin', null)).toBe('/admin');
-    expect(flow.normalizeReturnTo('admin', '/panel/clients?x=1')).toBe('/panel/clients?x=1');
+    expect(flow.normalizeReturnTo('admin', '/admin/clients?x=1')).toBe('/admin/clients?x=1');
     expect(flow.normalizeReturnTo('owner', '/s/tire/admin/bookings')).toBe('/s/tire/admin/bookings');
-    expect(flow.normalizeReturnTo('owner', '/panel')).toBeNull();
+    expect(flow.normalizeReturnTo('owner', '/admin')).toBeNull();
     expect(flow.normalizeReturnTo('owner', 'https://evil.com/s/x/panel')).toBeNull();
     expect(flow.loginPathFor('owner', '/s/tire/admin/bookings')).toBe('/s/tire/admin/login');
-    expect(flow.loginPathFor('admin', '/panel/clients')).toBe('/panel/login');
-    expect(flow.loginPathFor('owner', null)).toBe('/panel/login');
+    expect(flow.loginPathFor('admin', '/admin/clients')).toBe('/admin/login');
+    expect(flow.loginPathFor('owner', null)).toBe('/admin/login');
   });
 });

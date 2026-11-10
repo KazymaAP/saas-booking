@@ -2,7 +2,7 @@
 // главная/SuperAdmin.tsx — супер-админка SaaS в дизайне «Детейленг» (тёмная студия).
 // Переиспользует точный скомпилированный CSS public/assets/detailing-scoped.css (scoped под .detailing-root)
 // и токены бренда (bg-brand-surface, text-brand-text-muted, btn-primary, .sheet, …).
-// Данные — мок (для локального превью); реальный маршрут импортирует этот компонент из app/panel.
+// Данные — мок (для локального превью); компонент используется страницей /admin.
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   type Icon,
@@ -3398,7 +3398,7 @@ function PreviewPanel() {
 
   return (
     <div className="space-y-5">
-      <SectionHeader icon={Eye} title="Предпросмотр интерфейсов" desc="Как выглядят кабинет партнёра и кабинет предпринимателя. Это статичные макеты: кнопки не сохраняют данные — боевые кабинеты работают по адресам /partner и /{prefix}/{slug}/panel" />
+      <SectionHeader icon={Eye} title="Предпросмотр интерфейсов" desc="Как выглядят кабинет партнёра и кабинет предпринимателя. Это статичные макеты: кнопки не сохраняют данные — боевые кабинеты работают по адресам /partner и /{prefix}/{slug}/admin" />
 
       <div className="flex flex-wrap items-center gap-2">
         {PREVIEW_TABS.map((t) => (

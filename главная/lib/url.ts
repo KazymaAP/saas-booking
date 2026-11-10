@@ -1,4 +1,4 @@
-// app/panel/(protected)/_lib/url.ts — сборка ссылок с сохранением фильтров (пагинация через searchParams).
+// app/admin/(protected)/_lib/url.ts — сборка ссылок с сохранением фильтров (пагинация через searchParams).
 // Раньше пагинация теряла city и q: ссылки «Дальше» собирались вручную только из status.
 
 export type Params = Record<string, string | string[] | undefined>;

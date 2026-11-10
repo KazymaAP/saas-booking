@@ -96,7 +96,7 @@
 
 - Два дерева библиотек: рабочее `общие/lib/` (алиас `@/lib`) и дублирующее `lib/`. Правки нужно вносить в `общие/lib/` (том 03).
 - Два конфига Vitest (`vitest.config.ts` и `vitest.config.mts`), два Playwright (`playwright.config.ts` и `.mts`), дубли документации в `служебное/docs/`, дубли тестов в `служебное/tests/`, дубли скриптов в `служебное/scripts/`.
-- Часть `/admin` (SuperAdmin.tsx, 4688 строк) — клиентский компонент с собственными data-actions, частично использующий `fake-db.ts` и demо-режим localStorage; старая `/panel/*` — серверные страницы с `guarded`-actions. Обе панели сосуществуют.
+- Часть `/admin` (SuperAdmin.tsx, 4688 строк) — клиентский компонент с собственными data-actions, частично использующий `fake-db.ts` и demо-режим localStorage; старая `/admin/*` — серверные страницы с `guarded`-actions. Обе панели сосуществуют.
 - `/partner/demo` и `/admin/preview/tenant` historically были статичными предпросмотрами; первый теперь рабочий редирект, второй остаётся интерактивным предпросмотром (`TenantPreview.tsx`).
 - `TESTING.md` описывает ручные сценарии и smoke-test, но не отражает текущий объём автотестов.
 - Прямой порт 5432 Supabase из песочницы недоступен, миграции накатываются через Management API (`scripts/apply-migrations-api.cjs`).

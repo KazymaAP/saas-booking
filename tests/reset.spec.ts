@@ -1,4 +1,4 @@
-// tests/reset.spec.ts — e2e сброса пароля: /panel/forgot-password → /reset-password?token=... (ТЗ §5.5).
+// tests/reset.spec.ts — e2e сброса пароля: /admin/forgot-password → /reset-password?token=... (ТЗ §5.5).
 import { expect, test } from '@playwright/test';
 import { addMember, clearAuthRateLimits, createAuthToken, createBusiness, createUser, STAND, STAND_SKIP_REASON, uniqueEmail } from './stand';
 import { formAlert, formStatus } from './ui';
@@ -8,16 +8,16 @@ const NEW_PASSWORD = 'new-strong-password';
 
 test.describe('сброс пароля: без стенда', () => {
   test('форма запроса: подпись, автофокус, ссылка назад ко входу нужной области', async ({ page }) => {
-    await page.goto('/panel/forgot-password');
+    await page.goto('/admin/forgot-password');
     await expect(page.getByLabel('Почта')).toBeFocused();
-    await expect(page.getByRole('link', { name: 'Вернуться ко входу' })).toHaveAttribute('href', '/panel/login');
-    await page.goto(`/panel/forgot-password?next=${encodeURIComponent('/s/tire/panel/bookings')}`);
-    await expect(page.getByRole('link', { name: 'Вернуться ко входу' })).toHaveAttribute('href', '/s/tire/panel/login');
+    await expect(page.getByRole('link', { name: 'Вернуться ко входу' })).toHaveAttribute('href', '/admin/login');
+    await page.goto(`/admin/forgot-password?next=${encodeURIComponent('/s/tire/admin/bookings')}`);
+    await expect(page.getByRole('link', { name: 'Вернуться ко входу' })).toHaveAttribute('href', '/s/tire/admin/login');
   });
 
   test('/reset-password без токена ведёт на форму запроса; битый токен — сообщение', async ({ page }) => {
     await page.goto('/reset-password');
-    await expect(page).toHaveURL(/\/panel\/forgot-password/);
+    await expect(page).toHaveURL(/\/admin\/forgot-password/);
     await page.goto('/reset-password?token=garbage');
     await expect(formAlert(page)).toHaveText(/недействительна/);
     await expect(page.getByLabel('Новый пароль', { exact: true })).toHaveCount(0);
@@ -37,7 +37,7 @@ test.describe('сброс пароля: стенд', () => {
 
   test('ответ одинаков для зарегистрированного и неизвестного адреса', async ({ page }) => {
     for (const email of [uniqueEmail('ghost'), uniqueEmail('ghost2')]) {
-      await page.goto('/panel/forgot-password');
+      await page.goto('/admin/forgot-password');
       await page.getByLabel('Почта').fill(email);
       await page.getByRole('button', { name: 'Отправить ссылку' }).click();
       await expect(formStatus(page)).toHaveText(/Если адрес зарегистрирован/);
@@ -68,7 +68,7 @@ test.describe('сброс пароля: стенд', () => {
   });
 
   test('истёкшая ссылка (старше 1 часа)', async ({ page }) => {
-    const token = await createAuthToken('reset', uniqueEmail('late'), 'admin', '/panel/funnel', -1);
+    const token = await createAuthToken('reset', uniqueEmail('late'), 'admin', '/admin/funnel', -1);
     await page.goto(`/reset-password?token=${token}`);
     await expect(formAlert(page)).toHaveText(/истёк/);
   });

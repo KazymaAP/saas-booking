@@ -74,7 +74,7 @@ const WINDOW_FOR_SETTINGS: { booking_per_10min: number; cancel_per_15min: number
 };
 
 // Чистая функция: маппинг значения настройки в лимит scope'а. Выделена отдельно для тестирования
-// без обращения к БД (ТЗ §7.2; settings.rate_limits из app/panel/(protected)/settings/schema.ts).
+// без обращения к БД (ТЗ §7.2; settings.rate_limits из app/admin).
 export function scopeLimitFromSettings(
   settings: Record<string, number> | null | undefined,
   scope: RateLimitScope,

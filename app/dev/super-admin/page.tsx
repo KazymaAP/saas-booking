@@ -7,6 +7,6 @@ import { SuperAdmin } from '@/главная/SuperAdmin';
 export const dynamic = 'force-dynamic';
 
 export default async function DevSuperAdminPage() {
-  if (!(await isSuperAdmin())) redirect('/panel/login');
+  if (!(await isSuperAdmin())) redirect('/admin/login');
   return <SuperAdmin />;
 }

@@ -1,10 +1,10 @@
 // app/api/verticals/route.ts — выгрузка всех ниш в JSON (ТЗ §4.5, §13.1 «загрузка/выгрузка JSON»). Только супер-админ.
-// Формат = вход импорта (/panel/verticals → importVerticals): набор колонок берётся из verticalSchema,
+// Формат = вход импорта (/admin/verticals → importVerticals): набор колонок берётся из verticalSchema,
 // поэтому скачанный файл всегда загружается обратно без правок. Служебные id/created_at не выгружаются.
 import { isSuperAdmin } from '@/lib/admin-session';
 import { adminClient } from '@/lib/supabase';
 import { errorMessage, logError } from '@/lib/log';
-import { verticalSchema } from '@/app/panel/(protected)/verticals/schema';
+import { verticalSchema } from '@/app/admin/(protected)/verticals/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

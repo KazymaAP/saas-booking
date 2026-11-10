@@ -22,12 +22,12 @@ export function requireWrites(): void {
   test.skip(!ALLOW_WRITES, 'Изменяющий тест: включается E2E_ALLOW_WRITES=1 (только на тестовой базе)');
 }
 
-// Вход через /panel/login (зона агента 12). Поля ищем по name — у формы входа нет <label>.
+// Вход через /admin/login (зона агента 12). Поля ищем по name — у формы входа нет <label>.
 export async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto('/panel/login');
+  await page.goto('/admin/login');
   await page.locator('input[name="email"]').fill(ADMIN_EMAIL);
   await page.locator('input[name="password"]').fill(ADMIN_PASSWORD);
-  await Promise.all([page.waitForURL(/\/panel\/funnel/), page.getByRole('button', { name: 'Войти' }).click()]);
+  await Promise.all([page.waitForURL(/\/admin\/funnel/), page.getByRole('button', { name: 'Войти' }).click()]);
 }
 
 // Тост успеха — role=status, ошибки — role=alert (Toast.tsx). Next добавляет свой пустой role=alert (route announcer),

@@ -1,4 +1,4 @@
-// app/panel/(protected)/_lib/network.ts — отказ server action на клиенте (сеть пропала, 502, деплой посреди запроса).
+// app/admin/(protected)/_lib/network.ts — отказ server action на клиенте (сеть пропала, 502, деплой посреди запроса).
 // Server action в этом случае не возвращает ActionResult, а отклоняет промис: без обработки transition падает молча —
 // тоста нет, optimistic-значение откатывается без объяснения. Модуль без серверных импортов: безопасен для 'use client'.
 

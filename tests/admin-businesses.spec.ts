@@ -13,8 +13,8 @@ test.describe('без входа', () => {
   });
 
   test('список бизнесов уводит на вход', async ({ page }) => {
-    await page.goto('/panel/businesses');
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto('/admin/businesses');
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 });
 
@@ -22,7 +22,7 @@ test.describe('супер-админ', () => {
   requireAdmin();
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto('/panel/businesses');
+    await page.goto('/admin/businesses');
   });
 
   test('фильтры попадают в URL и в ссылки экспорта', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('супер-админ', () => {
   });
 
   test('пагинация сохраняет фильтры', async ({ page }) => {
-    await page.goto('/panel/businesses?status=new');
+    await page.goto('/admin/businesses?status=new');
     // Ждём данные (не скелетон loading.tsx): иначе count() = 0 и тест молча уходит в skip.
     await expect(page.getByRole('status').filter({ hasText: /^Найдено:/ })).toBeVisible();
     const next = page.getByRole('link', { name: 'Дальше →' });
@@ -61,11 +61,11 @@ test.describe('супер-админ', () => {
 
   test('массовая смена статуса: сервер не ответил — тост, статус откатился, выбор сохранён для повтора', async ({ page }) => {
     // Обрываем только POST server action (заголовок Next-Action); навигация и RSC-запросы идут как обычно.
-    await page.route('**/panel/businesses*', async (route) => {
+    await page.route('**/admin/businesses*', async (route) => {
       if (route.request().method() === 'POST' && route.request().headers()['next-action']) await route.abort('failed');
       else await route.continue();
     });
-    await page.goto('/panel/businesses?status=new');
+    await page.goto('/admin/businesses?status=new');
     // Таблица на десктопе, карточки на мобильном — берём видимый вариант.
     const first = page.getByRole('checkbox', { name: /^Выбрать «/ }).locator('visible=true').first();
     await first.check();
@@ -100,7 +100,7 @@ test.describe('супер-админ', () => {
     await form.getByRole('button').last().click();
     await expectToast(page, `Добавлено: ${name}`);
     // Без email — «Нет контакта», ищем по названию.
-    await page.goto(`/panel/businesses?q=${encodeURIComponent(name)}`);
+    await page.goto(`/admin/businesses?q=${encodeURIComponent(name)}`);
     await page.getByRole('link', { name: new RegExp(name) }).first().click();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(name);
     // История изменений из audit_log (History.tsx, подписи — _lib/audit-labels.ts).

@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default async function TenantPreviewPage() {
-  if (!(await isSuperAdmin())) redirect('/panel/login');
+  if (!(await isSuperAdmin())) redirect('/admin/login');
   return <TenantPreview />;
 }

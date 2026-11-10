@@ -56,7 +56,7 @@ export function formatLegalDate(iso: string): string {
 }
 
 // ===== Реквизиты =====
-// settings.platform_requisites — jsonb, пишется формой /panel/settings. Данные недоверенные: валидируем zod.
+// settings.platform_requisites — jsonb, пишется формой /admin/settings. Данные недоверенные: валидируем zod.
 const optional_text = z.string().trim().max(20_000).optional().catch(undefined);
 
 const RequisitesRowSchema = z.object({
@@ -136,7 +136,7 @@ export async function getRequisites(): Promise<Requisites> {
   return (await loadRequisites()).requisites;
 }
 
-// Дополнительный текст документа, который владелец ввёл в /panel/settings (поля «Текст оферты», «Текст политики»).
+// Дополнительный текст документа, который владелец ввёл в /admin/settings (поля «Текст оферты», «Текст политики»).
 export async function getLegalText(key: LegalDocKey): Promise<string | null> {
   return (await loadRequisites()).texts[key];
 }

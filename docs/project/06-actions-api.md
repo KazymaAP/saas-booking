@@ -11,7 +11,7 @@
 | `requestCodeAction(email)` | Не раскрывает наличие аккаунта; `publicClient().auth.signInWithOtp({ shouldCreateUser: true })` |
 | `resetPasswordAction(email, code, password)` | `verifyOtp` (6 цифр) → обновление `partners.password_hash` либо пароля Supabase Auth |
 
-## 2. Server actions — супер-админка `app/panel/(protected)/`
+## 2. Server actions — супер-админка `app/admin/(protected)/`
 
 | Файл | Экспорты |
 |---|---|

@@ -27,23 +27,23 @@ export function staffLoginPath(role: Role, prefix: string, slug: string): string
   return role === 'owner' ? `/${prefix}/${slug}/admin` : `/${prefix}/${slug}/${role}`;
 }
 
-// Куда вернуть после входа. Супер-админ — только внутрь /panel, владелец — только в /{prefix}/{slug}/admin.
+// Куда вернуть после входа. Супер-админ — только внутрь /admin, владелец — только в /{prefix}/{slug}/admin.
 // Для владельца null означает «кабинет не определён»: письмо не отправляется.
 export function normalizeReturnTo(realm: AuthRealm, raw: string | null): string | null {
   const safe = sanitizePanelNext(raw);
   if (!safe) return realm === 'admin' ? ADMIN_HOME : null;
   const root = panelRootOf(safe.split(/[?#]/)[0] ?? '');
-  if (realm === 'admin') return root === '/panel' ? safe : ADMIN_HOME;
-  return root && root !== '/panel' ? safe : null;
+  if (realm === 'admin') return root === '/admin' ? safe : ADMIN_HOME;
+  return root && root !== '/admin' ? safe : null;
 }
 
 // Страница входа той области, куда пользователь возвращается.
 export function loginPathFor(realm: AuthRealm, returnTo: string | null): string {
   if (realm === 'owner' && returnTo) {
     const root = panelRootOf(returnTo.split(/[?#]/)[0] ?? '');
-    if (root && root !== '/panel') return `${root}/login`;
+    if (root && root !== '/admin') return `${root}/login`;
   }
-  return '/panel/login';
+  return '/admin/login';
 }
 
 // Может ли адрес получить письмо для входа в область. Письма уходят только своим:

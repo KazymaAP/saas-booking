@@ -1,5 +1,5 @@
 // app/magic-link/page.tsx — вход по ссылке из письма (ТЗ §5.3, §5.4: /magic-link, /magic-link?token=...).
-// Без token — форма запроса письма (область входа определяется по ?next=: /panel... или /{prefix}/{slug}/panel...).
+// Без token — форма запроса письма (область входа определяется по ?next=: /admin... или /{prefix}/{slug}/admin...).
 // С token — кнопка «Войти»: GET ссылку не гасит (почтовые сканеры и превью открывают ссылки сами),
 // вход происходит только POST-ом. Токен не утекает через Referer: политика strict-origin (lib/auth-forms.ts).
 import { peekMagicLink } from '@/lib/auth-magic';

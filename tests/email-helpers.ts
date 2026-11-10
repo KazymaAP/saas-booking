@@ -13,12 +13,12 @@ export const E2E_READY = Boolean(E2E.baseUrl && E2E.email && E2E.password);
 export const SKIP_REASON = 'Нужны E2E_BASE_URL, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD';
 
 export async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto(`${E2E.baseUrl}/panel/login`);
+  await page.goto(`${E2E.baseUrl}/admin/login`);
   // На странице входа (зона агента 12) у полей нет label — ищем по name.
   await page.locator('input[name="email"]').fill(E2E.email);
   await page.locator('input[name="password"]').fill(E2E.password);
   await page.getByRole('button', { name: /войти/i }).click();
-  await expect(page).not.toHaveURL(/\/panel\/login/);
+  await expect(page).not.toHaveURL(/\/admin\/login/);
 }
 
 // Уникальная метка для данных теста: повторный прогон не конфликтует с прошлым.

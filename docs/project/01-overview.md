@@ -25,7 +25,7 @@
 
 | Роль | Где работает | Источник прав | Что делает |
 |---|---|---|---|
-| Оператор (супер-админ) | `/panel/*` и `/admin` | `SUPERADMIN_EMAILS` + Supabase Auth + `admin-session.ts` | Импорт, воронка, рассылка, клиенты, лицензии, бэкап, настройки платформы |
+| Оператор (супер-админ) | `/admin/*` и `/admin` | `SUPERADMIN_EMAILS` + Supabase Auth + `admin-session.ts` | Импорт, воронка, рассылка, клиенты, лицензии, бэкап, настройки платформы |
 | Владелец бизнеса | `/{prefix}/{slug}/admin` | `admin_users.role = 'owner'` | Брони, услуги, фото, тексты, настройки, оформление, подписка, команда, данные |
 | Менеджер бизнеса | `/{prefix}/{slug}/admin` | `admin_users.role = 'manager'` | Брони, услуги, фото, тексты, уведомления, главная. Без настроек/подписки/команды/оформления/данных |
 | Партнёр | `/partner` | Таблица `partners`, scrypt-пароль, HMAC-cookie `partner_session` | Лиды, счета, начисления, готовые сервисы, реферальная программа, материалы |
@@ -33,7 +33,7 @@
 | Неавторизованный посетитель | `/`, `/auth`, `/oferta`, `/privacy`, `/dogovor-porucheniya`, `/data-request`, `/blocked` | — | Лендинг, вход/регистрация, юридические страницы |
 
 Проверки доступа:
-- `app/panel/(protected)/layout.tsx` — `await isSuperAdmin()` иначе `redirect('/panel/login')`. Server actions дополнительно проверяют права сами через `главная/lib/guard.ts`.
+- `app/admin/(protected)/layout.tsx` — `await isSuperAdmin()` иначе `redirect('/admin/login')`. Server actions дополнительно проверяют права сами через `главная/lib/guard.ts`.
 - `app/[prefix]/[slug]/admin/(protected)/layout.tsx` — `currentOwner(slug)` (membership в `admin_users`, бизнес в статусе `client`), иначе `redirect(`${base}/login`)`. Для server actions — `requireOwnerAction(slug, roles)` с проверкой Origin.
 - `app/partner/page.tsx` — `readPartnerSession()` + `getPartnerById()`, иначе `redirect('/partner/login')` (который редиректит на `/auth`).
 - `app/admin/page.tsx` — `isSuperAdmin()`.
@@ -71,7 +71,7 @@ new → in_progress → preview_ready → approved → sent → viewed → repli
 
 ## 6. Воронка продаж (супер-админка)
 
-Шаги реализованы в `app/panel/(protected)/funnel/actions.ts` и `app/panel/(protected)/actions.ts`:
+Шаги реализованы в `app/admin/(protected)/funnel/actions.ts` и `app/admin/(protected)/actions.ts`:
 
 1. `moveToInProgress` — перевод выделенных бизнесов в работу.
 2. `generateOne` / `generateForSelected` / `generateBatch` — генерация прототипов (`общие/lib/generate.ts`, `generate-store.ts`, `generate-og.ts`).

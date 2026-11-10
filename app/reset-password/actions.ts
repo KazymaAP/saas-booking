@@ -1,5 +1,5 @@
 'use server';
-// app/reset-password/actions.ts — сброс пароля (ТЗ §5.5): запрос письма (форма /panel/forgot-password)
+// app/reset-password/actions.ts — сброс пароля (ТЗ §5.5): запрос письма (форма /admin/forgot-password)
 // и установка нового пароля по ссылке /reset-password?token=... Оба действия — POST с проверкой Origin.
 import { redirect } from 'next/navigation';
 import { completePasswordReset, requestPasswordReset, type ResetCompleteResult } from '@/lib/auth-reset';
@@ -8,7 +8,7 @@ import { authEvent } from '@/lib/auth-audit';
 import { isUuidV4 } from '@/lib/auth-core';
 import { formString, realmFromNext, withQuery, type AuthErrorCode } from '@/lib/auth-forms';
 
-const FORGOT_PAGE = '/panel/forgot-password';
+const FORGOT_PAGE = '/admin/forgot-password';
 const RESET_PAGE = '/reset-password';
 
 async function originIp(back: string): Promise<string> {

@@ -10,7 +10,7 @@ vi.mock('@/lib/admin-session', () => ({ isSuperAdmin: () => isSuperAdmin() }));
 vi.mock('@/lib/log', () => ({ logError: (...a: unknown[]) => logErrorMock(...(a as [])), errorMessage: (e: unknown) => String(e) }));
 
 import { GET } from './route';
-import { validateImport } from '@/app/panel/(protected)/verticals/schema';
+import { validateImport } from '@/app/admin/(protected)/verticals/schema';
 
 beforeEach(() => {
   fake.reset();

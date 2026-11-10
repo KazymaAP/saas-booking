@@ -40,7 +40,7 @@ export CRON_SECRET='<значение из Vercel>'
 | Результат smoke-test | Вероятная причина | Раздел |
 |---|---|---|
 | Все проверки `FAIL`, `000` (нет соединения) | DNS, домен, Vercel | [Vercel упал](#vercel-упал) |
-| `/`, `/panel/login`, `/sitemap.xml` — `OK`, публичный сайт — `FAIL` 404 | нет связи с Supabase или неверные ключи (запросы возвращают пустой результат без ошибки) | [Supabase упал](#supabase-упал) |
+| `/`, `/admin/login`, `/sitemap.xml` — `OK`, публичный сайт — `FAIL` 404 | нет связи с Supabase или неверные ключи (запросы возвращают пустой результат без ошибки) | [Supabase упал](#supabase-упал) |
 | всё `FAIL` 500, в Vercel → Logs `supabaseUrl is required` | не заданы переменные Supabase | [Vercel упал](#vercel-упал) |
 | `/` — `404` на своём домене | домена нет в `MAIN_HOSTS` | [DEPLOY.md, шаг 6](../DEPLOY.md#шаг-6-домен) |
 | `cron без секрета` — `FAIL` (не 401) | маршрут cron отвечает без проверки секрета — изменён код или middleware | откатить деплой, [Cron не работает](#cron-не-работает) |
@@ -54,20 +54,20 @@ export CRON_SECRET='<значение из Vercel>'
 | Vercel | <https://www.vercel-status.com/> |
 | Supabase | <https://status.supabase.com/> |
 | Telegram Bot API | официальной страницы нет; проверка — `curl -s https://api.telegram.org/bot<токен>/getMe` |
-| Yandex 360 | официальной страницы нет; проверка — вход в <https://mail.yandex.ru/> и «Проверить подключение» в `/panel/email-accounts` |
+| Yandex 360 | официальной страницы нет; проверка — вход в <https://mail.yandex.ru/> и «Проверить подключение» в `/admin/email-accounts` |
 
 ## Где смотреть логи
 
 | Где | Что там | Как открыть |
 |---|---|---|
-| `/panel/logs` → «Ошибки» | записи `error:email`, `error:generate`, `error:vercel`, `error:booking`, `error:import`, `error:cron` из `audit_log` | супер-админка |
-| `/panel/logs` → «Аудит» | действия оператора: оплаты, доступы, ящики, лицензии | супер-админка |
+| `/admin/logs` → «Ошибки» | записи `error:email`, `error:generate`, `error:vercel`, `error:booking`, `error:import`, `error:cron` из `audit_log` | супер-админка |
+| `/admin/logs` → «Аудит» | действия оператора: оплаты, доступы, ящики, лицензии | супер-админка |
 | Vercel → Logs | ответы всех запросов, исключения, таймауты функций | **Project → Logs**, фильтр по пути, например `/api/cron` |
 | Vercel → Cron Jobs | последние запуски 10 задач из `vercel.json` | **Settings → Cron Jobs → View Logs** |
 | Supabase → Logs | Postgres, Auth, Storage, API | **Project → Logs → Explorer** |
 | Telegram | `getWebhookInfo` → `last_error_message` | [telegram-setup.md, шаг 6](telegram-setup.md#шаг-6-проверка) |
 
-`/panel/logs` пишется в ту же базу Supabase. Если Supabase недоступен, смотрите Vercel → Logs.
+`/admin/logs` пишется в ту же базу Supabase. Если Supabase недоступен, смотрите Vercel → Logs.
 
 Последние ошибки через SQL Editor:
 
@@ -136,17 +136,17 @@ curl -sI "https://<project>.vercel.app" | head -5   # если работает 
 ## SMTP не работает
 
 **Симптомы:** письма рассылки не уходят, владельцы не получают письма о бронях, в Telegram оператору
-`❌ SMTP error: письмо не отправлено`, в `/panel/logs` — `error:email`.
+`❌ SMTP error: письмо не отправлено`, в `/admin/logs` — `error:email`.
 
 **Проверка по шагам:**
 
-1. `/panel/email-accounts`: строка «Отправлено сегодня: N из M».
+1. `/admin/email-accounts`: строка «Отправлено сегодня: N из M».
    - `N = M` — исчерпан дневной лимит всех ящиков. Письма ждут сброса в 00:00 МСК
      (`reset-email-limits`). Срочно: «Сбросить лимит» у ящика (риск блокировки Яндексом) или добавить ящик.
    - `M = 0` — нет активных ящиков: «Включить» или добавить ящик.
 2. У каждого ящика «Проверить подключение».
    - `OK` — SMTP работает, смотрите шаг 3.
-   - `ошибка SMTP` — текст ошибки в `/panel/logs`:
+   - `ошибка SMTP` — текст ошибки в `/admin/logs`:
 
 | Текст ошибки | Причина | Что делать |
 |---|---|---|
@@ -175,7 +175,7 @@ select email, active, sent_today, daily_limit, last_reset from email_accounts or
 
 ## IMAP: ответы не приходят
 
-**Симптомы:** `/panel/inbox` пуст, хотя бизнесы отвечают; статус `replied` не появляется.
+**Симптомы:** `/admin/inbox` пуст, хотя бизнесы отвечают; статус `replied` не появляется.
 
 1. Вызывается ли `check-replies`:
 
@@ -192,7 +192,7 @@ select email, active, sent_today, daily_limit, last_reset from email_accounts or
      в почтовой программе.
 3. Ответ ушёл на другой адрес — нет MX на домене ([email-setup.md, шаг 2](email-setup.md#шаг-2-mx)).
 4. Письмо сохранено, но без бизнеса (`business_id` пуст) — адрес отправителя не совпадает с `businesses.emails`,
-   а домен — с `businesses.websites`. Привяжите вручную по `/panel/businesses/{id}`.
+   а домен — с `businesses.websites`. Привяжите вручную по `/admin/businesses/{id}`.
 
 ## Telegram не работает
 
@@ -264,7 +264,7 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" "$SITE/api/cron/unknown-job"    
 | внешний планировщик показывает ошибки 401 | в задаче нет заголовка или старый секрет | обновить заголовок в планировщике |
 | `504` на `check-replies` | много ящиков или писем, лимит 60 с | меньше ящиков на вызов невозможно без правки кода; вызывать чаще, чтобы непрочитанных было меньше |
 | `send-emails` → `{"ok":true,"sent":0,"reason":"no_capacity"}` | нет ящика с остатком лимита или ошибка SMTP | [SMTP не работает](#smtp-не-работает) |
-| `send-emails` → `{"ok":true,"sent":0}` | очередь пуста | поставить бизнесы в очередь в `/panel/funnel` |
+| `send-emails` → `{"ok":true,"sent":0}` | очередь пуста | поставить бизнесы в очередь в `/admin/funnel` |
 
 `booking-reminders` ищет брони в окне «через 23–24 часа» и «через 1–2 часа». Пропущенный час — пропущенные
 напоминания: повторного поиска за прошлые окна нет. Планировщик должен вызывать задачу каждый час.
@@ -278,17 +278,17 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" "$SITE/api/cron/unknown-job"    
 | «Нет свободного времени» | `GET $SITE/api/bookings/slots?prefix=t&slug=<slug>&serviceId=<id>&date=YYYY-MM-DD` | пустой список — часы работы на этот день не заданы, услуга длиннее интервала, `min_hours_before` / `max_days_ahead` отсекают дату; поправить в «Настройках» |
 | время на сайте сдвинуто на 3 часа | слоты API — в UTC, сайт показывает в МСК | норма; часовой пояс всех бизнесов — UTC+3 |
 | «Это время уже занято» | двойная бронь отклонена (409 `slot_taken`) | норма; клиент выбирает другое время |
-| «Слишком много попыток» | 429 `rate_limited`, 5 броней за 10 минут с одного IP | подождать 10 минут; лимит задан в коде (`app/api/bookings/route.ts`), поле в `/panel/settings` на него не влияет |
+| «Слишком много попыток» | 429 `rate_limited`, 5 броней за 10 минут с одного IP | подождать 10 минут; лимит задан в коде (`app/api/bookings/route.ts`), поле в `/admin/settings` на него не влияет |
 | сайт бизнеса 404 | статус бизнеса не `client` или slug изменён | `select slug, status, slug_history from businesses where slug = '<slug>';` |
 | бронь есть в базе, уведомления нет | SMTP или Telegram | [SMTP](#smtp-не-работает), [Telegram](#telegram-не-работает) |
-| бизнес пропал из `/panel/businesses` вместе с бронями | ночью сработал `process-deletions` (`pending_deletion`) или `cleanup-prototypes` (любой `archived` с `created_at` старше 120 дней, [проблема 30](../PROGRESS.md#известные-проблемы)) | `select action, created_at from audit_log where entity_id = '<id>' order by created_at desc;` покажет последние ручные действия (cron в журнал не пишет); восстановить из [резервной копии](#резервная-копия-и-восстановление). JSON-копия содержит `businesses`, `services`, `bookings`, `admin_users`, но не `photos` — фото восстанавливаются только из `pg_dump` |
+| бизнес пропал из `/admin/businesses` вместе с бронями | ночью сработал `process-deletions` (`pending_deletion`) или `cleanup-prototypes` (любой `archived` с `created_at` старше 120 дней, [проблема 30](../PROGRESS.md#известные-проблемы)) | `select action, created_at from audit_log where entity_id = '<id>' order by created_at desc;` покажет последние ручные действия (cron в журнал не пишет); восстановить из [резервной копии](#резервная-копия-и-восстановление). JSON-копия содержит `businesses`, `services`, `bookings`, `admin_users`, но не `photos` — фото восстанавливаются только из `pg_dump` |
 
 ## Кастомный домен
 
 | Симптом | Причина | Что делать |
 |---|---|---|
 | `ssl_status = pending` больше суток | клиент не поменял DNS | `curl -s "https://dns.google/resolve?name=<домен>&type=A"` → должно быть `76.76.21.21`; отправить клиенту инструкцию ещё раз |
-| `ssl_status = error` | домен не добавлен в проект Vercel | `/panel/businesses/{id}` → сохранить домен ещё раз; проверить `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` |
+| `ssl_status = error` | домен не добавлен в проект Vercel | `/admin/businesses/{id}` → сохранить домен ещё раз; проверить `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` |
 | домен открывает чужой сайт или 404 | `custom_domain` не совпадает с доменом в Vercel | `select slug, custom_domain from businesses where custom_domain = '<домен>';` |
 | `www.<домен>` не работает | в Vercel добавлен только корневой домен | добавить `www` в Vercel → Domains и CNAME у регистратора |
 | в Telegram `⚠️ Домены не проверены` | ночной `check-domains` получил ошибку Vercel API | список доменов в сообщении; проверить токен Vercel |
@@ -297,7 +297,7 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" "$SITE/api/cron/unknown-job"    
 
 | Симптом | Причина | Что делать |
 |---|---|---|
-| `/panel/login` → «Неверная почта или пароль» при верном пароле | email не в `SUPERADMIN_EMAILS` | добавить, Redeploy |
+| `/admin/login` → «Неверная почта или пароль» при верном пароле | email не в `SUPERADMIN_EMAILS` | добавить, Redeploy |
 | кабинет владельца → «Неверная почта или пароль» | нет строки в `admin_users` для этого бизнеса | `select * from admin_users where email = '<email>';`; привязка — [INSTALL.md](../INSTALL.md#владелец) |
 | владелец забыл пароль | сброса в интерфейсе нет | Supabase → **Authentication → Users** → новый пароль |
 | после входа снова форма входа | cookie не сохраняется: вход по `http://` или чужой домен | входить по `https://` основного домена или домена клиента |
@@ -308,9 +308,9 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" "$SITE/api/cron/unknown-job"    
 
 | Симптом | Причина | Что делать |
 |---|---|---|
-| все страницы показывают `/blocked` | лицензия отозвана в `/panel/licenses` | оператор восстанавливает лицензию; клиент удаляет cookie `license_status` или ждёт 24 часа |
-| у оператора `⚠️ Запуск на другом домене` | клиент переехал на новый домен | `/panel/licenses` → «Разрешить домен» |
-| у оператора `🚨 Неизвестный запуск` | `LICENSE_ID` не найден | сверить `LICENSE_ID` у клиента с `/panel/licenses` |
+| все страницы показывают `/blocked` | лицензия отозвана в `/admin/licenses` | оператор восстанавливает лицензию; клиент удаляет cookie `license_status` или ждёт 24 часа |
+| у оператора `⚠️ Запуск на другом домене` | клиент переехал на новый домен | `/admin/licenses` → «Разрешить домен» |
+| у оператора `🚨 Неизвестный запуск` | `LICENSE_ID` не найден | сверить `LICENSE_ID` у клиента с `/admin/licenses` |
 | сервер лицензий недоступен | статус `unknown` | сайт продолжает работать; блокировки по недоступности нет |
 
 ## Резервная копия и восстановление
@@ -319,10 +319,10 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" "$SITE/api/cron/unknown-job"    
 |---|---|
 | GitHub Actions `weekly-backup` красный: `connection refused` | `SUPABASE_DB_URL` — строка **Session pooler**, порт 5432, пароль БД без спецсимволов или URL-кодированный |
 | `pg_dump: server version mismatch` | в workflow ставится `postgresql-client` из Ubuntu; версия Supabase новее — нужна правка workflow (установка клиента нужной версии из репозитория PostgreSQL) |
-| в `/panel/backup` нет новых файлов | кнопка вызывает `/api/cron/backup` с `CRON_SECRET` и `NEXT_PUBLIC_SITE_URL` — проверить обе переменные |
+| в `/admin/backup` нет новых файлов | кнопка вызывает `/api/cron/backup` с `CRON_SECRET` и `NEXT_PUBLIC_SITE_URL` — проверить обе переменные |
 | восстановление → `confirm` | в поле подтверждения нужно слово `ВОССТАНОВИТЬ` |
 
-Восстановление из JSON (`/panel/backup`) — upsert по `id` в 7 таблиц: удалённые после копии записи не удаляются,
+Восстановление из JSON (`/admin/backup`) — upsert по `id` в 7 таблиц: удалённые после копии записи не удаляются,
 изменённые возвращаются к состоянию копии. Полный откат БД — из `pg_dump`:
 
 ```bash
@@ -333,7 +333,7 @@ pg_restore --clean --if-exists --no-owner --no-privileges -d "$SUPABASE_DB_URL" 
 
 ## Сообщить о сбое клиентам
 
-Шаблон письма владельцам бизнесов (через `/panel/inbox` или обычную почту, если сервис недоступен):
+Шаблон письма владельцам бизнесов (через `/admin/inbox` или обычную почту, если сервис недоступен):
 
 ```text
 Тема: Временные перебои в работе онлайн-записи

@@ -34,10 +34,10 @@ describe('auth-core: сроки в текстах', () => {
 describe('auth-core: open redirect через кодирование', () => {
   it('закодированные точки и слэши, сегмент «.» не проходят', () => {
     for (const bad of ['/panel/%2e%2e/api', '/panel/%2E%2E/api', '/panel/.%2e/x', '/panel%2f..%2fapi', '/panel/%5c%5cevil.com', '/panel/./x']) {
-      expect(core.sanitizeNext(bad, '/panel')).toBeNull();
+      expect(core.sanitizeNext(bad, '/admin')).toBeNull();
     }
     // В query кодирование допустимо: оно не меняет путь.
-    expect(core.sanitizeNext('/panel/clients?q=%2e%2e', '/panel')).toBe('/panel/clients?q=%2e%2e');
+    expect(core.sanitizeNext('/admin/clients?q=%2e%2e', '/admin')).toBe('/admin/clients?q=%2e%2e');
   });
 });
 
@@ -61,14 +61,14 @@ describe('auth-forms: коды из URL и формы', () => {
   });
 
   it('withQuery пропускает пустые значения и кодирует остальные', () => {
-    expect(forms.withQuery('/panel/login', { error: 'invalid', next: null })).toBe('/panel/login?error=invalid');
-    expect(forms.withQuery('/panel/login', {})).toBe('/panel/login');
+    expect(forms.withQuery('/admin/login', { error: 'invalid', next: null })).toBe('/admin/login?error=invalid');
+    expect(forms.withQuery('/admin/login', {})).toBe('/admin/login');
     expect(forms.withQuery('/magic-link', { next: '/s/tire/admin?a=1&b=2' })).toBe('/magic-link?next=%2Fs%2Ftire%2Fadmin%3Fa%3D1%26b%3D2');
   });
 
   it('realmFromNext: кабинет владельца, супер-админка, мусор', () => {
     expect(forms.realmFromNext('/s/tire/admin/bookings')).toEqual({ realm: 'owner', next: '/s/tire/admin/bookings' });
-    expect(forms.realmFromNext('/panel/clients')).toEqual({ realm: 'admin', next: '/panel/clients' });
+    expect(forms.realmFromNext('/admin/clients')).toEqual({ realm: 'admin', next: '/admin/clients' });
     expect(forms.realmFromNext('https://evil.com/panel')).toEqual({ realm: 'admin', next: null });
     expect(forms.realmFromNext('/s/tire/admin/%2e%2e/x')).toEqual({ realm: 'admin', next: null });
   });
@@ -76,7 +76,7 @@ describe('auth-forms: коды из URL и формы', () => {
   it('param берёт первое значение повторённого ключа', () => {
     expect(forms.param({ next: ['/panel/a', '/panel/b'] }, 'next')).toBe('/panel/a');
     expect(forms.param({ next: undefined }, 'next')).toBeNull();
-    expect(forms.param({ next: '/panel' }, 'next')).toBe('/panel');
+    expect(forms.param({ next: '/admin' }, 'next')).toBe('/admin');
   });
 });
 
@@ -93,7 +93,7 @@ describe('auth-roles: разделы кабинета', () => {
   it('sectionOf: раздел из пути кабинета владельца и кастомного домена', () => {
     expect(roles.sectionOf('/s/tire/admin/settings/requisites')).toBe('settings');
     expect(roles.sectionOf('/s/tire/admin')).toBe('');
-    expect(roles.sectionOf('/panel/team?x=1')).toBe('team');
+    expect(roles.sectionOf('/admin/team?x=1')).toBe('team');
     expect(roles.sectionOf('/s/tire')).toBeNull();
     expect(roles.sectionOf(null)).toBeNull();
   });

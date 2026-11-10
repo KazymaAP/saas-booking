@@ -1,5 +1,5 @@
 // lib/log.ts — журнал ошибок (ТЗ §13.7 «Ошибки»: email, генерация, Vercel, брони, импорт).
-// Пишет в audit_log с action = 'error:<source>', вкладка «Ошибки» в /panel/logs фильтрует по префиксу.
+// Пишет в audit_log с action = 'error:<source>', вкладка «Ошибки» в /admin/logs фильтрует по префиксу.
 // Сообщение обрезается до 500 символов, ПД в сообщении и payload маскируются (ТЗ §17.8).
 import { adminClient } from './supabase';
 import { maskPayload, maskString, type AuditPayload } from './audit';

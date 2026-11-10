@@ -20,7 +20,7 @@
 | `auth-invites.ts` | Приглашения в кабинет бизнеса |
 | `auth-magic.ts` | Вход по одноразовой ссылке (не основной метод) |
 | `auth-mail.ts` | Письма: приглашение, magic-link, сброс пароля |
-| `auth-reset.ts` | Сброс пароля: `/panel/forgot-password` → письмо → `/reset-password?token=` |
+| `auth-reset.ts` | Сброс пароля: `/admin/forgot-password` → письмо → `/reset-password?token=` |
 | `auth-roles.ts` | Права ролей кабинета |
 | `auth-tokens.ts` | Одноразовые токены magic-link и сброса пароля |
 | `rate-limit.ts` | Атомарный rate limit в Postgres |
@@ -100,7 +100,7 @@
 | Файл | Назначение |
 |---|---|
 | `analytics.ts` | Собственная аналитика сайтов клиентов |
-| `analytics-summary.ts` | Агрегаты для `/panel/stats` и `/api/analytics/summary` |
+| `analytics-summary.ts` | Агрегаты для `/admin/stats` и `/api/analytics/summary` |
 | `appearance.ts` | 10 готовых стилей оформления кабинета и сайта |
 | `contrast.ts` | Выбор текста поверх акцентного цвета (WCAG) |
 | `json-ld.ts` | Безопасная сериализация JSON-LD |

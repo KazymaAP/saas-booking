@@ -60,7 +60,7 @@ describe('auth-magic: запрос ссылки', () => {
     expect(tokenRow()?.return_to).toBe('/admin');
     await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '/s/tire/admin', ip: '198.51.100.2' });
     expect(tokenRow()?.return_to).toBe('/admin');
-    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/panel/funnel', ip: IP })).toBe('sent');
+    expect(await magic.requestMagicLink({ email: 'owner@biz.ru', realm: 'owner', returnTo: '/admin/funnel', ip: IP })).toBe('sent');
     expect(harness.sentMails).toHaveLength(2);
   });
 
@@ -89,17 +89,17 @@ describe('auth-magic: запрос ссылки', () => {
   it('slugFromPanelPath', () => {
     expect(magic.slugFromPanelPath('/s/tire/admin')).toBe('tire');
     expect(magic.slugFromPanelPath('/s/tire/admin/bookings?x=1')).toBe('tire');
-    expect(magic.slugFromPanelPath('/panel/funnel')).toBeNull();
+    expect(magic.slugFromPanelPath('/admin/funnel')).toBeNull();
     expect(magic.slugFromPanelPath(null)).toBeNull();
   });
 });
 
 describe('auth-magic: погашение ссылки', () => {
   it('супер-админ: вход, cookie сессии, одноразовость', async () => {
-    await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '/panel/clients', ip: IP });
+    await magic.requestMagicLink({ email: 'boss@example.com', realm: 'admin', returnTo: '/admin/clients', ip: IP });
     const token = tokenFromLastMail();
     vi.mocked(provider.sessionWithoutPassword).mockResolvedValue(sessionFor('boss@example.com', 'boss'));
-    expect(await magic.consumeMagicLink(token, IP)).toEqual({ kind: 'ok', redirectTo: '/panel/clients' });
+    expect(await magic.consumeMagicLink(token, IP)).toEqual({ kind: 'ok', redirectTo: '/admin/clients' });
     expect(harness.jar.get('sa_session')).toMatchObject({ value: 'access-boss', httpOnly: true, secure: true, sameSite: 'lax' });
     expect(await magic.consumeMagicLink(token, IP)).toEqual({ kind: 'invalid' });
     expect(await magic.peekMagicLink(token)).toBe('used');

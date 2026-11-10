@@ -2,12 +2,12 @@
 import { expect, test } from '@playwright/test';
 import { E2E, E2E_READY, SKIP_REASON, loginAsAdmin } from './email-helpers';
 
-test.describe('/panel/inbox', () => {
+test.describe('/admin/inbox', () => {
   test.skip(!E2E_READY, SKIP_REASON);
 
   test('без входа — редирект на логин', async ({ page }) => {
-    await page.goto(`${E2E.baseUrl}/panel/inbox`);
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto(`${E2E.baseUrl}/admin/inbox`);
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
   test.describe('после входа', () => {
@@ -16,17 +16,17 @@ test.describe('/panel/inbox', () => {
     });
 
     test('фильтры: активный отмечен aria-current, неизвестный фильтр = «Все»', async ({ page }) => {
-      await page.goto(`${E2E.baseUrl}/panel/inbox?filter=unread`);
+      await page.goto(`${E2E.baseUrl}/admin/inbox?filter=unread`);
       const nav = page.getByRole('navigation', { name: 'Фильтр писем' });
       await expect(nav.getByRole('link', { name: /Непрочитанные/ })).toHaveAttribute('aria-current', 'page');
       await nav.getByRole('link', { name: 'Отвеченные' }).click();
       await expect(page).toHaveURL(/filter=answered/);
-      await page.goto(`${E2E.baseUrl}/panel/inbox?filter=<script>`);
+      await page.goto(`${E2E.baseUrl}/admin/inbox?filter=<script>`);
       await expect(nav.getByRole('link', { name: 'Все' })).toHaveAttribute('aria-current', 'page');
     });
 
     test('отметка прочитанным/непрочитанным меняется сразу', async ({ page }) => {
-      await page.goto(`${E2E.baseUrl}/panel/inbox?filter=all`);
+      await page.goto(`${E2E.baseUrl}/admin/inbox?filter=all`);
       const thread = page.getByRole('article').first();
       test.skip((await thread.count()) === 0, 'Во входящих нет писем');
       const toggle = thread.getByRole('button', { name: /нить/ });
@@ -38,7 +38,7 @@ test.describe('/panel/inbox', () => {
     });
 
     test('у поля ответа есть label, пустой ответ не отправляется', async ({ page }) => {
-      await page.goto(`${E2E.baseUrl}/panel/inbox?filter=all`);
+      await page.goto(`${E2E.baseUrl}/admin/inbox?filter=all`);
       const thread = page.getByRole('article').first();
       test.skip((await thread.count()) === 0, 'Во входящих нет писем');
       const field = thread.getByLabel(/Ответ \(уйдёт с того же ящика/);

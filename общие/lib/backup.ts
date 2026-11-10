@@ -363,7 +363,7 @@ export async function performBackup(deps: BackupJobDeps, trigger: 'cron' | 'manu
   const result = await runBackup(deps.db, now);
   if (!result.ok) {
     await deps.log_error(`backup: ${result.error.slice(0, 300)}`, { trigger });
-    await deps.notify(`🚨 Резервная копия не создана (${trigger}): ${result.error.slice(0, 200)}. Подробности: /panel/logs`);
+    await deps.notify(`🚨 Резервная копия не создана (${trigger}): ${result.error.slice(0, 200)}. Подробности: /admin`);
     return { ...result, pings_purged: null, trigger };
   }
   let pings_purged: number | null = null;

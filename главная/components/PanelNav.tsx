@@ -42,7 +42,7 @@ export function PanelNav({ items }: { items: NavItem[] }) {
   return (
     <nav aria-label="Разделы супер-админки" className="border-b border-[#e5e5e5] bg-white">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2">
-        <Link href="/panel/funnel" className="text-[15px] font-semibold no-underline">Супер-админка</Link>
+        <Link href="/admin" className="text-[15px] font-semibold no-underline">Супер-админка</Link>
         <button
           type="button"
           className="md:hidden"

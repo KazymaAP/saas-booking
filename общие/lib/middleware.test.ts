@@ -60,7 +60,7 @@ describe('middleware', () => {
 
   it('панели и прототипы — noindex', async () => {
     const { middleware } = await load();
-    for (const path of ['/panel', '/panel/funnel', '/t/tire/admin', '/t/tire/admin/bookings', '/preview/abc']) {
+    for (const path of ['/admin', '/admin/clients', '/t/tire/admin', '/t/tire/admin/bookings', '/preview/abc']) {
       const res = await middleware(request(`https://zapishisya.ru${path}`), event);
       expect(res.headers.get('x-robots-tag'), path).toBe('noindex, nofollow');
     }
@@ -75,13 +75,13 @@ describe('middleware', () => {
     expect(rewriteOf(custom)?.pathname).toBe('/t/tire/admin');
   });
 
-  it('кастомный домен: старый /panel/login → 308 на /admin/login', async () => {
+  it('старая панель /panel/* → 404 без редиректа', async () => {
     const { middleware } = await load();
-    const res = await middleware(request('https://client.ru/panel/login?next=%2Fadmin'), event);
-    expect(res.status).toBe(308);
-    const location = new URL(res.headers.get('location') ?? 'https://client.ru/');
-    expect(location.pathname).toBe('/admin/login');
-    expect(location.searchParams.get('next')).toBe('/admin');
+    for (const path of ['/panel', '/panel/login', '/panel/funnel', '/panel/clients']) {
+      const res = await middleware(request(`https://zapishisya.ru${path}`), event);
+      expect(res.status, path).toBe(404);
+      expect(res.headers.get('location'), path).toBeNull();
+    }
   });
 
   it('/domain-site напрямую на основном домене — 404', async () => {

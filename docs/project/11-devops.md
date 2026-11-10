@@ -102,11 +102,11 @@ E2E использует отдельный тестовый Supabase (`TEST_SUP
 ## 6. Мониторинг
 
 - `/api/health` — 200/503, без чувствительных данных; `X-Robots-Tag: noindex`, `Cache-Control: no-store`.
-- `audit_log` — журнал действий (маскирование PII), `/panel/logs` и «Журнал» в админ-студии.
+- `audit_log` — журнал действий (маскирование PII), `/admin/logs` и «Журнал» в админ-студии.
 - `app_logs` — ошибки приложения, `logError()`.
 - `cron_marks`, `cron_locks`, `cron_registry` — идемпотентность и блокировки cron.
 - Алерты в Telegram оператору (`TELEGRAM_CHAT_ID`) из `admin-notify.ts`, `cron_log_error`.
-- `/panel/stats` + `/api/analytics/summary` — агрегаты; materialized view `analytics_daily`.
+- `/admin/stats` + `/api/analytics/summary` — агрегаты; materialized view `analytics_daily`.
 
 ## 7. Сборка и артефакты
 

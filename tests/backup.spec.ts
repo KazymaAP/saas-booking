@@ -40,9 +40,9 @@ test.describe('GET /api/transfer/[id]', () => {
   });
 });
 
-test.describe('/panel/backup', () => {
+test.describe('/admin/backup', () => {
   test('без входа страница не показывает копии и ссылки на скачивание', async ({ page }) => {
-    await page.goto('/panel/backup');
+    await page.goto('/admin/backup');
     await expect(page.getByRole('link', { name: /Скачать копию/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Восстановить' })).toHaveCount(0);
   });

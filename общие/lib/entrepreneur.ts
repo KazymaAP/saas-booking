@@ -1,5 +1,5 @@
 // lib/entrepreneur.ts — заявка предпринимателя с публичной страницы /auth.
-// Создаёт бизнес в статусе 'new' (виден в /panel/businesses) с уникальным slug.
+// Создаёт бизнес в статусе 'new' (виден в /admin/businesses) с уникальным slug.
 // Аккаунт Supabase Auth создаётся отдельно в server action (email+password).
 import { adminClient } from './supabase';
 

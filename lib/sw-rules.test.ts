@@ -15,7 +15,7 @@ describe('isShellPath: какие пути можно кэшировать', () 
       '/booking/cancel/abc', '/booking/reschedule/abc', '/s/tire/booking/cancel/abc', // отмена и перенос
       '/invite/9f1c2d3e-4a5b-4c6d-8e7f-0a1b2c3d4e5f', '/magic-link', '/reset-password', // токенные ссылки
       '/unsubscribe/tok', '/data-request', '/blocked', '/preview/x', // отписка, выгрузка, служебные
-      '/panel', '/panel/funnel', '/s/tire/panel', '/s/tire/panel/bookings', // кабинеты
+      '/admin', '/admin/funnel', '/s/tire/admin', '/s/tire/admin/bookings', // кабинеты
       '/api/bookings', '/api/cron/send-emails', '/sw.js', '/robots.txt', '/_next/static/x.js',
       '/a/b/c',
     ];
@@ -72,7 +72,7 @@ describe('swRulesSource: вставленный в service worker код вед�
   };
 
   it('правила совпадают с оригиналом на наборе путей', () => {
-    for (const p of ['/', '/oferta', '/s/tire', '/invite/tok', '/s/tire/panel', '/api/x', '/a/b/c']) {
+    for (const p of ['/', '/oferta', '/s/tire', '/invite/tok', '/s/tire/admin', '/api/x', '/a/b/c']) {
       expect(embedded.isShellPathWith(p, embedded.SHELL, embedded.RESERVED), p).toBe(isShellPath(p));
     }
   });

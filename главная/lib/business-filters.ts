@@ -1,5 +1,5 @@
-// app/panel/(protected)/_lib/business-filters.ts — разбор и проверка фильтров списка бизнесов.
-// Общий для страницы /panel/businesses и экспорта /api/export/businesses: один и тот же набор строк
+// app/admin/(protected)/_lib/business-filters.ts — разбор и проверка фильтров списка бизнесов.
+// Общий для страницы /admin/businesses и экспорта /api/export/businesses: один и тот же набор строк
 // на экране и в файле. Всё, что не прошло проверку, просто игнорируется (фильтр не применяется).
 import type { BusinessStatus } from '@/lib/database.types';
 import { isBusinessStatus } from './statuses';

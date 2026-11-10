@@ -1,6 +1,6 @@
 # Том 04. Все маршруты App Router
 
-Источник: полный обход `app/` (список файлов `page.tsx`, `layout.tsx`, `route.ts`, `actions.ts`, `loading/error/not-found.tsx`), `middleware.ts`, `app/panel/(protected)/layout.tsx`, `app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts`.
+Источник: полный обход `app/` (список файлов `page.tsx`, `layout.tsx`, `route.ts`, `actions.ts`, `loading/error/not-found.tsx`), `middleware.ts`, `app/admin/(protected)/layout.tsx`, `app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts`.
 
 Ниже перечислены **все** маршруты проекта. Для страниц указаны файл и назначение. Для `/api/**` — том 06.
 
@@ -75,14 +75,14 @@
 Разделы и видимость по ролям — `'_lib/sections.ts'`:
 `home` (Главная), `bookings` (Брони), `services` (Услуги), `photos` (Фото), `texts` (Тексты), `notifications` (Уведомления) — доступны owner и manager; `settings` (Настройки), `appearance` (Оформление), `subscription` (Подписка), `team` (Команда), `data` (Данные) — `ownerOnly: true`. `eagerPrefetch` только у `home` и `bookings`. Вспомогательные модули `_lib/`: `access.ts`, `busy.ts`, `client-action.ts`, `color.ts`, `form.ts`, `onboarding.ts`, `result.ts`, `subscription.ts`, `time.ts`, `tips.ts`, `useUnsavedGuard.ts`; компоненты `_components/`: `ConfirmDialog`, `CopyButton`, `Field`, `OnboardingTip`, `PanelNav`, `Skeleton`, `Toast`.
 
-## 4. Супер-админка `app/panel/`
+## 4. Супер-админка `app/admin/`
 
 | Путь | Файл | Назначение |
 |---|---|---|
-| `/panel` | `page.tsx` | `redirect('/admin')` |
-| `/panel/login` | `login/page.tsx` | Вход супер-админа, код ошибки в `?error=` |
-| `/panel/forgot-password` | `forgot-password/page.tsx` | Запрос сброса пароля, область по `?next=` |
-| `/panel/(protected)` | `layout.tsx` | `isSuperAdmin()` + NAV из 13 пунктов |
+| `/admin` | `page.tsx` | `redirect('/admin')` |
+| `/admin/login` | `login/page.tsx` | Вход супер-админа, код ошибки в `?error=` |
+| `/admin/forgot-password` | `forgot-password/page.tsx` | Запрос сброса пароля, область по `?next=` |
+| `/admin/(protected)` | `layout.tsx` | `isSuperAdmin()` + NAV из 13 пунктов |
 | `/funnel` | `funnel/page.tsx` + `actions.ts` | Воронка: 5 шагов, генерация, модерация, рассылка |
 | `/businesses` | `businesses/page.tsx` + `actions.ts` | Список бизнесов, фильтры, «Импорт выгрузки 2GIS», «Добавить вручную», массовая смена статуса, экспорт |
 | `/businesses/[id]` | `businesses/[id]/page.tsx` + `actions.ts` | Карточка бизнеса: заметка, домен, проверка SSL, смена slug/статуса |
@@ -99,7 +99,7 @@
 | — | `(protected)/actions.ts` | `moveToInProgress`, `generateOne`, `generateForSelected`, `approveSelected`, `sendBackForRework`, `queueOutreach` |
 | — | `loading.tsx`, `error.tsx` | Состояния |
 
-NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Клиенты, Входящие, Шаблоны, Ниши, Ящики, Лицензии, Статистика, Логи, Настройки, Бэкап, Админ-студия (`/admin`).
+NAV (`app/admin/(protected)/layout.tsx`): Воронка, Бизнесы, Клиенты, Входящие, Шаблоны, Ниши, Ящики, Лицензии, Статистика, Логи, Настройки, Бэкап, Админ-студия (`/admin`).
 
 ## 5. Админ-студия `app/admin/`
 
@@ -147,7 +147,7 @@ NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Кли
    - `path === '/'` без cookie → `rewrite('/domain-site/by-domain?domain=<host>')`;
    - остальные подпути без cookie → `rewrite('/api/resolve-domain')` с заголовками `x-resolve-host`, `x-resolve-next`, `x-resolve-retry`.
 4. На основном хосте `path.startsWith('/domain-site')` → 404.
-5. Иначе `NextResponse.next()` + `X-Robots-Tag: noindex, nofollow` для `/preview/`, `/panel`, `/admin`, `/dev`, `/partner`, `/{prefix}/{slug}/admin`, всех `/api/`.
+5. Иначе `NextResponse.next()` + `X-Robots-Tag: noindex, nofollow` для `/preview/`, `/admin`, `/admin`, `/dev`, `/partner`, `/{prefix}/{slug}/admin`, всех `/api/`.
 
 `isMainHost` (`общие/lib/site.ts`): `MAIN_HOSTS` = `[apex, www.apex, 'localhost', '127.0.0.1']` из `NEXT_PUBLIC_SITE_URL` + `NEXT_PUBLIC_MAIN_HOSTS`; любой `*.vercel.app` тоже основной. Пустой/некорректный host считается основным.
 
@@ -157,11 +157,11 @@ NAV (`app/panel/(protected)/layout.tsx`): Воронка, Бизнесы, Кли
 
 | Откуда | Куда | Условие |
 |---|---|---|
-| `/panel` | `/admin` | всегда |
+| `/admin` | `/admin` | всегда |
 | `/partner/login` | `/auth` | всегда |
 | `/partner/demo` | `/api/demo/partner` | всегда |
 | `/demo/business` | `/api/demo/owner` | всегда |
-| `/panel/*` | `/panel/login` | не супер-админ |
+| `/admin/*` | `/admin/login` | не супер-админ |
 | `/{prefix}/{slug}/admin/*` | `…/admin/login` | нет membership/рефреш сессии |
 | `/partner` | `/partner/login` | нет партнёрской сессии |
 | `/{prefix}/{slug}` | новый URL | `resolveBusiness` вернул `redirect` (slug_history) → `permanentRedirect` (308) |

@@ -51,7 +51,7 @@ async function notifyOperator(id: string, input: DataRequestInput): Promise<void
     input.business ? `Бизнес: ${input.business}` : '',
     input.request_text ? `Текст запроса:\n${input.request_text}` : 'Текст запроса не указан.',
     '',
-    `Ответ направить на email заявителя. Запросы: ${SITE_URL}/panel`,
+    `Ответ направить на email заявителя. Запросы: ${SITE_URL}/admin`,
   ].filter((line, index, all) => line !== '' || all[index - 1] !== '').join('\n');
   // №26: запрос субъекта ПД (ФЗ-152) — транзакционное письмо, не расходует лимит рассылки.
   await sendMail({ to, subject: `Запрос субъекта ПД: ${label}`, text, transactional: true }).catch(() => false);

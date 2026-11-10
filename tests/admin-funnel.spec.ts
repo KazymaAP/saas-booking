@@ -6,13 +6,13 @@ test.describe('без входа', () => {
   requireApp();
 
   test('страница воронки уводит на вход', async ({ page }) => {
-    await page.goto('/panel/funnel');
-    await expect(page).toHaveURL(/\/panel\/login/);
+    await page.goto('/admin/funnel');
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 
-  test('/panel → /panel/funnel → вход', async ({ page }) => {
-    await page.goto('/panel');
-    await expect(page).toHaveURL(/\/panel\/login/);
+  test('/admin → /admin/funnel → вход', async ({ page }) => {
+    await page.goto('/admin');
+    await expect(page).toHaveURL(/\/admin\/login/);
   });
 });
 

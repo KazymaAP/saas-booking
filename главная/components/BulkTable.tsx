@@ -279,14 +279,14 @@ function RowCheck({ uid, row, checked, onToggle }: { uid: string; row: BulkRow; 
 
 function RowName({ row, link }: { row: BulkRow; link: boolean }) {
   if (!link) return <span>{row.name}</span>;
-  return <PrefetchLink className="underline" href={`/panel/businesses/${row.id}`}>{row.name}</PrefetchLink>;
+  return <PrefetchLink className="underline" href={`/admin`}>{row.name}</PrefetchLink>;
 }
 
 function Cell({ row, column, pending }: { row: BulkRow; column: BulkColumn; pending: boolean }) {
   if (column === 'city') return <span>{row.city || '—'}</span>;
   if (column === 'status') return row.status ? <StatusBadge status={row.status} pending={pending} /> : <span>—</span>;
   if (column === 'extra') return <span className="text-[#666666]">{row.extra || '—'}</span>;
-  if (column === 'edit') return <PrefetchLink className="underline" href={`/panel/businesses/${row.id}`} aria-label={`Правки: ${row.name}`}>Правки</PrefetchLink>;
+  if (column === 'edit') return <PrefetchLink className="underline" href={`/admin`} aria-label={`Правки: ${row.name}`}>Правки</PrefetchLink>;
   return row.preview_url ? (
     <a className="underline" href={row.preview_url} target="_blank" rel="noreferrer noopener" aria-label={`Открыть прототип «${row.name}» в новой вкладке`}>Открыть</a>
   ) : (

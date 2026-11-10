@@ -1,6 +1,6 @@
 // app/[prefix]/[slug]/admin/login/page.tsx — вход владельца/менеджера (ТЗ §5.3: /{prefix}/{slug}/admin/login).
 // На кастомном домене middleware переписывает /admin/login сюда: ссылки и редиректы строятся от ownerBasePath,
-// а страницы /magic-link и /panel/forgot-password живут на основном домене (SITE_URL) — сессия там своя (§5.8).
+// а страницы /magic-link и /admin/forgot-password живут на основном домене (SITE_URL) — сессия там своя (§5.8).
 import { notFound, redirect } from 'next/navigation';
 import { ownerAccess, ownerPanelInfo, signInOwner } from '@/lib/owner-session';
 import { sanitizeNext } from '@/lib/auth-core';
@@ -46,7 +46,7 @@ export default async function OwnerLogin({ params, searchParams }: { params: Par
         <AuthField name="password" label="Пароль" type="password" autoComplete="current-password" invalid={Boolean(error)} />
       </AuthForm>
       <AuthLinks links={[
-        { href: `${authBase}/panel/forgot-password${nextQuery}`, label: 'Забыли пароль?' },
+        { href: `${authBase}/admin/forgot-password${nextQuery}`, label: 'Забыли пароль?' },
         { href: `${authBase}/magic-link${nextQuery}`, label: 'Войти по ссылке из письма' },
       ]} />
     </AuthShell>

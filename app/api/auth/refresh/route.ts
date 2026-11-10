@@ -23,9 +23,9 @@ function redirectTo(req: NextRequest, path: string): NextResponse {
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const realm = parseRealm(req.nextUrl.searchParams.get('realm'));
   const next = sanitizePanelNext(req.nextUrl.searchParams.get('next'));
-  if (!realm || !next) return redirectTo(req, '/panel/login');
+  if (!realm || !next) return redirectTo(req, '/admin/login');
 
-  const root = panelRootOf(next) ?? '/panel';
+  const root = panelRootOf(next) ?? '/admin';
   const session = await refreshSession(realm);
   if (session) return redirectTo(req, next);
 
