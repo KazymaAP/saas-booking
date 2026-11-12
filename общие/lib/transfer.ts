@@ -39,6 +39,7 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0021_staff_roles.sql',
   'supabase/migrations/0022_custom_roles.sql',
   'supabase/migrations/0023_custom_roles_lifecycle.sql',
+  'supabase/migrations/0024_custom_roles_cron.sql',
 ] as const;
 
 export type TransferBusiness = {

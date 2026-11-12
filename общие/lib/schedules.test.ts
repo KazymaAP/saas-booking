@@ -81,7 +81,7 @@ describe('vercel.json', () => {
 });
 
 describe('миграции pg_cron синхронизированы с реестром', () => {
-  const sql = ['0008_pg_cron.sql', '0009_retention.sql', '0010_partitions.sql']
+  const sql = ['0008_pg_cron.sql', '0009_retention.sql', '0010_partitions.sql', '0024_custom_roles_cron.sql']
     .map((f) => read(`supabase/migrations/${f}`)).join('\n');
 
   it('каждая pg_cron задача объявлена в SQL с тем же расписанием', () => {
