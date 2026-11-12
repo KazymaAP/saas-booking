@@ -24,7 +24,7 @@ const EMAIL_MAX_LENGTH = 254;
 export type AuthRealm = 'admin' | 'owner';
 
 // Итог попытки входа. 'inactive' сообщается только после верного пароля, чтобы не раскрывать статус бизнеса.
-export type SignInResult = 'ok' | 'invalid' | 'rate_limited' | 'forbidden_origin' | 'inactive';
+export type SignInResult = 'ok' | 'invalid' | 'rate_limited' | 'forbidden_origin' | 'inactive' | 'role_removed';
 
 export type RateRule = { readonly limit: number; readonly windowSeconds: number };
 

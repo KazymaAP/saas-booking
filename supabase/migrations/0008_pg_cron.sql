@@ -311,6 +311,7 @@ insert into public.cron_registry (name, schedule, kind, command, timeout_ms) val
   ('process-transfers', '30 1 * * *', 'http', 'process-transfers', 10000),
   ('cleanup-prototypes', '0 2 * * *', 'http', 'cleanup-prototypes', 60000),
   ('check-domains', '30 2 * * *', 'http', 'check-domains', 60000),
+  ('cleanup-unused-roles', '0 4 * * *', 'http', 'cleanup-unused-roles', 10000),
   ('keep-alive', '0 * * * *', 'sql', 'select public.cron_keep_alive()', 30000)
 on conflict (name) do update
   set schedule = excluded.schedule, kind = excluded.kind, command = excluded.command,

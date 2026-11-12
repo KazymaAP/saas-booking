@@ -17,7 +17,7 @@ export default async function TeamPage({ params }: { params: { prefix: string; s
   const db = adminClient();
   const [membersRes, rolesRes] = await Promise.all([
     db.from('admin_users').select('id, email, role').eq('business_id', access.business.id).order('created_at').returns<MemberRow[]>(),
-    db.from('business_custom_roles').select('id, name, matrix').eq('business_id', access.business.id).order('created_at').returns<BusinessCustomRole[]>(),
+    db.from('business_custom_roles').select('id, name, matrix, last_used_at, removal_notified_at, created_at').eq('business_id', access.business.id).order('created_at').returns<BusinessCustomRole[]>(),
   ]);
   // Ошибка БД → error.tsx, а не «в команде никого нет».
   if (membersRes.error) throw new Error('team: list failed');

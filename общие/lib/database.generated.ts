@@ -126,6 +126,8 @@ export type Database = {
           name: string;
           matrix: Json;
           created_at: string;
+          last_used_at: string | null;
+          removal_notified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -133,6 +135,8 @@ export type Database = {
           name: string;
           matrix: Json;
           created_at?: string;
+          last_used_at?: string | null;
+          removal_notified_at?: string | null;
         };
         Update: {
           id?: string;
@@ -140,6 +144,8 @@ export type Database = {
           name?: string;
           matrix?: Json;
           created_at?: string;
+          last_used_at?: string | null;
+          removal_notified_at?: string | null;
         };
         Relationships: [
           {

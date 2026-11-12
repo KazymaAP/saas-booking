@@ -371,6 +371,46 @@ describe('owner-session (задача 3)', () => {
   });
 });
 
+describe('owner-session: кастомные роли (П1/П3)', () => {
+  const CID = '11111111-1111-1111-1111-111111111111';
+  const CROLE = `custom:${CID}`;
+
+  beforeEach(() => {
+    harness.seed('businesses', [{ id: 'b1', slug: 'tire', status: 'client', name: 'Шиномонтаж' }]);
+    harness.seed('admin_users', [
+      { id: 'm1', business_id: 'b1', auth_user_id: 'owner-1', role: CROLE, email: 'owner@biz.ru' },
+    ]);
+  });
+
+  it('П1: вход с кастомной ролью фиксирует last_used_at и сбрасывает removal_notified_at', async () => {
+    harness.seed('business_custom_roles', [
+      { id: CID, business_id: 'b1', name: 'Только брони', created_at: '2026-01-01T00:00:00Z', last_used_at: null, removal_notified_at: '2026-09-01T00:00:00Z' },
+    ]);
+    vi.mocked(provider.passwordSignIn).mockResolvedValue(sessionFor('owner@biz.ru', 'owner-1'));
+    expect(await owner.signInOwner('owner@biz.ru', 'correct-pass', 'tire')).toBe('ok');
+    const role = harness.tables.get('business_custom_roles')?.find((r) => r.id === CID);
+    expect(role).toBeDefined();
+    expect(role?.last_used_at).not.toBeNull();
+    expect(role?.removal_notified_at).toBeNull();
+    expect(harness.auditActions()).toContain('auth:login_success');
+  });
+
+  it('П3: кастомная роль удалена владельцем → вход запрещён (role_removed), cookie нет', async () => {
+    // business_custom_roles для этой роли отсутствует
+    vi.mocked(provider.passwordSignIn).mockResolvedValue(sessionFor('owner@biz.ru', 'owner-1'));
+    expect(await owner.signInOwner('owner@biz.ru', 'correct-pass', 'tire')).toBe('role_removed');
+    expect(harness.jar.has('biz_session')).toBe(false);
+    expect(harness.auditActions()).toContain('auth:login_failed');
+  });
+
+  it('встроенная роль owner входит как раньше, кастомные таблицы не трогаются', async () => {
+    harness.seed('admin_users', [{ id: 'm2', business_id: 'b1', auth_user_id: 'owner-2', role: 'owner', email: 'o2@biz.ru' }]);
+    vi.mocked(provider.passwordSignIn).mockResolvedValue(sessionFor('o2@biz.ru', 'owner-2'));
+    expect(await owner.signInOwner('o2@biz.ru', 'correct-pass', 'tire')).toBe('ok');
+    expect(harness.tables.get('business_custom_roles')).toBeUndefined();
+  });
+});
+
 describe('flash (задача 4)', () => {
   it('принимает только известные не-секретные сообщения', async () => {
     const { parseFlash } = await import('./flash');

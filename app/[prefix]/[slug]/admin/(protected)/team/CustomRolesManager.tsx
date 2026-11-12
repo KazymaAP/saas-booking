@@ -51,6 +51,17 @@ function summary(matrix: unknown): string {
   return parts.length ? parts.join('; ') : 'нет доступа';
 }
 
+// Дата автоудаления неиспользуемой кастомной роли (П2): последнее использование либо создание + 30 дней.
+// Возвращает строку для баннера или null, если роль ещё не в «окне уведомления» (removal_notified_at пуст).
+function deletionDateOf(cr: BusinessCustomRole): string | null {
+  if (!cr.removal_notified_at) return null;
+  const base = cr.last_used_at ?? cr.created_at;
+  if (!base) return null;
+  const deadline = new Date(Date.parse(base) + 30 * 86_400_000);
+  if (Number.isNaN(deadline.getTime())) return null;
+  return deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 export function CustomRolesManager({ slug, customRoles, canManage }: { slug: string; customRoles: BusinessCustomRole[]; canManage: boolean }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -109,6 +120,20 @@ export function CustomRolesManager({ slug, customRoles, canManage }: { slug: str
       </div>
       <p className="sr-only" aria-live="polite">{announce}</p>
       {dialog}
+
+      {/* П2: баннер о грядущем автоудалении неиспользуемой кастомной роли (removal_notified_at проставлен cron-задачей). */}
+      {customRoles.some((cr) => deletionDateOf(cr) !== null) && (
+        <div role="alert" className="rounded-xl border border-[#b45309] bg-[#fffbeb] p-3 text-[14px] text-[#92400e]">
+          <p className="!mb-1 font-medium">Некоторые роли будут автоматически удалены</p>
+          <ul className="grid gap-1">
+            {customRoles.filter((cr) => deletionDateOf(cr) !== null).map((cr) => (
+              <li key={cr.id}>
+                Роль «{cr.name}» — {deletionDateOf(cr)}. Откройте её или назначьте сотрудника, чтобы отменить удаление.
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!canManage && (
         <p className="!mb-0 text-[14px] text-[#595959]">Управление ролями доступно только владельцу кабинета.</p>

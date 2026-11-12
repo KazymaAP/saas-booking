@@ -6,7 +6,7 @@ export type FieldErrors = Record<string, string>;
 
 export type ActionResult<T = undefined> =
   | { ok: true; message?: string; data?: T }
-  | { ok: false; error: string; fieldErrors?: FieldErrors };
+  | { ok: false; error: string; fieldErrors?: FieldErrors; reason?: string };
 
 // Тексты ошибок — по ТЗ §19.5, одинаковые во всех разделах.
 export const ERR = {
@@ -22,8 +22,8 @@ export function ok<T = undefined>(message?: string, data?: T): ActionResult<T> {
   return { ok: true, message, data };
 }
 
-export function fail(error: string, fieldErrors?: FieldErrors): ActionResult<never> {
-  return { ok: false, error, fieldErrors };
+export function fail(error: string, fieldErrors?: FieldErrors, reason?: string): ActionResult<never> {
+  return { ok: false, error, fieldErrors, reason };
 }
 
 // Первая ошибка zod на каждое поле — под полем показываем одну строку.

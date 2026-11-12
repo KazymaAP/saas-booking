@@ -151,7 +151,7 @@ export async function deleteCustomRole(slug: string, id: string): Promise<Action
   const { data: used } = await adminClient()
     .from('admin_users').select('id').eq('business_id', access.business.id).eq('role', `custom:${id}`).limit(1)
     .returns<{ id: string }[]>();
-  if ((used ?? []).length) return fail('Сначала переназначьте сотрудников с этой ролью');
+  if ((used ?? []).length) return fail('Сначала переназначьте сотрудников с этой ролью', undefined, 'role_in_use');
   const { error } = await adminClient()
     .from('business_custom_roles').delete().eq('id', id).eq('business_id', access.business.id);
   if (error) return fail(ERR.server);

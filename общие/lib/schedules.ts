@@ -76,6 +76,7 @@ export const SCHEDULES: readonly CronSchedule[] = [
   http('process-transfers', '30 1 * * *', 'Выкуп кода: заглушка после support_until, +7 дней transferred_out (§14.4)'),
   http('cleanup-prototypes', '0 2 * * *', 'preview_ready > 90 дней → archived, archived > 30 дней → удаление (05:00 МСК, §11.5)', HTTP_TIMEOUT_LONG),
   http('check-domains', '30 2 * * *', 'Кастомные домены через Vercel API → ssl_status (05:30 МСК)', HTTP_TIMEOUT_LONG),
+  http('cleanup-unused-roles', '0 4 * * *', 'П1/П2: неиспользуемые 30 дней кастомные роли → уведомление за 10 дней, затем удаление (07:00 МСК)'),
 
   // --- pg_cron → SQL внутри БД ---
   sql('keep-alive', '0 * * * *', 'select public.cron_keep_alive()', 'Активность БД раз в час (Supabase Free)'),

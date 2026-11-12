@@ -10,6 +10,7 @@ import { authEvent } from './auth-audit';
 import { passwordSignIn, type ProviderSession } from './auth-provider';
 import { endSession, readSession, refreshSession, startSession } from './auth-session';
 import { cookieNames } from './auth-cookies';
+import { customRoleId, isCustomRole } from './sections';
 import type { AdminUser, Business } from './database.types';
 
 export const OWNER_COOKIE = cookieNames('owner').access;
@@ -51,8 +52,35 @@ export async function completeOwnerSignIn(session: ProviderSession, slug: string
     await authEvent('login_failed', { realm: 'owner', email: session.user.email, ip, reason: 'inactive', businessId: membership.businessId });
     return 'inactive';
   }
+  const business = membership.data.business;
+  const role = membership.data.member.role;
+  // П3: кастомная роль удалена владельцем → вход запрещён, пользователь видит ?error=role_removed.
+  if (isCustomRole(role)) {
+    const cid = customRoleId(role);
+    if (cid) {
+      const { data: roleRow, error: roleError } = await adminClient()
+        .from('business_custom_roles').select('id').eq('id', cid).eq('business_id', business.id).maybeSingle();
+      if (roleError || !roleRow) {
+        await authEvent('login_failed', { realm: 'owner', email: session.user.email, ip, reason: 'role_removed', businessId: business.id });
+        return 'role_removed';
+      }
+    }
+  }
   startSession('owner', session);
-  await authEvent('login_success', { realm: 'owner', email: session.user.email, ip, businessId: membership.data.business.id });
+  await authEvent('login_success', { realm: 'owner', email: session.user.email, ip, businessId: business.id });
+  // П1: фиксируем использование кастомной роли и снимаем флаг предупреждения об удалении.
+  // Если роль «ожила» (сотрудник снова вошёл), отсчёт 30 дней неактивности начинается заново.
+  if (isCustomRole(role)) {
+    const cid = customRoleId(role);
+    if (cid) {
+      // best-effort: «оживление» роли — сбрасываем отсчёт неактивности и флаг предупреждения.
+      await Promise.resolve(
+        adminClient().from('business_custom_roles')
+          .update({ last_used_at: new Date().toISOString(), removal_notified_at: null })
+          .eq('id', cid).eq('business_id', business.id),
+      ).catch(() => undefined);
+    }
+  }
   return 'ok';
 }
 

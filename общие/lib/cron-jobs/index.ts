@@ -8,6 +8,7 @@ import { bookingReminders } from './booking-reminders';
 import { checkDomains } from './check-domains';
 import { cleanupAuditLog } from './cleanup-audit-log';
 import { cleanupPrototypes } from './cleanup-prototypes';
+import { cleanupUnusedRoles } from './cleanup-unused-roles';
 import { followUp } from './follow-up';
 import { processDeletions } from './process-deletions';
 import { processTransfers } from './process-transfers';
@@ -26,6 +27,7 @@ export const JOBS = {
   'check-domains': checkDomains,
   'cleanup-audit-log': cleanupAuditLog,
   'cleanup-prototypes': cleanupPrototypes,
+  'cleanup-unused-roles': cleanupUnusedRoles,
   'cleanup-slots': cleanupSlots,
   'follow-up': followUp,
   'process-deletions': processDeletions,

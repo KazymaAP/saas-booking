@@ -120,3 +120,13 @@
 | «Vercel Pro, cron до раза в минуту» (2026-10-11) | Vercel Hobby, ежедневные cron + внешний планировщик | Коммиты `825f39f`, `98012c2` «only daily on Hobby» |
 | «Node 20 LTS» | Node `24.x` | `package.json` → `engines` |
 | «Статус сборки: tsc не запускался, следующие шаги — lib/…» | Код написан, `pnpm typecheck` и `pnpm build` проходят | `check-log.txt`, [PROGRESS.md](PROGRESS.md) |
+
+## Кастомные роли: жизненный цикл (П1/П2/П3, 2026-11-12)
+
+| Решение | Почему | Где |
+|---|---|---|
+| «Висячая» роль (`admin_users.role = 'custom:<uuid>' при удалённой записи в `business_custom_roles`) обрабатывается **блокировкой входа**, а не матрицей прав | Гранулярные права (per-section enable/disable для встроенных ролей) не вводим: за рамками ТЗ 4.0, усложняют UI и RLS. Вход с удалённой кастомной ролью возвращает `SignInResult = 'role_removed'`, страница логина показывает `?error=role_removed` | `lib/owner-session.ts` → `completeOwnerSignIn`; `lib/auth-core.ts` (`SignInResult`), `lib/auth-forms.ts` (`AUTH_ERROR_TEXT.role_removed`); `app/[prefix]/[slug]/admin/login/page.tsx` |
+| Автоудаление неиспользуемой кастомной роли — через cron, а не при входе/визите | Удаление не должно зависеть от действий пользователя; cron детерминирован и идемпотентен | `lib/cron-jobs/cleanup-unused-roles.ts`, `lib/schedules.ts`, `supabase/migrations/0023_custom_roles_lifecycle.sql` |
+| Срок неактивности роли — 30 дней; уведомление владельцу — за 10 дней (на 20-й день) | Баланс между «роль не мешает» и «владелец не теряет настройки внезапно» | `cleanup-unused-roles.ts` (`INACTIVITY_DAYS=30`, `NOTIFY_BEFORE_DAYS=10`) |
+| «Последнее использование» = `last_used_at`, сбрасывается при входе сотрудника с этой ролью; при «оживлении» `removal_notified_at` сбрасывается в NULL | Если роль снова нужна, отсчёт 30 дней начинается заново, удаление не происходит | `owner-session.ts` (update при входе), `cleanup-unused-roles.ts` |
+| Выборка кандидатов на уведомление/удаление — SQL-функции `cron_select_roles_to_notify` / `cron_select_unused_roles` (NOT EXISTS по `admin_users`) | Не тянем всю таблицу в память; корректно исключаем роли с живыми сотрудниками | миграция 0023 |

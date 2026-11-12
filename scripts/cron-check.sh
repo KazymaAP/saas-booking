@@ -27,6 +27,7 @@ readonly EXPECTED_JOBS=(
   "process-transfers|30 1 * * *"
   "cleanup-prototypes|0 2 * * *"
   "check-domains|30 2 * * *"
+  "cleanup-unused-roles|0 4 * * *"
   "keep-alive|0 * * * *"
   "cleanup-audit-log-90|0 3 * * *"
   "cleanup-app-logs-30|0 4 * * *"
