@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   ArrowRight, ArrowUpRight, CalendarCheck, Clock, Download, House,
-  MapPin, Phone, UserCircle, X,
+  MapPin, Phone, X,
 } from '@phosphor-icons/react';
 import { NicheBookingFlow } from './NicheBookingFlow';
 import { Glyph } from './glyph';
@@ -162,9 +162,6 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               )}
             </span>
             <span className="text-[16px] font-semibold leading-none tracking-[-0.01em]">{tenant.name}</span>
-          </a>
-          <a href={`/${prefix}/${slug}/my`} aria-label="Профиль клиента" className="grid size-10 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-border hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
-            <UserCircle size={21} weight="bold" />
           </a>
         </div>
       </header>
@@ -382,10 +379,6 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
           <a href="#services" aria-label="Услуги" className="bottom-nav__item press">
             <Glyph icon={tenant.glyph} size={20} weight="bold" />
             <span>Услуги</span>
-          </a>
-          <a href={`/${prefix}/${slug}/my`} aria-label="Моя запись" className="bottom-nav__item press">
-            <CalendarCheck size={20} weight="bold" />
-            <span>Моя запись</span>
           </a>
         </div>
       </nav>
