@@ -454,7 +454,7 @@ export function GeraTable() {
                                 type="button"
                                 onClick={() => setStatus(row.id, option.value)}
                                 aria-pressed={current}
-                                className={`whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold transition-colors ${current ? option.active : 'text-white/35 hover:text-white/70'}`}
+                                className={`whitespace-nowrap rounded-full border-0 bg-transparent px-2 py-1 text-[10px] font-semibold transition-colors ${current ? option.active : 'text-white/35 hover:text-white/70'}`}
                               >
                                 {option.label}
                               </button>
