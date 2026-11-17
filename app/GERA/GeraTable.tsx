@@ -64,18 +64,12 @@ function telHref(value: string): string {
 }
 
 function messageFor(row: GeraRow, templateUrl: string): string {
-  if (row.siteUrl) {
-    return [
-      `Здравствуйте! Мы сделали для «${row.name}» сайт с онлайн-записью: ${row.siteUrl}`,
-      '',
-      'Посмотрите, пожалуйста. Если понравится — можем доработать под вас: услуги, фото, цены и запись уже внутри.',
-    ].join('\n');
-  }
+  const example = row.siteUrl ?? templateUrl;
   return [
-    'Здравствуйте! Мы делаем сайты с онлайн-записью для детейлинг-студий.',
-    `Пример шаблона: ${templateUrl}`,
-    '',
-    `Можем сделать такой же сайт для «${row.name}»${row.city ? ` (${row.city})` : ''}. Посмотрите, пожалуйста.`,
+    `Здравствуйте! Нашёл «${row.name}» в Яндекс.Картах. У вас нет сайта — я подготовил пример, как он мог бы выглядеть: услуги, фото, прайс и онлайн-запись.`,
+    `Пример (${example})`,
+    'Важно: это не готовый сайт — сайт могу поменять под ваши требования: добавить или убрать услуги, поменять фото, цены, тексты и форму записи.',
+    'Посмотрите без обязательств. Если интересно — напишите, расскажу, как запустить такой сайт для вас.',
   ].join('\n');
 }
 
@@ -387,7 +381,7 @@ export function GeraTable() {
                     <th className="w-[100px] px-3 py-3"><SortHeader label="Оценка" active={sortKey === 'rating'} dir={sortDir} onClick={() => toggleSort('rating')} /></th>
                     <th className="w-[150px] px-3 py-3"><SortHeader label="Отзывы" active={sortKey === 'reviews'} dir={sortDir} onClick={() => toggleSort('reviews')} /></th>
                     <th className="w-[190px] px-3 py-3"><SortHeader label="Статус" active={sortKey === 'status'} dir={sortDir} onClick={() => toggleSort('status')} /></th>
-                    <th className="w-[170px] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white/45">Сообщение</th>
+                    <th className="w-[220px] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white/45">Сообщение</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -474,6 +468,12 @@ export function GeraTable() {
                         <div className="mt-1 text-center text-[10px] text-white/30">
                           {row.siteUrl ? 'ссылка на их сайт' : 'ссылка на шаблон'}
                         </div>
+                        <details className="mt-1">
+                          <summary className="cursor-pointer list-none text-center text-[10px] text-white/30 hover:text-white/60">показать текст</summary>
+                          <p className="mt-1 whitespace-pre-wrap rounded-lg border border-white/10 bg-black/30 p-2 text-[10px] leading-snug text-white/50">
+                            {messageFor(row, data.templateUrl)}
+                          </p>
+                        </details>
                       </td>
                     </tr>
                   ))}

@@ -186,11 +186,15 @@ function toNumber(raw: unknown, min: number, max: number): number | null {
   return Number.isFinite(n) && n >= min && n <= max ? n : null;
 }
 
-function parseOrganizations(rows: readonly Cell[], from: number, limit: number): Organization[] {
-  const slice = rows.slice(Math.max(0, from - 1), Math.max(0, from - 1) + limit);
+function parseOrganizations(rows: readonly Cell[], from: number, limit: number, sortBy: 'row' | 'reviews' = 'row'): Organization[] {
+  const indexed = rows.map((row, index) => ({ row, rowNumber: index + 1 }));
+  if (sortBy === 'reviews') {
+    indexed.sort((a, b) => (toNumber(b.row['Отзывы'], 0, 1_000_000) ?? 0) - (toNumber(a.row['Отзывы'], 0, 1_000_000) ?? 0));
+  }
+  const slice = indexed.slice(Math.max(0, from - 1), Math.max(0, from - 1) + limit);
   const outList: Organization[] = [];
   for (let i = 0; i < slice.length; i += 1) {
-    const row = slice[i];
+    const { row, rowNumber } = slice[i];
     const name = cellText(row['Название']);
     if (!name) continue;
     const city = cellText(row['Город']);
@@ -220,7 +224,7 @@ function parseOrganizations(rows: readonly Cell[], from: number, limit: number):
     const mapUrl = safeSocialUrl(cellText(row['Карта']));
 
     outList.push({
-      rowNumber: from + i,
+      rowNumber,
       name,
       sphere,
       templateSlug,
@@ -443,17 +447,18 @@ function positiveFlag(flags: Map<string, string | true>, key: string, fallback: 
 }
 
 async function main(): Promise<number> {
-  const { positional, flags } = parseArgs(process.argv.slice(2), ['limit', 'photos', 'from']);
+  const { positional, flags } = parseArgs(process.argv.slice(2), ['limit', 'photos', 'from', 'sort']);
   if (flags.has('help')) {
-    out('Использование: pnpm exec tsx служебное/scripts/import-sites-from-excel.ts <файл.xlsx> [--from=1] [--limit=20] [--photos=6] [--dry-run] [--json]');
+    out('Использование: pnpm exec tsx служебное/scripts/import-sites-from-excel.ts <файл.xlsx> [--from=1] [--limit=20] [--photos=6] [--sort=reviews] [--dry-run] [--json]');
     return 0;
   }
-  const unknown = [...flags.keys()].filter((k) => !['limit', 'photos', 'from', 'dry-run', 'json', 'help'].includes(k));
+  const unknown = [...flags.keys()].filter((k) => !['limit', 'photos', 'from', 'sort', 'dry-run', 'json', 'help'].includes(k));
   if (unknown.length > 0) throw new CliError(`Неизвестные параметры: ${unknown.map((k) => `--${k}`).join(', ')}`);
 
   const from = positiveFlag(flags, 'from', 1);
   const limit = positiveFlag(flags, 'limit', 20);
   const photosPerBusiness = positiveFlag(flags, 'photos', 6);
+  const sortBy = flags.get('sort') === 'reviews' ? 'reviews' : 'row';
   const dryRun = flags.has('dry-run');
   const data = readInputFile(positional[0], MAX_FILE_BYTES, /\.xlsx$/i);
 
@@ -461,7 +466,7 @@ async function main(): Promise<number> {
   const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ''];
   if (!sheet) throw new CliError('В книге нет листов');
   const rows = XLSX.utils.sheet_to_json<Cell>(sheet, { defval: '', raw: false });
-  const orgs = parseOrganizations(rows, from, limit);
+  const orgs = parseOrganizations(rows, from, limit, sortBy);
   if (orgs.length === 0) throw new CliError('В выбранном диапазоне нет организаций с названием');
 
   if (dryRun) {
