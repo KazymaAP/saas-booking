@@ -42,6 +42,9 @@ const theme: NicheTheme = {
     { name: 'Полировка кузова', price: 12000, duration: 180 },
     { name: 'Керамическое покрытие', price: 28000, duration: 480 },
   ],
+  // Заголовки секций — дословно из эталонного D:\Clode\Детейленг (Home.tsx):
+  // «Услуги», «Работы студии», «Запись в студию».
+  sectionTitles: { services: 'Услуги', gallery: 'Работы студии', booking: 'Запись в студию' },
   detailField: {
     title: 'Ваш автомобиль',
     label: 'Автомобиль',

@@ -128,7 +128,15 @@ function slugify(value: string): string {
   return latin.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/g, '') || 'business';
 }
 
-function durationFor(price: number): number {
+function durationFor(name: string, price: number): number {
+  const n = name.toLowerCase();
+  // Длительности эталонного детейлинга: мойка 1 ч, химчистка 3 ч, полировка 4 ч,
+  // воск 3 ч, оклейка плёнкой 2 ч. Для остальных услуг — эвристика по названию и цене.
+  if (n.includes('оклейк') || n.includes('пленк') || n.includes('плёнк') || n.includes('бронирован')) return 240;
+  if (n.includes('керам')) return 480;
+  if (n.includes('полиров')) return 240;
+  if (n.includes('химчист') || n.includes('чистк') || n.includes('воск')) return 180;
+  if (n.includes('тониров') || n.includes('вмят') || n.includes('ремонт')) return 120;
   if (price >= 50_000) return 480;
   if (price >= 15_000) return 240;
   if (price >= 5_000) return 120;
@@ -139,11 +147,14 @@ function parseService(raw: string): ParsedService | null {
   const text = cellText(raw).replace(/\s+/g, ' ');
   if (!text) return null;
   const priceMatch = /\(([\d\s\u00a0.,]+)\s*₽\)\s*$/u.exec(text);
-  if (!priceMatch) return { name: text.replace(/[.;,]+$/, ''), price: 0, duration: 60 };
+  if (!priceMatch) {
+    const name = text.replace(/[.;,]+$/, '');
+    return { name, price: 0, duration: durationFor(name, 0) };
+  }
   const price = Math.round(Number(priceMatch[1].replace(/[\s\u00a0]/g, '').replace(',', '.'))) || 0;
   const name = text.slice(0, priceMatch.index).replace(/[.;,]+$/, '').trim();
   if (!name) return null;
-  return { name, price, duration: durationFor(price) };
+  return { name, price, duration: durationFor(name, price) };
 }
 
 function templateSlugFor(sphere: string): string {
@@ -205,7 +216,7 @@ function parseOrganizations(rows: readonly Cell[], from: number, limit: number):
     const templateSlug = templateSlugFor(sphere);
     const resultServices = services.length > 0 ? services : [...FALLBACK_SERVICES];
     const serviceList = resultServices.map((s) => s.name).slice(0, 4).join(', ');
-    const description = `${name} — ${sphere.toLowerCase()} в ${city || 'вашем городе'}. Онлайн-запись на услуги: ${serviceList}.`;
+    const description = `${serviceList}. Онлайн-запись без звонков — выберите услугу и удобное время.`;
     const mapUrl = safeSocialUrl(cellText(row['Карта']));
 
     outList.push({
@@ -352,7 +363,7 @@ async function importPhotos(
         business_id: businessId,
         url: pub.publicUrl,
         path,
-        alt: `${org.name} — фото ${index + 1}`,
+        alt: org.services[index % org.services.length]?.name ?? 'Работа студии',
         sort_order: index,
       });
       if (insertError) throw new Error(insertError.message);

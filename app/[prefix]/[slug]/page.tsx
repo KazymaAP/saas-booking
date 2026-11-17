@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { prefix: string; s
   if (r.kind !== 'found') return { robots: { index: false, follow: false } };
   const b = r.business;
   return {
-    title: b.name,
+    title: `${b.name} — запись онлайн`,
     description: b.description ?? undefined,
     manifest: `/${params.prefix}/${params.slug}/manifest.webmanifest`,
     openGraph: { title: b.name, description: b.description ?? undefined, type: 'website' },

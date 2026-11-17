@@ -30,6 +30,7 @@ supabase/.temp/
 .next_bak_*/
 build_out/
 .tmp-vitest/
+.tmp-visual/
 coverage/
 public/uploads/
 *.timestamp-*.mjs

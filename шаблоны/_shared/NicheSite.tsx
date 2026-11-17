@@ -163,7 +163,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             </span>
             <span className="text-[16px] font-semibold leading-none tracking-[-0.01em]">{tenant.name}</span>
           </a>
-          <a href="#book" aria-label="Профиль клиента" className="grid size-10 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-border hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
+          <a href={`/${prefix}/${slug}/my`} aria-label="Профиль клиента" className="grid size-10 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-border hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
             <UserCircle size={21} weight="bold" />
           </a>
         </div>
@@ -232,7 +232,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             <div className="order-2 lg:order-1">
               <section id="services">
                 <div className="mb-5 flex items-end justify-between gap-4">
-                  <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">Услуги</h2>
+                  <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.services ?? 'Услуги'}</h2>
                   <a href="#services" className="inline-flex items-center gap-1 text-[13px] text-brand-text-muted transition-colors hover:text-brand-text">
                     Все услуги
                     <ArrowRight size={15} weight="bold" aria-hidden="true" />
@@ -266,7 +266,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
 
               {gallery.length > 0 && (
                 <section className="mt-10">
-                  <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">Наши работы</h2>
+                  <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.gallery ?? 'Наши работы'}</h2>
                   <div className="grid max-w-[520px] grid-cols-2 gap-x-4 gap-y-5">
                     {gallery.map((item) => (
                       <figure key={item.id} className="group min-w-0">
@@ -300,7 +300,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             </div>
 
             <aside className="order-1 space-y-4 lg:order-2">
-              <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">Запись</h2>
+              <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.booking ?? 'Запись'}</h2>
 
               <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-5">
                 <div className="dot-matrix pointer-events-none absolute -right-14 -top-16 size-52 opacity-70" aria-hidden="true" />
@@ -336,13 +336,6 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               </div>
             </aside>
           </div>
-
-          <section id="book" className="mt-12 md:mt-16">
-            <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.ctaPrimary}</h2>
-            <div className="rounded-3xl border border-brand-border bg-brand-surface p-5 md:p-6">
-              <NicheBookingFlow tenant={tenant} prefix={prefix} slug={slug} onClose={() => {}} />
-            </div>
-          </section>
 
           <section className="mt-12 md:mt-16" id="install">
             <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-6 md:p-8">
@@ -390,7 +383,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             <Glyph icon={tenant.glyph} size={20} weight="bold" />
             <span>Услуги</span>
           </a>
-          <a href="#book" aria-label="Моя запись" className="bottom-nav__item press">
+          <a href={`/${prefix}/${slug}/my`} aria-label="Моя запись" className="bottom-nav__item press">
             <CalendarCheck size={20} weight="bold" />
             <span>Моя запись</span>
           </a>

@@ -69,6 +69,9 @@ export interface NicheTheme {
   defaultServices?: { name: string; price: number; duration: number }[];
   detailField: NicheDetailField;
   serviceGlyph?: Record<string, IconKey>; // keyword -> иконка (доп. к дефолтным)
+  // Заголовки секций для точного совпадения с эталонным сайтом ниши.
+  // Необязательны: у остальных ниш остаются универсальные значения.
+  sectionTitles?: { services?: string; gallery?: string; booking?: string };
 }
 
 export interface NicheWorkHours {
@@ -131,6 +134,7 @@ export interface NicheTenant {
   resourceLabel: string;
   detailField: NicheDetailField;
   serviceGlyph?: Record<string, IconKey>;
+  sectionTitles?: NicheTheme['sectionTitles'];
 }
 
 const DAY_MAP: Record<string, keyof NicheWorkHours> = {
@@ -263,6 +267,7 @@ export function buildNicheTenant(
     resourceLabel: theme.resourceLabel,
     detailField: theme.detailField,
     serviceGlyph: theme.serviceGlyph,
+    sectionTitles: theme.sectionTitles,
   };
 }
 
