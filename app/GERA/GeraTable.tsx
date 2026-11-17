@@ -137,7 +137,7 @@ function SortHeader({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1 text-left text-[11px] font-semibold uppercase tracking-wide transition-colors ${active ? 'text-white' : 'text-white/45 hover:text-white/80'} ${className ?? ''}`}
+      className={`inline-flex items-center gap-1 border-0 bg-transparent p-0 text-left text-[11px] font-semibold uppercase tracking-wide transition-colors ${active ? 'text-white' : 'text-white/45 hover:text-white/80'} ${className ?? ''}`}
     >
       {label}
       <ArrowsDownUp size={12} weight="bold" className={active ? 'opacity-100' : 'opacity-40'} />
