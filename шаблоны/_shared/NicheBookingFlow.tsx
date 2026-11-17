@@ -233,7 +233,20 @@ export function NicheBookingFlow({
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
+      {/* Назад — только со второго шага, в левом верхнем углу шторки.
+          На первом шаге стрелки нет: закрыть можно крестиком справа. */}
+      {step !== 'service' && step !== 'done' && (
+        <button
+          type="button"
+          onClick={goBack}
+          disabled={submitting}
+          aria-label="Назад"
+          className="absolute left-4 top-4 z-10 grid size-9 place-items-center rounded-full text-brand-text-muted transition-colors hover:bg-brand-border-hover hover:text-brand-text disabled:opacity-50"
+        >
+          <ArrowLeft size={20} weight="bold" />
+        </button>
+      )}
+      <div className={`flex items-start justify-between gap-3 ${step !== 'service' && step !== 'done' ? 'pl-11' : ''}`}>
         <div>
           <h2 className="text-heading-lg">{step === 'done' ? 'Готово' : TITLES[currentStep]}</h2>
           {step !== 'done' && (
@@ -242,17 +255,6 @@ export function NicheBookingFlow({
             </p>
           )}
         </div>
-        {step !== 'done' && (
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={submitting}
-            aria-label={step === 'service' ? 'Закрыть' : 'Назад'}
-            className="grid size-9 place-items-center rounded-full text-brand-text-muted transition-colors hover:bg-brand-border-hover hover:text-brand-text disabled:opacity-50"
-          >
-            <ArrowLeft size={20} weight="bold" />
-          </button>
-        )}
       </div>
       {step !== 'done' && <StepBar step={currentStep} />}
 
