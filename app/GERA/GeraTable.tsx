@@ -37,7 +37,17 @@ type Payload = {
   rows: GeraRow[];
 };
 
-type SortKey = 'id' | 'name' | 'city' | 'rating' | 'reviews' | 'services';
+type SortKey = 'id' | 'name' | 'city' | 'rating' | 'reviews' | 'services' | 'status';
+
+type OutreachStatus = 'new' | 'progress' | 'sent';
+
+const STATUS_OPTIONS: ReadonlyArray<{ value: OutreachStatus; label: string; active: string; order: number }> = [
+  { value: 'new', label: 'Не взят', active: 'bg-white/15 text-white', order: 0 },
+  { value: 'progress', label: 'В процессе', active: 'bg-amber-400/20 text-amber-200', order: 1 },
+  { value: 'sent', label: 'Отправил', active: 'bg-emerald-400/20 text-emerald-200', order: 2 },
+];
+
+const STATUS_KEY = 'gera:statuses:v1';
 
 const PAGE_SIZES = [25, 50, 100] as const;
 
@@ -155,6 +165,9 @@ export function GeraTable() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(50);
   const [copied, setCopied] = useState<number | null>(null);
+  const [statuses, setStatuses] = useState<Record<number, OutreachStatus>>({});
+  const [statusesLoaded, setStatusesLoaded] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | OutreachStatus>('all');
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
@@ -173,16 +186,45 @@ export function GeraTable() {
     return () => { cancelled = true; };
   }, []);
 
+  // Статусы обзвона храним в браузере: переживают перезагрузку и не требуют записи в БД.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STATUS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, OutreachStatus>;
+        const next: Record<number, OutreachStatus> = {};
+        for (const [key, value] of Object.entries(parsed)) {
+          if (value === 'new' || value === 'progress' || value === 'sent') next[Number(key)] = value;
+        }
+        setStatuses(next);
+      }
+    } catch {
+      // Приватный режим или повреждённое значение — начинаем с пустых статусов.
+    }
+    setStatusesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!statusesLoaded) return;
+    try {
+      window.localStorage.setItem(STATUS_KEY, JSON.stringify(statuses));
+    } catch {
+      // Если localStorage запрещён, статусы останутся в памяти на время сессии.
+    }
+  }, [statuses, statusesLoaded]);
+
   useEffect(() => {
     setPage(1);
-  }, [deferredQuery, pageSize, sortKey, sortDir]);
+  }, [deferredQuery, pageSize, sortKey, sortDir, statusFilter]);
 
   const filtered = useMemo(() => {
     if (!data) return [];
     const needle = deferredQuery.trim().toLowerCase();
-    if (!needle) return data.rows;
     const digits = needle.replace(/\D/g, '');
     return data.rows.filter((row) => {
+      const status = statuses[row.id] ?? 'new';
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+      if (!needle) return true;
       const haystack = [
         row.name, row.sphere, row.city, row.address,
         ...row.phones, ...row.services.map((service) => service.name),
@@ -190,7 +232,7 @@ export function GeraTable() {
       if (haystack.includes(needle)) return true;
       return digits.length >= 3 && row.phones.some((phone) => phone.replace(/\D/g, '').includes(digits));
     });
-  }, [data, deferredQuery]);
+  }, [data, deferredQuery, statusFilter, statuses]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
@@ -212,15 +254,29 @@ export function GeraTable() {
           return (a.reviews - b.reviews) * dir;
         }
         case 'services': return (a.services.length - b.services.length) * dir;
+        case 'status': {
+          const order = (id: number) => STATUS_OPTIONS.find((option) => option.value === (statuses[id] ?? 'new'))?.order ?? 0;
+          return (order(a.id) - order(b.id)) * dir;
+        }
         default: return (a.id - b.id) * dir;
       }
     });
     return rows;
-  }, [filtered, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir, statuses]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<OutreachStatus, number> = { new: 0, progress: 0, sent: 0 };
+    for (const row of data?.rows ?? []) counts[statuses[row.id] ?? 'new'] += 1;
+    return counts;
+  }, [data, statuses]);
+
+  const setStatus = (id: number, status: OutreachStatus) => {
+    setStatuses((current) => ({ ...current, [id]: status }));
+  };
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -246,7 +302,9 @@ export function GeraTable() {
             <div>
               <h1 className="text-[22px] font-semibold tracking-tight md:text-[26px]">GERA — база сервисов</h1>
               <p className="mt-1 text-[13px] text-white/45">
-                {data ? `${data.total.toLocaleString('ru-RU')} организаций · ${data.withSite} с готовым сайтом` : 'Загрузка базы…'}
+                {data
+                  ? `${data.total.toLocaleString('ru-RU')} организаций · ${data.withSite} с готовым сайтом · отправлено ${statusCounts.sent.toLocaleString('ru-RU')}`
+                  : 'Загрузка базы…'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -286,7 +344,26 @@ export function GeraTable() {
         {data && (
           <>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[12px] text-white/45">
-              <span>Найдено {sorted.length.toLocaleString('ru-RU')} из {data.total.toLocaleString('ru-RU')}</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${statusFilter === 'all' ? 'border-white/25 bg-white/10 text-white' : 'border-white/10 bg-white/[0.03] text-white/50 hover:text-white/80'}`}
+                >
+                  Все <span className="text-white/35">{data.total.toLocaleString('ru-RU')}</span>
+                </button>
+                {STATUS_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStatusFilter(option.value)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${statusFilter === option.value ? option.active : 'border-white/10 bg-white/[0.03] text-white/50 hover:text-white/80'}`}
+                  >
+                    {option.label} <span className="text-white/35">{statusCounts[option.value].toLocaleString('ru-RU')}</span>
+                  </button>
+                ))}
+                <span className="ml-1">Найдено {sorted.length.toLocaleString('ru-RU')}</span>
+              </div>
               <label className="flex items-center gap-2">
                 Показывать по
                 <select
@@ -300,7 +377,7 @@ export function GeraTable() {
             </div>
 
             <div className="max-h-[calc(100vh-230px)] overflow-auto rounded-2xl border border-white/10">
-              <table className="w-full min-w-[1180px] border-collapse text-left text-[13px]">
+              <table className="w-full min-w-[1380px] border-collapse text-left text-[13px]">
                 <thead className="sticky top-0 z-10 bg-[#101010]">
                   <tr className="border-b border-white/10">
                     <th className="w-[58px] px-3 py-3"><SortHeader label="№" active={sortKey === 'id'} dir={sortDir} onClick={() => toggleSort('id')} /></th>
@@ -309,6 +386,7 @@ export function GeraTable() {
                     <th className="min-w-[300px] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white/45">Связаться</th>
                     <th className="w-[100px] px-3 py-3"><SortHeader label="Оценка" active={sortKey === 'rating'} dir={sortDir} onClick={() => toggleSort('rating')} /></th>
                     <th className="w-[150px] px-3 py-3"><SortHeader label="Отзывы" active={sortKey === 'reviews'} dir={sortDir} onClick={() => toggleSort('reviews')} /></th>
+                    <th className="w-[190px] px-3 py-3"><SortHeader label="Статус" active={sortKey === 'status'} dir={sortDir} onClick={() => toggleSort('status')} /></th>
                     <th className="w-[170px] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white/45">Сообщение</th>
                   </tr>
                 </thead>
@@ -366,6 +444,24 @@ export function GeraTable() {
                         )}
                       </td>
                       <td className="px-3 py-3 text-[12px] text-white/50">{row.reviews === null ? '—' : row.reviews.toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-3">
+                        <div className="inline-flex rounded-full border border-white/10 bg-white/[0.03] p-0.5" role="group" aria-label="Статус обзвона">
+                          {STATUS_OPTIONS.map((option) => {
+                            const current = (statuses[row.id] ?? 'new') === option.value;
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setStatus(row.id, option.value)}
+                                aria-pressed={current}
+                                className={`whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold transition-colors ${current ? option.active : 'text-white/35 hover:text-white/70'}`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </td>
                       <td className="px-3 py-3">
                         <button
                           type="button"
