@@ -1,3 +1,4 @@
+'use client';
 // шаблоны/_shared/NicheUtilityShell.tsx — оболочка служебных страниц витрины
 // («Моя запись» и т.п.) в том же стиле, что и основной сайт-витрина.
 import type { ReactNode, CSSProperties } from 'react';
