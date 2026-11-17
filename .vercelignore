@@ -1,6 +1,7 @@
 # Локальные артефакты сборки и тестов — на Vercel не загружаем.
 node_modules
 .git
+.vercel/output
 .next
 .next_bak_*
 .next-prod_*
