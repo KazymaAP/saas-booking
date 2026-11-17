@@ -2,11 +2,10 @@
 // app/[prefix]/[slug]/booking/last/page.tsx — переходник «Моя запись» без аккаунта.
 // Читает токен последней записи из localStorage и открывает страницу записи,
 // либо экран «Запись не найдена» (порт эталонного MyBooking.tsx).
+// Фон сразу тёмный: иначе при переходе на мгновение мелькает белая страница.
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function LastBookingPage({ params }: { params: { prefix: string; slug: string } }) {
-  const router = useRouter();
   const { prefix, slug } = params;
 
   useEffect(() => {
@@ -16,18 +15,11 @@ export default function LastBookingPage({ params }: { params: { prefix: string; 
     } catch {
       token = '';
     }
-    if (token) {
-      router.replace(`/${prefix}/${slug}/booking/my/${encodeURIComponent(token)}`);
-    } else {
-      // Нет последней записи — показываем экран «Запись не найдена» из эталона.
-      router.replace(`/${prefix}/${slug}/booking/my/none`);
-    }
-  }, [prefix, slug, router]);
+    const target = token
+      ? `/${prefix}/${slug}/booking/my/${encodeURIComponent(token)}`
+      : `/${prefix}/${slug}/booking/my/none`;
+    window.location.replace(target);
+  }, [prefix, slug]);
 
-  return (
-    <main className="mx-auto max-w-[520px] px-4 py-10">
-      <h1 className="text-[24px] font-semibold">Моя запись</h1>
-      <p className="mt-4 text-[15px] text-[#595959]">Загружаем вашу запись…</p>
-    </main>
-  );
+  return <div style={{ minHeight: '100vh', background: '#000000' }} aria-hidden="true" />;
 }

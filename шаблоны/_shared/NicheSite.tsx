@@ -74,8 +74,20 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
     if (new URLSearchParams(window.location.search).get('book') === '1') setBookingOpen(true);
   }, []);
 
-  // «Моя запись» — страница записи по токену из localStorage, не аккаунт клиента.
-  const bookingTarget = `/${prefix}/${slug}/booking/last`;
+  // Уходим сразу на нужную страницу, минуя светлый промежуточный /booking/last —
+  // иначе при переходе на мгновение мелькает белый экран.
+  const openMyBooking = () => {
+    let token = '';
+    try {
+      token = window.localStorage.getItem(`autobooking:last:${slug}`) ?? '';
+    } catch {
+      token = '';
+    }
+    const target = token
+      ? `/${prefix}/${slug}/booking/my/${encodeURIComponent(token)}`
+      : `/${prefix}/${slug}/booking/my/none`;
+    window.location.assign(target);
+  };
 
   const openBooking = (serviceId?: string) => {
     setInitialServiceId(serviceId);
@@ -171,7 +183,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             </span>
             <span className="text-[16px] font-semibold leading-none tracking-[-0.01em]">{tenant.name}</span>
           </a>
-          <a href={bookingTarget} aria-label="Профиль клиента" className="grid size-10 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-border hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
+          <a href={`/${prefix}/${slug}/booking/my/none`} onClick={(event) => { event.preventDefault(); openMyBooking(); }} aria-label="Профиль клиента" className="grid size-10 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-border hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
             <UserCircle size={21} weight="bold" />
           </a>
         </div>
@@ -391,7 +403,7 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             <Glyph icon={tenant.glyph} size={20} weight="bold" />
             <span>Услуги</span>
           </button>
-          <a href={bookingTarget} aria-label="Моя запись" className="bottom-nav__item press">
+          <a href={`/${prefix}/${slug}/booking/my/none`} onClick={(event) => { event.preventDefault(); openMyBooking(); }} aria-label="Моя запись" className="bottom-nav__item press">
             <CalendarCheck size={20} weight="bold" />
             <span>Моя запись</span>
           </a>

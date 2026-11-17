@@ -32,6 +32,8 @@ export function NicheUtilityShell({ name, prefix, slug, children }: Props) {
 
   return (
     <div className="detailing-root min-h-screen" style={style} data-mode="dark">
+      {/* Критический фон до загрузки внешнего CSS: иначе при переходе мелькает белый экран. */}
+      <style>{'html,body{background:#000;color:#fff}'}</style>
       {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link rel="stylesheet" href="/assets/detailing-scoped.css" />
       {/* eslint-disable-next-line @next/next/no-css-tags */}
