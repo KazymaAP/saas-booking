@@ -199,8 +199,18 @@ export function GeraTable() {
       switch (sortKey) {
         case 'name': return a.name.localeCompare(b.name, 'ru') * dir;
         case 'city': return a.city.localeCompare(b.city, 'ru') * dir;
-        case 'rating': return ((a.rating ?? -1) - (b.rating ?? -1)) * dir;
-        case 'reviews': return ((a.reviews ?? -1) - (b.reviews ?? -1)) * dir;
+        case 'rating': {
+          if (a.rating === null && b.rating === null) return 0;
+          if (a.rating === null) return 1;
+          if (b.rating === null) return -1;
+          return (a.rating - b.rating) * dir;
+        }
+        case 'reviews': {
+          if (a.reviews === null && b.reviews === null) return 0;
+          if (a.reviews === null) return 1;
+          if (b.reviews === null) return -1;
+          return (a.reviews - b.reviews) * dir;
+        }
         case 'services': return (a.services.length - b.services.length) * dir;
         default: return (a.id - b.id) * dir;
       }

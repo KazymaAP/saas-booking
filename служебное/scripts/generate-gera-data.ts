@@ -64,11 +64,47 @@ function parseServices(raw: unknown): ParsedService[] {
 function socialUrl(value: unknown, kind: 'telegram' | 'max' | 'vk' | 'whatsapp'): string {
   const raw = text(value);
   if (!raw) return '';
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (kind === 'telegram') return `https://t.me/${raw.replace(/^@/, '')}`;
-  if (kind === 'max') return `https://max.ru/${raw.replace(/^@/, '')}`;
-  if (kind === 'vk') return `https://vk.com/${raw.replace(/^@/, '')}`;
-  return `https://wa.me/${raw.replace(/\D/g, '')}`;
+  if (kind === 'telegram') {
+    if (/^https?:\/\//i.test(raw)) {
+      // t.me/8909... и t.me/7909... — это телефон, а не username: нужен t.me/+7...
+      const phone = raw.match(/^https?:\/\/t\.me\/(\d{10,11})$/i);
+      if (phone) {
+        const digits = phone[1];
+        const normalized = digits.length === 11
+          ? (digits.startsWith('8') ? `7${digits.slice(1)}` : digits)
+          : `7${digits}`;
+        return `https://t.me/+${normalized}`;
+      }
+      return raw;
+    }
+    return `https://t.me/${raw.replace(/^@/, '')}`;
+  }
+  if (kind === 'max') {
+    // MAX: ссылки на профиль (/u/...) и чат (/join/...) оставляем как есть,
+    // а «телефонные» варианты вида /+7+999... приводим к /7999...
+    const path = raw.replace(/^https?:\/\/max\.ru\//i, '').replace(/^max\.ru\+?/i, '');
+    if (path.startsWith('u/') || path.startsWith('join/')) return `https://max.ru/${path}`;
+    const digits = path.replace(/\D/g, '');
+    if (digits.length >= 10) {
+      const normalized = digits.length === 11 && digits.startsWith('8') ? `7${digits.slice(1)}` : digits;
+      return `https://max.ru/${normalized}`;
+    }
+    return `https://max.ru/${raw.replace(/^@/, '')}`;
+  }
+  if (kind === 'vk') {
+    return /^https?:\/\//i.test(raw) ? raw : `https://vk.com/${raw.replace(/^@/, '')}`;
+  }
+  if (kind === 'whatsapp') {
+    const digits = raw.replace(/\D/g, '');
+    if (/^https?:\/\//i.test(raw)) {
+      // wa.me/8XXXXXXXXXX → wa.me/7XXXXXXXXXX (иначе WhatsApp не находит номер).
+      if (/^https?:\/\/wa\.me\/8\d{10}$/i.test(raw)) return `https://wa.me/7${digits.slice(1)}`;
+      return raw;
+    }
+    const normalized = digits.length === 11 && digits.startsWith('8') ? `7${digits.slice(1)}` : digits;
+    return `https://wa.me/${normalized}`;
+  }
+  return raw;
 }
 
 type BusinessRow = {
@@ -161,8 +197,8 @@ async function main() {
       vk: socialUrl(row['VK'], 'vk'),
       whatsapp: socialUrl(row['WhatsApp'], 'whatsapp'),
       map: text(row['Карта']),
-      rating: row['Оценка'] === '' ? null : Number(row['Оценка']),
-      reviews: row['Отзывы'] === '' ? null : Number(row['Отзывы']),
+      rating: Number(row['Оценка']) || null,
+      reviews: Number(row['Отзывы']) || null,
       services: parseServices(row['Услуги']),
       siteUrl,
       exampleUrl: siteUrl ?? TEMPLATE_URL,
