@@ -1,0 +1,11 @@
+# Локальные артефакты сборки и тестов — на Vercel не загружаем.
+node_modules
+.git
+.next
+.next_bak_*
+.next-prod_*
+.next-buildcheck
+.tmp-*
+coverage
+public/uploads
+*.log
