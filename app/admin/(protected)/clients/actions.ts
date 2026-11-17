@@ -66,14 +66,46 @@ async function markPaid(id: string, planKey?: string): Promise<Result> {
   const plan = planKey && planKeys.includes(planKey) ? planKey : (planKeys[0] ?? 'basic');
   const tariffPrice = typeof tariffs[plan]?.price === 'number' ? (tariffs[plan].price as number) : null;
   const price = tariffPrice ?? p.monthly;
-  const patch = predictPatch('paid', { subscription_until: null }, new Date(), p.monthly, { type: plan, price });
-  const now = new Date().toISOString();
-  const okUpd = await conditionalUpdate(id, { ...patch, subscription_started_at: now }, { notIn: NOT_PAYABLE });
+  // Текущее состояние читаем до UPDATE: от него зависит конец периода (досрочная оплата
+  // не должна съедать оплаченные дни) и дата «Подключена» (её не перезаписываем).
+  const { data: cur, error: curErr } = await adminClient()
+    .from('businesses')
+    .select('subscription_until, paid_initial_at, subscription_started_at')
+    .eq('id', id)
+    .maybeSingle<{ subscription_until: string | null; paid_initial_at: string | null; subscription_started_at: string | null }>();
+  if (curErr) throw new Error(curErr.message);
+  const nowDate = new Date();
+  const patch = predictPatch(
+    'paid',
+    { subscription_until: cur?.subscription_until ?? null, paid_initial_at: cur?.paid_initial_at ?? null },
+    nowDate,
+    p.monthly,
+    { type: plan, price },
+  );
+  const now = nowDate.toISOString();
+  // «Подключена» — дата первого подключения; при повторной оплате оставляем прежнюю.
+  const withStart = cur?.subscription_started_at ? patch : { ...patch, subscription_started_at: now };
+  const okUpd = await conditionalUpdate(id, withStart, { notIn: NOT_PAYABLE });
   if (!okUpd) return fail('Оплата уже отмечена или бизнес недоступен');
+
+  // Платёж в историю: дашборд и отчёты считают выручку по payments. Без этой строки ручная
+  // оплата меняла подписку, но не попадала ни в выручку месяца, ни в историю клиента.
+  const { error: payErr } = await adminClient().from('payments').insert({
+    business_id: id,
+    amount: p.initial,
+    type: 'initial_5000',
+    period_start: now.slice(0, 10),
+    period_end: (patch.subscription_until as string | null | undefined) ?? null,
+    paid_at: now,
+    note: `Оплата отмечена вручную (тариф «${plan}» ${price} ₽/мес)`,
+  });
+  if (payErr) await logError('admin', 'mark_paid_payment_failed', { business: id, error: payErr.message });
+
   await audit('mark_paid', 'business', id, { amount: p.initial, monthly: price, plan, until: patch.subscription_until });
   // Уведомление в Telegram — без названия и контактов бизнеса (только id): канал внешний.
   await notifyAdmin(`Оплата ${p.initial} ₽ (тариф «${plan}» ${price} ₽/мес): бизнес ${id}`);
-  return ok(`Оплата ${p.initial.toLocaleString('ru-RU')} ₽ отмечена. Тариф «${plan}», ${price.toLocaleString('ru-RU')} ₽/мес. Подписка до ${patch.subscription_until}`, patch);
+  const suffix = payErr ? ' Платёж не записан в историю — сообщите разработчику.' : '';
+  return ok(`Оплата ${p.initial.toLocaleString('ru-RU')} ₽ отмечена. Тариф «${plan}», ${price.toLocaleString('ru-RU')} ₽/мес. Подписка до ${patch.subscription_until}.${suffix}`, patch);
 }
 
 // Продление: optimistic-lock по текущей дате окончания — два параллельных клика не дадут +60 дней.

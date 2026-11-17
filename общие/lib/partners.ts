@@ -6,6 +6,8 @@ import { adminClient } from './supabase';
 import { hashPassword, verifyPassword, generateReferralCode } from './partners-auth';
 import { createYookassaPayment, isYookassaConfigured } from './yookassa';
 import { SITE_URL } from './site';
+import { defaultTemplateId } from './vertical-templates';
+import { logError } from './log';
 
 export type Partner = {
   id: string;
@@ -335,11 +337,6 @@ export async function updateCheckoutEntrepreneur(id: string, input: {
   if (error) throw new Error(error.message);
 }
 
-export async function getBusinessSlug(businessId: string): Promise<string | null> {
-  const { data } = await (adminClient() as any).from('businesses').select('slug').eq('id', businessId).maybeSingle();
-  return (data as { slug: string } | null)?.slug ?? null;
-}
-
 // ---------- готовые сайт-визитки (каталог для партнёров) ----------
 export async function listReadySites(): Promise<PartnerReadySite[]> {
   try {
@@ -412,6 +409,8 @@ function slugify(input: string): string {
 
 async function createBusinessForEntrepreneur(name: string, email: string | null, phone: string | null): Promise<string> {
   const db = (adminClient() as any);
+  // Ниша обязательна: без vertical_template_id сайт не открывается ни по одному адресу (lib/business.ts).
+  const templateId = await defaultTemplateId();
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const slug = `${slugify(name) || 'biz'}-${randomBytes(3).toString('hex')}`;
     const { data, error } = await db
@@ -420,6 +419,7 @@ async function createBusinessForEntrepreneur(name: string, email: string | null,
         name: name.trim(),
         slug,
         status: 'sent',
+        vertical_template_id: templateId,
         emails: email ? [email] : [],
         phones: phone ? [phone] : [],
         plan: 'pro',
@@ -434,6 +434,20 @@ async function createBusinessForEntrepreneur(name: string, email: string | null,
     }
   }
   throw new Error('Не удалось создать сайт-визитку (конфликт slug)');
+}
+
+// Конец оплаченного периода при продлении: отсчёт идёт от текущей даты окончания, если она
+// в будущем. Иначе досрочная оплата «съедала» остаток: клиент платил за 30 дней, получал меньше.
+export function renewalEndDate(currentUntil: string | null, now: Date, days = 30): string {
+  const parsed = currentUntil ? Date.parse(`${currentUntil}T00:00:00Z`) : Number.NaN;
+  const base = Number.isFinite(parsed) ? Math.max(now.getTime(), parsed) : now.getTime();
+  return new Date(base + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+// Дата, до которой должен продлить подписку конкретный платёж. Если строка payments по этому
+// чекауту уже записана — берём её period_end: повторная доставка вебхука не продлевает второй раз.
+export function appliedUntilDate(appliedPeriodEnd: string | null, currentUntil: string | null, now: Date): string {
+  return appliedPeriodEnd ?? renewalEndDate(currentUntil, now);
 }
 
 // Идемпотентная обработка оплаты (вызывается из вебхука и при возврате со страницы).
@@ -453,18 +467,61 @@ export async function markCheckoutPaid(checkoutId: string): Promise<PartnerCheck
     const email = checkout.entrepreneur_email;
     const phone = checkout.entrepreneur_phone;
     businessId = await createBusinessForEntrepreneur(name, email, phone);
+    // Сразу фиксируем связь: иначе повторная доставка вебхука (или падение между
+    // созданием бизнеса и финальным UPDATE) создаст второго «клиента» на один платёж.
+    await db.from('partner_checkouts').update({ business_id: businessId }).eq('id', checkout.id);
   }
 
   const now = new Date();
-  const inOneMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const note = `Партнёрский чекаут ${checkout.id}`;
+  // Текущая дата окончания: при досрочной оплате продление идёт от неё, а не от «сейчас».
+  const { data: currentBiz } = await db
+    .from('businesses')
+    .select('subscription_until, subscription_started_at')
+    .eq('id', businessId)
+    .maybeSingle();
+  const currentBizRow = currentBiz as { subscription_until?: string | null; subscription_started_at?: string | null } | null;
+  const currentUntil = currentBizRow?.subscription_until ?? null;
+  const startedAt = currentBizRow?.subscription_started_at ?? null;
+
+  // Идемпотентность продления. Строка payments — источник истины о том, до какой даты
+  // этот платёж уже продлил подписку: повторная доставка вебхука берёт period_end из неё,
+  // а не считает «сейчас + 30 дней» от уже продлённой даты (иначе один платёж давал два месяца).
+  const { data: applied } = await db
+    .from('payments')
+    .select('period_end')
+    .eq('note', note)
+    .maybeSingle();
+  const appliedUntil = (applied as { period_end?: string | null } | null)?.period_end ?? null;
+  const untilDate = appliedUntilDate(appliedUntil, currentUntil, now);
+  const inOneMonth = new Date(`${untilDate}T00:00:00Z`);
+
+  // Платёж в таблице payments (типы уже существуют: subscription / code_buyout / other).
+  // Пишем ДО обновления бизнеса: если процесс упадёт посередине, повторный запуск
+  // возьмёт дату отсюда и применит ровно её — активация не потеряется.
+  const paymentType = checkout.variant === 'subscription_5000' ? 'subscription' : checkout.variant === 'code_5000' ? 'code_buyout' : 'other';
+  // 23505 — платёж по этому счёту уже записан повторным вебхуком (уникальный индекс 0030).
+  const { error: payErr } = await db.from('payments').insert({
+    business_id: businessId,
+    amount: checkout.amount,
+    type: paymentType,
+    period_start: now.toISOString().slice(0, 10),
+    period_end: checkout.variant === 'subscription_5000' ? untilDate : null,
+    paid_at: now.toISOString(),
+    note,
+  });
+  if (payErr && payErr.code !== '23505') {
+    await logError('admin', 'partner_payment_failed', { error: payErr.message, checkout: checkout.id });
+  }
 
   // Обновляем бизнес в зависимости от варианта.
   const bizPatch: Record<string, unknown> = { status: 'client', updated_at: now.toISOString() };
   if (checkout.variant === 'subscription_5000') {
     bizPatch.subscription_active = true;
     bizPatch.subscription_price = 5000;
-    bizPatch.subscription_started_at = now.toISOString();
-    bizPatch.subscription_until = inOneMonth.toISOString().slice(0, 10);
+    // «Подключена» — дата первого подключения: при продлении не перезаписываем.
+    if (!startedAt) bizPatch.subscription_started_at = now.toISOString();
+    bizPatch.subscription_until = untilDate;
     bizPatch.plan = 'pro';
   } else if (checkout.variant === 'code_5000') {
     bizPatch.code_transferred_at = now.toISOString();
@@ -477,18 +534,6 @@ export async function markCheckoutPaid(checkoutId: string): Promise<PartnerCheck
   }
   const { error: bizErr } = await db.from('businesses').update(bizPatch).eq('id', businessId);
   if (bizErr) throw new Error(bizErr.message);
-
-  // Платёж в таблице payments (типы уже существуют: subscription / code_buyout / other).
-  const paymentType = checkout.variant === 'subscription_5000' ? 'subscription' : checkout.variant === 'code_5000' ? 'code_buyout' : 'other';
-  await db.from('payments').insert({
-    business_id: businessId,
-    amount: checkout.amount,
-    type: paymentType,
-    period_start: now.toISOString().slice(0, 10),
-    period_end: checkout.variant === 'subscription_5000' ? inOneMonth.toISOString().slice(0, 10) : null,
-    paid_at: now.toISOString(),
-    note: `Партнёрский чекаут ${checkout.id}`,
-  });
 
   // Начисление партнёру.
   const earningPatch: Record<string, unknown> = {
@@ -504,7 +549,12 @@ export async function markCheckoutPaid(checkoutId: string): Promise<PartnerCheck
     earningPatch.period_end = inOneMonth.toISOString().slice(0, 10);
     earningPatch.next_accrual_at = inOneMonth.toISOString();
   }
-  await db.from('partner_earnings').insert(earningPatch);
+  // Повторный вебхук: уникальный индекс (0030) отклонит дубль с 23505 — это норма, а не сбой.
+  // Остальные ошибки пишем в журнал, но оплату не отменяем: деньги уже пришли.
+  const { error: earnErr } = await db.from('partner_earnings').insert(earningPatch);
+  if (earnErr && earnErr.code !== '23505') {
+    await logError('admin', 'partner_earning_failed', { error: earnErr.message, checkout: checkout.id });
+  }
 
   // Второй уровень: 10% от этого начисления получает наставник. Платит платформа,
   // у партнёра ничего не вычитается. Ошибки внутри не пробрасываются — оплата важнее.
@@ -586,6 +636,7 @@ export async function createDraftSiteVizitka(input: {
   name: string; email?: string; phone?: string;
 }): Promise<{ businessId: string; slug: string }> {
   const db = (adminClient() as any);
+  const templateId = await defaultTemplateId();
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const slug = `${slugify(input.name) || 'biz'}-${randomBytes(3).toString('hex')}`;
     const { data, error } = await db
@@ -594,6 +645,7 @@ export async function createDraftSiteVizitka(input: {
         name: input.name.trim(),
         slug,
         status: 'new',
+        vertical_template_id: templateId,
         emails: input.email ? [input.email.trim()] : [],
         phones: input.phone ? [input.phone.trim()] : [],
         plan: 'basic',

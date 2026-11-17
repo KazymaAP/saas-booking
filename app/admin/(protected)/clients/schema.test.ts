@@ -21,6 +21,14 @@ describe('predictPatch', () => {
     const p = predictPatch('paid', { subscription_until: null }, NOW, 1500);
     expect(p).toMatchObject({ status: 'client', subscription_active: true, subscription_until: '2026-11-14', subscription_price: 1500 });
   });
+  it('досрочная оплата продлевает от текущей даты окончания', () => {
+    // Оплачено до 20 октября, платят 15-го — должно стать 19 ноября, а не 14-го.
+    expect(predictPatch('paid', { subscription_until: '2026-10-20' }, NOW).subscription_until).toBe('2026-11-19');
+  });
+  it('повторная оплата не перезаписывает дату первой', () => {
+    const p = predictPatch('paid', { subscription_until: null, paid_initial_at: '2026-10-01T00:00:00Z' }, NOW);
+    expect(p.paid_initial_at).toBe('2026-10-01T00:00:00Z');
+  });
   it('отказ убирает строку из списка', () => {
     expect(predictPatch('refuse', { subscription_until: null }, NOW)).toEqual({ status: 'refused', removed: true });
   });

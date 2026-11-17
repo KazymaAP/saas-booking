@@ -3,7 +3,7 @@
 // Клиентский: проверка подписи и файлов до отправки, ошибки — под полем и в aria-live.
 import { useCallback, useId, useRef, useState } from 'react';
 import { FieldFrame, fieldA11y } from '../_components/Field';
-import { ACCEPT, ALT_MAX, AltSchema, MAX_PHOTOS, altForIndex, formatMb, MAX_UPLOAD_BYTES, sourceFileError } from './rules';
+import { ACCEPT, ALT_MAX, AltSchema, MAX_PHOTOS, altForIndex, formatMb, MAX_UPLOAD_BYTES, sourceFileError } from '@/lib/photo-rules';
 
 const ALT_HINT = 'Что на фото — для поиска и незрячих посетителей. Например: «Маникюр с дизайном»';
 

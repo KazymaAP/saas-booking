@@ -1,6 +1,6 @@
 # scripts/gen-db-types.ps1
 # Generates общие/lib/database.generated.ts from the public schema of a test database.
-# Run after migrations 0001-0012 are applied to the TEST project (never production).
+# Run after migrations 0001-0029 are applied to the TEST project (never production).
 #
 # Usage (from the project folder):
 #   powershell -ExecutionPolicy Bypass -File .\служебное\scripts\gen-db-types.ps1 -DbUrl "postgresql://..."

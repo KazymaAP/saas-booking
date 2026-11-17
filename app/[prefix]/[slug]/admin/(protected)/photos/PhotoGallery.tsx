@@ -8,7 +8,7 @@ import { useToast } from '../_components/Toast';
 import { callAction } from '../_lib/client-action';
 import { deletePhoto, updatePhotoAlt, type PhotoRow } from './actions';
 import { PhotoUploaderLazy } from './PhotoUploaderLazy';
-import { ALT_MAX, AltSchema, MAX_PHOTOS, remainingSlots } from './rules';
+import { ALT_MAX, AltSchema, MAX_PHOTOS, remainingSlots } from '@/lib/photo-rules';
 import { usePhotoUploads, type PendingPhoto, type UploadStage } from './usePhotoUploads';
 
 const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4';

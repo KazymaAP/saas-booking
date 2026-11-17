@@ -5,8 +5,10 @@ import AdmZip from 'adm-zip';
 import { revalidatePath } from 'next/cache';
 import { getNicheThemeBySlug } from '@/шаблоны/_shared/themes';
 import { imageSize } from 'image-size';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename } from 'node:path';
+import { adminClient } from '@/lib/supabase';
+import { BUCKET as PHOTOS_BUCKET, MAX_UPLOAD_BYTES, PHOTO_TYPES } from '@/lib/photo-rules';
+import { logError } from '@/lib/log';
 import { listAllPartnersOverview } from '@/lib/partners';
 import {
   ingestLeads, generateSitesForNiche, listReadyServices, setReadyStatus,
@@ -106,29 +108,48 @@ function normalizeLead(raw: Record<string, unknown>): ParsedLead {
   };
 }
 
-// Раскладывает фото из ZIP в public/uploads/<batch>/ и привязывает к строкам.
+// Раскладывает фото из ZIP в Supabase Storage (bucket photos, префикс ready/<batch>/) и привязывает к строкам.
 // Сопоставление: по имени файла из photo_file, иначе по префиксу «источник_id»
 // (парсер называет файлы yandex_<org_id>_<hash>.ext / 2gis_<org_id>_<hash>.ext).
-function storePhotosFromZip(zipBuffer: Buffer, leads: ParsedLead[]): { matched: number; unmatched: number } {
-  const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif)$/i;
+//
+// Почему Storage, а не public/uploads: на Vercel файловая система только для чтения (кроме /tmp),
+// поэтому writeFileSync в public/uploads падал с EROFS — импорт обрывался целиком. Storage работает
+// одинаково локально и в облаке, а ссылка получается публичной (bucket photos публичный).
+// Форматы и лимит берём из общего модуля правил: bucket photos принимает только jpeg/png/webp
+// до 5 МБ (0003_seed.sql). Раньше здесь был свой список с gif/avif — такие файлы Storage
+// отклонял, и они молча пропадали из галереи.
+const MIME_BY_EXT: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(PHOTO_TYPES).map(([mime, ext]) => [ext, mime])),
+  jpeg: 'image/jpeg', // расширение .jpeg — тот же формат, что .jpg
+};
+const IMAGE_EXT = new RegExp(`\\.(${Object.keys(MIME_BY_EXT).join('|')})$`, 'i');
+
+async function storePhotosFromZip(
+  zipBuffer: Buffer,
+  leads: ParsedLead[],
+): Promise<{ matched: number; unmatched: number; failed: number }> {
   const MAX_ENTRIES = 3000;
   const MAX_UNCOMPRESSED = 600 * 1024 * 1024;
 
   const zip = new AdmZip(zipBuffer);
   const entries = zip.getEntries().filter((entry) => !entry.isDirectory);
+  // Число файлов проверяем до распаковки: 3000 записей — предел, дальше это уже архив-бомба.
+  if (entries.length > MAX_ENTRIES) throw new Error(`В архиве больше ${MAX_ENTRIES} файлов`);
+
   const byName = new Map<string, (typeof entries)[number]>();
   for (const entry of entries) byName.set(basename(entry.entryName).toLowerCase(), entry);
 
   const batchId = `b${Date.now().toString(36)}`;
-  const outDir = join(process.cwd(), 'public', 'uploads', batchId);
-  mkdirSync(outDir, { recursive: true });
+  const storage = adminClient().storage.from(PHOTOS_BUCKET);
+  // Один файл может подойти нескольким строкам — грузим его ровно один раз (и помним вердикт по размеру).
+  const uploaded = new Map<string, { url: string; bad: boolean }>();
 
   let matched = 0;
   let unmatched = 0;
+  let failed = 0;
   let totalBytes = 0;
-  let overLimit = false;
+
   for (const lead of leads) {
-    if (overLimit) break;
     const base = lead.photo_file ? basename(String(lead.photo_file)).toLowerCase() : '';
     // Префикс организации: yandex_<org_id>_ / 2gis_<org_id>_ — из имени файла или полей.
     let prefix = '';
@@ -147,17 +168,36 @@ function storePhotosFromZip(zipBuffer: Buffer, leads: ParsedLead[]): { matched: 
       if (exact) picked = [exact];
     }
     if (picked.length === 0) { unmatched += 1; continue; }
-    picked = picked.slice(0, MAX_ENTRIES);
 
     const urls: string[] = [];
     let allBad = true;
+    let overLimit = false;
     for (const entry of picked) {
-      // В public/uploads пишем только изображения — иначе можно залить HTML/JS (stored XSS).
+      // В галерею пишем только изображения — иначе можно залить HTML/JS (stored XSS).
       if (!IMAGE_EXT.test(entry.entryName)) continue;
-      const size = Number((entry as unknown as { header?: { size?: number } }).header?.size ?? 0);
-      totalBytes += size;
+
+      const fileName = basename(entry.entryName).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const cached = uploaded.get(fileName);
+      if (cached) {
+        urls.push(cached.url);
+        if (!cached.bad) allBad = false;
+        continue;
+      }
+
+      let data: Buffer;
+      try {
+        data = entry.getData();
+      } catch {
+        failed += 1; // битый или зашифрованный entry — остальные файлы не страдают
+        continue;
+      }
+      // Считаем РЕАЛЬНЫЙ распакованный размер: header.size берётся из оглавления ZIP и подделывается,
+      // поэтому лимит по нему архив-бомба обходила.
+      totalBytes += data.length;
       if (totalBytes > MAX_UNCOMPRESSED) { overLimit = true; break; }
-      const data = entry.getData();
+      // Bucket photos не принимает файлы больше 5 МБ — отсекаем до загрузки, а не после отказа Storage.
+      if (data.length > MAX_UPLOAD_BYTES) { failed += 1; continue; }
+
       let bad = true;
       try {
         const dim = imageSize(data);
@@ -165,18 +205,29 @@ function storePhotosFromZip(zipBuffer: Buffer, leads: ParsedLead[]): { matched: 
       } catch {
         continue; // битый файл или не картинка — не сохраняем
       }
-      const fileName = basename(entry.entryName).replace(/[^a-zA-Z0-9._-]/g, '_');
-      writeFileSync(join(outDir, fileName), data);
+
+      const ext = (fileName.split('.').pop() ?? '').toLowerCase();
+      const path = `ready/${batchId}/${fileName}`;
+      const { error } = await storage.upload(path, data, {
+        contentType: MIME_BY_EXT[ext] ?? 'application/octet-stream',
+        upsert: true,
+      });
+      if (error) { failed += 1; continue; }
+      const { data: pub } = storage.getPublicUrl(path);
+      uploaded.set(fileName, { url: pub.publicUrl, bad });
+      urls.push(pub.publicUrl);
       if (!bad) allBad = false;
-      urls.push(`/uploads/${batchId}/${fileName}`);
     }
+    if (overLimit) break;
     if (urls.length === 0) { unmatched += 1; continue; }
     lead.photo_urls = urls;
     lead.photo_url = urls[0] ?? '';
     lead.photo_bad = allBad;
     matched += 1;
   }
-  return { matched, unmatched };
+  // Не роняем импорт из-за фото: строки без картинок всё равно полезны. Итог — в журнал.
+  if (failed > 0) await logError('import', 'ready-upload: часть фото не сохранена', { batch: batchId, failed });
+  return { matched, unmatched, failed };
 }
 
 function parseCsv(text: string): Record<string, unknown>[] {
@@ -242,13 +293,17 @@ export async function ingestReadyUploadAction(formData: FormData) {
 
     // Архив с фото (необязательно): раскладываем и привязываем к строкам.
     const photosFile = formData.get('photos');
-    let photoStats: { matched: number; unmatched: number } | null = null;
+    let photoStats: { matched: number; unmatched: number; failed: number } | null = null;
     if (photosFile instanceof File && photosFile.size > 0) {
       if (photosFile.size > 200 * 1024 * 1024) return { ok: false as const, error: 'Архив с фото больше 200 МБ' };
       try {
         const zipBuffer = Buffer.from(await photosFile.arrayBuffer());
-        photoStats = storePhotosFromZip(zipBuffer, leads);
-      } catch {
+        photoStats = await storePhotosFromZip(zipBuffer, leads);
+      } catch (e) {
+        // Фото — необязательная часть: строки импортируем и без них, но причину пишем в журнал.
+        await logError('import', 'ready-upload: архив с фото не разобран', {
+          reason: e instanceof Error ? e.message : String(e),
+        });
         photoStats = null;
       }
     }

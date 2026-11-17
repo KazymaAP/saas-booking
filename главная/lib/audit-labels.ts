@@ -73,6 +73,7 @@ export const SOURCE_LABEL: Record<LogSource, string> = {
   cron: 'Cron',
   admin: 'Админка',
   export: 'Экспорт',
+  demo: 'Демо-кабинет',
 };
 
 export function isLogSource(s: unknown): s is LogSource {

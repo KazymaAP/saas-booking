@@ -58,7 +58,7 @@
 
 ## 5. RLS и разграничение данных
 
-RLS включён на всех таблицах; `service_role` используется только на сервере (`adminClient()`), публичный `publicClient()` — с anon-ключом. Изоляция арендаторов обеспечивается `business_id` во всех запросах и функциями `accessible_business_ids()` / `owned_business_ids()` / `public_business_ids()`. Политики для клиентского чтения — только активные бизнесы (`p_businesses_sel`), анонимная вставка разрешена только в `bookings` (`p_bookings_anon_ins`). Подробнее — том 07.
+RLS включён на всех таблицах; `service_role` используется только на сервере (`adminClient()`), публичный `publicClient()` — с anon-ключом и только для Supabase Auth (вход по OTP), таблицы им не читаются и не пишутся. Изоляция арендаторов обеспечивается `business_id` во всех запросах и функциями `accessible_business_ids()` / `owned_business_ids()` / `public_business_ids()`. Политики для клиентского чтения — только активные бизнесы (`p_businesses_sel`). Прямой anon-вставки в `bookings` больше нет (0029): бронь создаётся только через `POST /api/bookings`, где есть rate limit и проверка слота. Подробнее — том 07.
 
 ## 6. Шифрование и секреты
 

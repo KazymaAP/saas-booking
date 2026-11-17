@@ -30,6 +30,7 @@ export async function saveSettings(slug: string, input: SettingsFormValues): Pro
       min_hours_before: v.min_hours_before,
       max_days_ahead: v.max_days_ahead,
       auto_confirm: v.auto_confirm,
+      require_client_registration: v.require_client_registration,
     })
     .eq('id', access.business.id);
   if (error) return fail(ERR.server);

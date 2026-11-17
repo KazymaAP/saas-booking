@@ -128,6 +128,7 @@ export type SlotsQuery = z.output<typeof slotsQuery>;
 export const API_REASONS = [
   'validation', 'rate_limited', 'not_found', 'service_not_found', 'slot_taken', 'too_late',
   'not_cancellable', 'not_reschedulable', 'reschedule_limit', 'forbidden', 'server', 'privacy_outdated',
+  'registration_required',
 ] as const;
 export type ApiReason = (typeof API_REASONS)[number];
 
@@ -180,6 +181,7 @@ export const REASON_MESSAGES: Record<ApiReason, string> = {
   forbidden: 'Запрос отклонён. Обновите страницу и попробуйте снова.',
   server: 'Что-то пошло не так. Попробуйте ещё раз.',
   privacy_outdated: 'Политика обработки данных обновилась. Обновите страницу и подтвердите согласие ещё раз.',
+  registration_required: 'Для записи нужна регистрация. Войдите в кабинет клиента.',
 };
 export const NETWORK_MESSAGE = 'Не удалось. Попробуйте ещё раз.';
 

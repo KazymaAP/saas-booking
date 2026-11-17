@@ -5,7 +5,10 @@ export const DEMO_PARTNER_NAME = 'DEMO Партнёр';
 export const DEMO_PARTNER_REF = 'PR-DEMO01';
 export const DEMO_OWNER_EMAIL = 'demo-owner@zapishisya.ru';
 export const DEMO_OWNER_NAME = 'DEMO Предприниматель';
-export const DEMO_PASSWORD = 'demo12345';
+export const DEMO_CUSTOMER_EMAIL = 'demo-client@zapishisya.ru';
+export const DEMO_CUSTOMER_NAME = 'DEMO Клиент';
+// Пароля здесь намеренно нет: этот модуль попадает в клиентский бандл, а пароль от настоящей
+// сессии — секрет. Сервер берёт его из demo-secret.ts (DEMO_PASSWORD в окружении).
 export const DEMO_PREFIX = 'm';
 export const DEMO_SLUG = 'demo';
 export const DEMO_BUSINESS_NAME = 'DEMO — Студия маникюра «Любава»';

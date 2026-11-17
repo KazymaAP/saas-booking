@@ -1,7 +1,7 @@
--- scripts/db-check.sql
--- Проверка схемы после миграций 0001–0007 (ТЗ §4, §4.49, §4.50, §10.2).
+-- служебное/scripts/db-check.sql
+-- Проверка схемы после миграций 0001–0030 (ТЗ §4, §4.49, §4.50, §10.2).
 -- Только чтение: ничего не меняет, кроме временной таблицы сессии.
--- Запуск: DATABASE_URL=... bash scripts/db-check.sh
+-- Запуск: DATABASE_URL=... bash служебное/scripts/db-check.sh
 -- FAIL → psql выходит с ошибкой (ON_ERROR_STOP). WARN — информация, не ошибка.
 
 create temp table _db_check (
@@ -49,12 +49,19 @@ from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public' and c.relkind in ('r', 'p');
 
--- 4. Политики RLS: у каждой основной таблицы есть хотя бы одна.
+-- 4. Политики RLS: наличие политик — не обязательное условие. Служебные таблицы (cron_*, партнёрские,
+-- analytics_refresh_log, cron_retention_policy) живут с включённым RLS и БЕЗ политик — это «доступ только
+-- service_role», самый строгий вариант. Раньше такие таблицы помечались FAIL, из-за чего проверка не могла
+-- пройти ни на одной корректной базе: 13 постоянных FAIL и `raise exception` в конце. Теперь FAIL только
+-- при выключенном RLS (тогда гранты anon/authenticated дают реальный доступ), отсутствие политик — WARN.
 insert into _db_check (section, name, status, detail)
 select 'rls_policies', c.relname,
-       case when exists (select 1 from pg_policy p where p.polrelid = c.oid)
-            then 'PASS' else 'FAIL' end,
-       'нет политик — доступ только через service_role'
+       case when exists (select 1 from pg_policy p where p.polrelid = c.oid) then 'PASS'
+            when c.relrowsecurity then 'WARN'
+            else 'FAIL' end,
+       case when exists (select 1 from pg_policy p where p.polrelid = c.oid) then null
+            when c.relrowsecurity then 'RLS включён, политик нет — доступ только через service_role (норма для служебных таблиц)'
+            else 'RLS выключен — таблица доступна ролям PostgREST напрямую' end
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relispartition;
@@ -100,14 +107,18 @@ select 'extensions', v.name,
        null
 from (values ('pgcrypto'), ('btree_gist')) as v(name);
 
--- 8. Брони: exclusion-констрейнт (ТЗ §10.2) и триггер снимка (duration/price/timezone).
+-- 8. Брони: запрет пересечения активных броней (ТЗ §10.2) и триггер снимка (duration/price/timezone).
+-- Проверяем ТРИГГЕР, а не EXCLUDE-ограничение: на партиционированной bookings (0014) exclusion-ограничение
+-- с выражением booking_range(...) && создать нельзя, поэтому 0027 переносит проверку в триггер с advisory-lock.
+-- Раньше здесь проверялся bookings_no_overlap — он не создавался после 0014, и проверка вечно показывала FAIL.
 insert into _db_check (section, name, status, detail)
-select 'constraints', 'bookings_no_overlap',
+select 'constraints', 'bookings_no_overlap (trigger)',
        case when exists (
-         select 1 from pg_constraint c
-         where c.conname = 'bookings_no_overlap' and c.conrelid = to_regclass('public.bookings')
+         select 1 from pg_trigger t
+         where t.tgname = 'trg_bookings_no_overlap' and not t.tgisinternal
+           and t.tgrelid = to_regclass('public.bookings')
        ) then 'PASS' else 'FAIL' end,
-       'EXCLUDE gist; конфликт → 23P01 (код обрабатывает 23505 и 23P01)';
+       'BEFORE INSERT/UPDATE + advisory-lock по business_id; конфликт → 23P01 (код обрабатывает 23505 и 23P01)';
 
 insert into _db_check (section, name, status, detail)
 select 'triggers', 'bookings_fill_snapshot',

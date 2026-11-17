@@ -20,7 +20,10 @@ describe('fail / ok', () => {
     expect(fail({ reason: 'slot_taken' }).status).toBe(409);
     expect(fail({ reason: 'too_late', phone: '+7' }).status).toBe(409);
     expect(fail({ reason: 'server' }).status).toBe(500);
-    expect(Object.keys(REASON_STATUS)).toHaveLength(12);
+    // Требование регистрации клиента (настройка require_client_registration) — 403, а не 400:
+    // запрос корректен, запрещён доступ.
+    expect(fail({ reason: 'registration_required' }).status).toBe(403);
+    expect(Object.keys(REASON_STATUS)).toHaveLength(13);
   });
 
   it('тело { ok: false, reason } и no-store', async () => {

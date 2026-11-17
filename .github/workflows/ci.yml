@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml — проверки качества на каждый PR и пуш в master.
+# Раньше в CI был только weekly-backup, поэтому неработающий ESLint и ошибки типов жили в master незамеченными.
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Отменяем предыдущий прогон той же ветки: экономит минуты и не копит очереди.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # --frozen-lockfile: сборка падает, если lockfile разошёлся с package.json.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test

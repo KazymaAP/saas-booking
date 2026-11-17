@@ -1,4 +1,5 @@
-// app/api/cron/backup/route.ts — ежедневный JSON-бэкап 9 таблиц в приватный bucket backups (ТЗ 4.0 §16.7).
+// app/api/cron/backup/route.ts — еженедельный (воскресенье 03:00 UTC) JSON-бэкап 10 таблиц в приватный
+// bucket backups (ТЗ 4.0 §16.7). Расписание — lib/schedules.ts (runner vercel, '0 3 * * 0').
 // Защита: Authorization: Bearer CRON_SECRET. Статический маршрут имеет приоритет над app/api/cron/[job],
 // поэтому старый job 'backup' (7 таблиц, обрезка до 1000 строк) больше не вызывается по этому пути.
 // Логика — lib/backup.ts (performBackup): сбор с пагинацией, загрузка, retention 30 дней, retention license_pings.

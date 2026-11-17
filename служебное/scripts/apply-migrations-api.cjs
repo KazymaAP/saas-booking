@@ -1,10 +1,15 @@
-// scripts/apply-migrations-api.cjs — накат миграций 0001–0014 через Supabase Management API (HTTPS).
+// служебное/scripts/apply-migrations-api.cjs — накат миграций supabase/migrations (сейчас 0001–0030)
+// через Supabase Management API (HTTPS). Список читается из каталога, новые файлы подхватываются сами.
 // Используется, когда прямой порт 5432 до БД недоступен (например, в песочнице агента).
 // Требует аккаунт-токен Management API (НЕ service_role!): https://supabase.com/dashboard/account/tokens
 //
 // Запуск:
 //   SUPABASE_MANAGEMENT_TOKEN=<token> SUPABASE_PROJECT_REF=oryzoexstuzgpbqvpjbr \
-//   node scripts/apply-migrations-api.cjs
+//   node служебное/scripts/apply-migrations-api.cjs
+//
+// Опционально — пропустить миграции ниже указанного номера (например, демо-сид 0015):
+//   MIGRATION_FROM=0016 node служебное/scripts/apply-migrations-api.cjs
+//   (пропущенные файлы помечаются применёнными, чтобы не предлагаться повторно)
 //
 // Endpoint: POST https://api.supabase.com/v1/projects/{ref}/database/query
 // Body:     {"query": "<SQL>"}
@@ -57,7 +62,17 @@ async function main() {
   } catch {}
 
   let count = 0;
+  const FROM = process.env.MIGRATION_FROM ? String(process.env.MIGRATION_FROM).padStart(4, '0') : null;
   for (const f of files) {
+    const m = f.match(/^(\d{4})_/);
+    const prefix = m ? m[1] : '0000';
+    if (FROM && prefix < FROM) {
+      if (!applied.has(f)) {
+        await runQuery(`INSERT INTO _applied_migrations(name) VALUES ('${f}') ON CONFLICT DO NOTHING;`, `track-skip ${f}`);
+      }
+      console.log(`⏭️  ${f} — ниже MIGRATION_FROM=${FROM}, пропущена (отмечена применённой)`);
+      continue;
+    }
     if (applied.has(f)) {
       console.log(`⏭️  ${f} — уже применена, пропускаем`);
       continue;

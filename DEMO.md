@@ -195,4 +195,4 @@
 | Нет свободного времени | «Сегодня запись закрыта, выберу завтра» | часы работы демо-бизнеса на все дни, минимум часов до записи = 0 |
 | «Слишком много попыток» | «Это защита от спама» | лимит 5 записей за 10 минут с одного IP — не репетируйте с того же адреса перед встречей |
 | Telegram не пришёл | «Уведомление дублируется на email» — показать почту | [docs/telegram-setup.md](docs/telegram-setup.md), [docs/troubleshooting.md](docs/troubleshooting.md) |
-| Сайт не открывается | перейти на скриншоты и KP, перенести показ | [docs/troubleshooting.md](docs/troubleshooting.md), `bash scripts/smoke-test.sh <SITE_URL>` |
+| Сайт не открывается | перейти на скриншоты и KP, перенести показ | [docs/troubleshooting.md](docs/troubleshooting.md), `bash служебное/scripts/smoke-test.sh <SITE_URL>` |

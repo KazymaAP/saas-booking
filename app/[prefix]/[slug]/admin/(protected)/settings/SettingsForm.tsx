@@ -175,6 +175,13 @@ function BookingSection({ ctx }: { ctx: Ctx }) {
         <input type="checkbox" {...ctx.register('auto_confirm')} className="h-5 w-5" />
         Подтверждать новые записи автоматически
       </label>
+      <label className="flex min-h-[44px] items-center gap-3 text-[14px]">
+        <input type="checkbox" {...ctx.register('require_client_registration')} className="h-5 w-5" />
+        Обязательна регистрация клиента для записи
+      </label>
+      <p className="!m-0 -mt-2 text-[13px] text-[#595959]">
+        Клиенту нужно войти в кабинет (/my) перед записью. Иначе запрос отклоняется с кодом 403.
+      </p>
     </fieldset>
   );
 }

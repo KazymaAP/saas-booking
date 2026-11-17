@@ -1078,7 +1078,7 @@
 
 ### lib/backup.test.ts
 **Назначение:** Бэкап: полнота (пагинация), порядок restore, идемпотентность, retention, разбор дампа.
-**Покрытие:** Имена файлов (UTC, обход пути), `collectBackup` (9 таблиц, пагинация >1000, ошибка чтения роняет бэкап), `runBackup` (запись/перезапись/сбой), `pruneBackups` (30 дней, последняя копия не удаляется), `parseDump` (новый/старый формат, мусор/дубли id/обрезанный/будущая версия), `restoreDump` (порядок родитель→ребёнок, batch ≤500, идемпотентность upsert, ошибка родителя→дети skipped, исключение не роняет), устойчивость, `restoreFromFile`, `listBackups` (signed URL TTL 300), `isRestoreConfirmed` (только «ВОССТАНОВИТЬ»), `performBackup` (успех/сбой/очистка пингов), `handleRestoreRequest` (confirm, 200/409/207/404/503).
+**Покрытие:** Имена файлов (UTC, обход пути), `collectBackup` (10 таблиц, пагинация >1000, ошибка чтения роняет бэкап), `runBackup` (запись/перезапись/сбой), `pruneBackups` (30 дней, последняя копия не удаляется), `parseDump` (новый/старый формат, мусор/дубли id/обрезанный/будущая версия), `restoreDump` (порядок родитель→ребёнок, batch ≤500, идемпотентность upsert, ошибка родителя→дети skipped, исключение не роняет), устойчивость, `restoreFromFile`, `listBackups` (signed URL TTL 300), `isRestoreConfirmed` (только «ВОССТАНОВИТЬ»), `performBackup` (успех/сбой/очистка пингов), `handleRestoreRequest` (confirm, 200/409/207/404/503).
 **Зависимости:** `lib/backup`, `../tests/memory-backup-db`, мок `supabase`.
 **Релиз-блокеры:** Нет.
 
@@ -1704,7 +1704,7 @@
 **HTTP-методы:** GET
 **Экспорты:** runtime, dynamic, maxDuration, GET
 **Импорты (4):** next/server, @/lib/cron, @/lib/backup-deps, @/lib/backup
-**Комментарий:** app/api/cron/backup/route.ts — ежедневный JSON-бэкап 9 таблиц в приватный bucket backups (ТЗ 4.0 §16.7).
+**Комментарий:** app/api/cron/backup/route.ts — еженедельный (воскресенье 03:00 UTC) JSON-бэкап 10 таблиц в приватный bucket backups (ТЗ 4.0 §16.7).
 
 ### `app/api/cron/booking-reminders/route.test.ts`  (124 стр.)
 **Роль:** Тест (Vitest)

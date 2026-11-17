@@ -1,7 +1,7 @@
 // photos/upload-client.ts — браузерная часть загрузки: сжатие и PUT в Storage с прогрессом.
 // Импортируется только клиентскими компонентами. Библиотека сжатия (~50 КБ) грузится по требованию,
 // при выборе первого большого файла, — страница фото не платит за неё заранее.
-import { COMPRESS_FROM_BYTES, COMPRESS_MAX_SIDE_PX, COMPRESS_TARGET_MB } from './rules';
+import { COMPRESS_FROM_BYTES, COMPRESS_MAX_SIDE_PX, COMPRESS_TARGET_MB } from '@/lib/photo-rules';
 
 export type ProgressFn = (percent: number) => void;
 

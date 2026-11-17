@@ -158,7 +158,8 @@ export async function accrueReferralBonus(input: {
       type: 'one_time',
       status: 'accrued',
     });
-    if (error) await logError('admin', 'referral_bonus_failed', { error: error.message, referrer: referrerId });
+    // 23505 — бонус уже начислен параллельным обработчиком (уникальный индекс 0030), это норма.
+    if (error && error.code !== '23505') await logError('admin', 'referral_bonus_failed', { error: error.message, referrer: referrerId });
   } catch (error) {
     await logError('admin', 'referral_bonus_failed', { error: error instanceof Error ? error.message : String(error) });
   }

@@ -40,6 +40,12 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0022_custom_roles.sql',
   'supabase/migrations/0023_custom_roles_lifecycle.sql',
   'supabase/migrations/0024_custom_roles_cron.sql',
+  'supabase/migrations/0025_customers.sql',
+  'supabase/migrations/0026_rls_custom_roles.sql',
+  'supabase/migrations/0027_bookings_overlap_trigger.sql',
+  'supabase/migrations/0028_email_attachments_bucket.sql',
+  'supabase/migrations/0029_bookings_anon_insert_lockdown.sql',
+  'supabase/migrations/0030_partner_earnings_unique.sql',
 ] as const;
 
 export type TransferBusiness = {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/preflight.sh — smoke-проверка перед деплоем: env → install → typecheck → тесты → build → smoke запущенного сервера.
+# служебное/scripts/preflight.sh — smoke-проверка перед деплоем: env → install → typecheck → тесты → build → smoke запущенного сервера.
 # Запуск: pnpm preflight   (или bash служебное/scripts/preflight.sh)
 # Флаги окружения:
 #   PREFLIGHT_SKIP_ENV=1    — не проверять env (CI без секретов; build всё равно пройдёт).
@@ -44,7 +44,7 @@ check_node() {
   command -v pnpm >/dev/null || { echo 'pnpm не найден: npm i -g pnpm'; return 1; }
 }
 
-# Список обязательных переменных — из lib/env.ts (единый источник), проверка формата — там же.
+# Список обязательных переменных — из общие/lib/env.ts (единый источник), проверка формата — там же.
 check_env() {
   node --experimental-strip-types --no-warnings -e '
     import("./общие/lib/env.ts").then(({ checkEnv }) => {
@@ -55,7 +55,7 @@ check_env() {
   ' 2>/dev/null && return 0
   # Fallback для Node без strip-types: только наличие переменных.
   local missing=0 name
-  for name in $(sed -n '/^export const REQUIRED_ENV = \[/,/^\]/p' lib/env.ts | grep -oE "'[A-Z_]+'" | tr -d "'"); do
+  for name in $(sed -n '/^export const REQUIRED_ENV = \[/,/^\]/p' общие/lib/env.ts | grep -oE "'[A-Z_]+'" | tr -d "'"); do
     if [[ -z "${!name:-}" ]]; then echo "  - $name: не задана"; missing=1; fi
   done
   return "$missing"
@@ -100,7 +100,8 @@ smoke() {
 
   headers="$(curl -s -D - -o /dev/null "http://127.0.0.1:$PORT/")"
   local h
-  for h in 'content-security-policy' 'strict-transport-security' 'x-frame-options: deny' 'x-content-type-options: nosniff' 'referrer-policy' 'permissions-policy' 'cross-origin-opener-policy: same-origin'; do
+  # X-Frame-Options = SAMEORIGIN: CSP frame-ancestors 'self' (next.config.mjs). DENY сломал бы встраивание своих же страниц.
+  for h in 'content-security-policy' 'strict-transport-security' 'x-frame-options: sameorigin' 'x-content-type-options: nosniff' 'referrer-policy' 'permissions-policy' 'cross-origin-opener-policy: same-origin'; do
     grep -qi "^$h" <<<"$headers" || { echo "нет заголовка: $h"; return 1; }
   done
   grep -qi "^x-powered-by" <<<"$headers" && { echo 'X-Powered-By не отключён'; return 1; }

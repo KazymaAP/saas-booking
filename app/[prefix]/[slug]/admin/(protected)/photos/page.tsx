@@ -5,7 +5,7 @@ import { isOwner, requireSectionAccess } from '../_lib/access';
 import { OnboardingTip } from '../_components/OnboardingTip';
 import type { PhotoRow } from './actions';
 import { PhotoGallery } from './PhotoGallery';
-import { MAX_PHOTOS } from './rules';
+import { MAX_PHOTOS } from '@/lib/photo-rules';
 
 export const dynamic = 'force-dynamic';
 

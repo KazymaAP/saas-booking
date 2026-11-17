@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useForm, useWatch, type FieldErrors, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { bookingFormSchema, BOOKING_FIELD_ORDER, PRIVACY_VERSION, type BookingField, type BookingFormValues } from '@/lib/schemas';
+import { bookingFormSchema, BOOKING_FIELD_ORDER, PRIVACY_VERSION, type BookingCreated, type BookingField, type BookingFormValues } from '@/lib/schemas';
 import { formatPhoneMask } from '@/lib/phone';
 import { formatSlotDateTime } from '@/lib/slots';
 import { dateBounds, dateOptions, firstOpenDate, isDateInBounds, resolveSchedule, type ClientSchedule } from '@/lib/booking-dates';
@@ -103,7 +103,16 @@ export function BookingForm({ prefix, slug, services, schedule }: Props) {
     form.setValue('startsAt', '', { shouldValidate: false });
   }, [form, serviceId, date]);
 
-  if (outcome.kind === 'done') return <SuccessPanel id={ids.done} status={outcome.booking.status} startsAt={outcome.booking.startsAt} timeZone={resolved.timeZone} />;
+  if (outcome.kind === 'done') {
+    return (
+      <SuccessPanel
+        id={ids.done}
+        booking={outcome.booking}
+        timeZone={resolved.timeZone}
+        hasEmail={(form.getValues('email') ?? '').trim() !== ''}
+      />
+    );
+  }
 
   const failure = outcome.kind === 'failed' && outcome.failure.reason !== 'slot_taken' && outcome.failure.fields === undefined ? outcome.failure : null;
   return (
@@ -265,17 +274,28 @@ function SubmitButton({ sending }: { sending: boolean }) {
   );
 }
 
-function SuccessPanel({ id, status, startsAt, timeZone }: { id: string; status: string; startsAt: string; timeZone: string }) {
+function SuccessPanel({ id, booking, timeZone, hasEmail }: { id: string; booking: BookingCreated; timeZone: string; hasEmail: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   // Форма исчезла — фокус на результат, чтобы диктор и клавиатура не «потерялись».
   useEffect(() => ref.current?.focus(), []);
-  const confirmed = status === 'confirmed';
+  const confirmed = booking.status === 'confirmed';
+  // Ссылки показываем на экране, а не только в письме: email необязателен, письмо может не дойти,
+  // а без ссылки клиент не может отменить или перенести запись.
+  const cancelHref = `/booking/cancel/${booking.cancelToken}`;
+  const rescheduleHref = `/booking/reschedule/${booking.cancelToken}`;
   return (
     <div id={id} ref={ref} tabIndex={-1} role="status" aria-live="polite" className="mt-4 rounded-lg bg-[#f5f5f5] p-4 outline-none">
       <p className="m-0 font-semibold">{confirmed ? 'Вы записаны' : 'Заявка принята'}</p>
-      <p className="m-0 mt-1">{formatSlotDateTime(startsAt, timeZone)}</p>
+      <p className="m-0 mt-1">{formatSlotDateTime(booking.startsAt, timeZone)}</p>
       <p className="m-0 mt-1 text-[14px] text-[#595959]">
-        {confirmed ? 'Запись подтверждена. Ссылка для отмены и переноса — в письме.' : 'Мы свяжемся с вами для подтверждения.'}
+        {confirmed ? 'Запись подтверждена.' : 'Мы свяжемся с вами для подтверждения.'}
+        {hasEmail ? ' Копия — в письме.' : ''}
+      </p>
+      <p className="m-0 mt-2 text-[14px]">
+        Сохраните ссылки:{' '}
+        <a href={cancelHref} className="underline">отменить запись</a>{' '}
+        или{' '}
+        <a href={rescheduleHref} className="underline">перенести</a>.
       </p>
     </div>
   );

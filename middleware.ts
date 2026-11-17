@@ -98,7 +98,10 @@ function isNoindexPath(path: string): boolean {
     || path === '/admin' || path.startsWith('/admin/')
     || path === '/dev' || path.startsWith('/dev/')
     || path === '/partner' || path.startsWith('/partner/')
+    || path === '/my' || path.startsWith('/my/')
     || /^\/[a-z]{1,4}\/[^/]+\/admin(\/|$)/.test(path)
+    // Кабинет клиента /{prefix}/{slug}/my и его вложения — служебные, не индексируются.
+    || /^\/[a-z]{1,4}\/[^/]+\/my(\/|$)/.test(path)
     // Разделы сотрудников /{prefix}/{slug}/{role} — служебные, не индексируются.
     || /^\/[a-z]{1,4}\/[^/]+\/(manager|receptionist|content|viewer|finance|marketing|callcenter|analyst|photographer|copywriter|support|auditor|intern)(\/|$)/.test(path);
 }

@@ -801,6 +801,7 @@ export type Database = {
           completed_at: string | null;
           confirmed_at: string | null;
           created_at: string;
+          customer_id: string | null;
           custom_fields: NonNullable<Json>;
           duration_at_booking: number;
           id: string;
@@ -836,6 +837,7 @@ export type Database = {
           completed_at?: string | null;
           confirmed_at?: string | null;
           created_at?: string;
+          customer_id?: string | null;
           custom_fields?: NonNullable<Json>;
           duration_at_booking: number;
           id?: string;
@@ -870,6 +872,7 @@ export type Database = {
           completed_at?: string | null;
           confirmed_at?: string | null;
           created_at?: string;
+          customer_id?: string | null;
           custom_fields?: NonNullable<Json>;
           duration_at_booking?: number;
           id?: string;
@@ -916,6 +919,48 @@ export type Database = {
             columns: ["service_id"];
             isOneToOne: false;
             referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      customers: {
+        Row: {
+          id: string;
+          business_id: string;
+          email: string;
+          name: string | null;
+          phone: string | null;
+          auth_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: string;
+          business_id: string;
+          email: string;
+          name?: string | null;
+          phone?: string | null;
+          auth_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          email?: string;
+          name?: string | null;
+          phone?: string | null;
+          auth_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customers_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
             referencedColumns: ["id"];
           },
         ];
@@ -1091,6 +1136,7 @@ export type Database = {
           ssl_status: string;
           status: string;
           subscription_active: boolean;
+          require_client_registration: boolean;
           subscription_price: number | null;
           subscription_started_at: string | null;
           subscription_until: string | null;
@@ -1157,6 +1203,7 @@ export type Database = {
           ssl_status?: string;
           status?: string;
           subscription_active?: boolean;
+          require_client_registration?: boolean;
           subscription_price?: number | null;
           subscription_started_at?: string | null;
           subscription_until?: string | null;
@@ -1222,6 +1269,7 @@ export type Database = {
           ssl_status?: string;
           status?: string;
           subscription_active?: boolean;
+          require_client_registration?: boolean;
           subscription_price?: number | null;
           subscription_started_at?: string | null;
           subscription_until?: string | null;

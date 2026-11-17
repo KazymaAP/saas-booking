@@ -8,7 +8,6 @@ export default defineConfig({
     alias: {
       '@/lib': fileURLToPath(new URL('./общие/lib', import.meta.url)),
       '@/components': fileURLToPath(new URL('./общие/components', import.meta.url)),
-      '@/types': fileURLToPath(new URL('./общие/types', import.meta.url)),
       '@': fileURLToPath(new URL('./', import.meta.url)),
     },
   },

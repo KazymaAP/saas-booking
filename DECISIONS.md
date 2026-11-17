@@ -46,7 +46,7 @@
 | Права: `isSuperAdmin()` (почта из `SUPERADMIN_EMAILS`) и `currentOwner(slug)` (`admin_users`) | Супер-админов мало и они не меняются; владельцы привязаны к бизнесу | `lib/admin-session.ts`, `lib/owner-session.ts` |
 | Rate limit — таблица `rate_limits` в Postgres | Serverless-инстансы не делят память, `Map` не работает | `lib/rate-limit.ts` |
 | Слоты не хранятся, считаются на лету | Нет рассинхронизации при смене графика и длительности услуг | `lib/slots.ts`, `lib/availability.ts` |
-| Защита от двойной брони — частичный уникальный индекс `bookings_slot_unique` | Проще exclusion constraint; достаточно при фиксированном шаге слотов | `0001_init.sql` |
+| Защита от двойной брони — частичный уникальный индекс `bookings_slot_unique` + триггер `trg_bookings_no_overlap` с advisory-lock | Индекс ловит точное совпадение старта, но не пересечение интервалов при `slot_step_minutes` меньше длительности услуги; exclusion constraint на партиционированной `bookings` (0014) создать нельзя | `0001_init.sql`, `0027_bookings_overlap_trigger.sql` |
 | Service worker — один `/sw.js` на весь сервис | Минимальный PWA без Workbox (ТЗ §5.1); кэширует только навигацию, API и панели не кэширует | `app/sw.js/route.ts` |
 | Манифест PWA — на каждый бизнес | Своё имя и цвет на иконке телефона | `app/[prefix]/[slug]/manifest.webmanifest/route.ts` |
 | Карта и сжатие фото загружаются лениво | Leaflet и `browser-image-compression` не попадают в общий бандл | `components/MapLazy.tsx`, `photos/PhotoUploaderLazy.tsx` |
@@ -130,3 +130,14 @@
 | Срок неактивности роли — 30 дней; уведомление владельцу — за 10 дней (на 20-й день) | Баланс между «роль не мешает» и «владелец не теряет настройки внезапно» | `cleanup-unused-roles.ts` (`INACTIVITY_DAYS=30`, `NOTIFY_BEFORE_DAYS=10`) |
 | «Последнее использование» = `last_used_at`, сбрасывается при входе сотрудника с этой ролью; при «оживлении» `removal_notified_at` сбрасывается в NULL | Если роль снова нужна, отсчёт 30 дней начинается заново, удаление не происходит | `owner-session.ts` (update при входе), `cleanup-unused-roles.ts` |
 | Выборка кандидатов на уведомление/удаление — SQL-функции `cron_select_roles_to_notify` / `cron_select_unused_roles` (NOT EXISTS по `admin_users`) | Не тянем всю таблицу в память; корректно исключаем роли с живыми сотрудниками | миграция 0023 |
+
+## Кабинет клиента /my (NEW-5, 2026-11-12)
+
+| Решение | Почему | Где |
+|---|---|---|
+| Кабинет клиента `/{prefix}/{slug}/my` **существует всегда** и открыт для всех, даже без входа | Клиенту полезно видеть свои записи; бизнес не должен терять записи только потому, что клиент не зарегистрирован | `app/[prefix]/[slug]/my/page.tsx` |
+| Регистрация клиента **добровольная**; бизнес сам решает, обязательна ли она для записи — флаг `businesses.require_client_registration` (по умолчанию false) | Одни бизнесы хотят лёгкую запись без барьеров, другим нужен точный контакт клиента | `supabase/migrations/0025_customers.sql`, `app/[prefix]/[slug]/admin/(protected)/settings/*` (чекбокс «Обязательна регистрация клиента для записи») |
+| Если `require_client_registration = true` и нет клиентской сессии — POST `/api/bookings` возвращает **403 `{ ok:false, reason:'registration_required' }`**; при наличии сессии `bookings.customer_id` заполняется | Гейт срабатывает сразу после `resolveBusiness`, ДО проверки слота — лишняя нагрузка на слоты не нужна | `app/api/bookings/route.ts`, `lib/schemas.ts` (`API_REASONS`), `lib/booking-http.ts` (`REASON_STATUS`) |
+| Сессия клиента — подписанный HS256-JWT в cookie `customer_session` (тот же `SUPABASE_JWT_SECRET`, что у токенов Supabase); realm отдельный — `'customer'` | Переиспользуем локальную проверку подписи `verifyAccessToken`, не заводим отдельный key-механизм; изоляция между бизнесами — поиском клиента по `(id, business_id)` | `lib/customer-session.ts` |
+| Изоляция между бизнесами: клиент бизнеса A не проходит проверку в бизнесе B (нейтрально «Нет аккаунта с таким email»), RLS `p_customers_deny`/`member_customer_bookings_read` — защита вглубь | Чужой бизнес не видит записи клиента; анти-перечисление не раскрывает, существует ли клиент в другом бизнесе | `lib/customer-session.ts`, миграция 0025 |
+| Временная форма входа `/{prefix}/{slug}/my/login` (OTP-код из email + пароль) — будет заменена на единый `/{prefix}/{slug}/login` в NEW-6 | Не дублируем логику входа: NEW-6 объединяет клиента, владельца и сотрудника в одну форму | `app/[prefix]/[slug]/my/login/page.tsx`, `app/[prefix]/[slug]/my/actions.ts` |

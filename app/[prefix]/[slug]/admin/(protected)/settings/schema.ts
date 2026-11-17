@@ -65,6 +65,7 @@ export const SettingsSchema = z.object({
   min_hours_before: intIn(0, 72, 'ч'),
   max_days_ahead: intIn(1, 365, 'дн.'),
   auto_confirm: z.boolean(),
+  require_client_registration: z.boolean(),
 }).superRefine((v, ctx) => {
   // Окно записи должно существовать: «не раньше чем через N часов» меньше горизонта «на M дней вперёд».
   if (v.min_hours_before >= v.max_days_ahead * 24) {
@@ -98,5 +99,6 @@ export function toSettingsForm(b: Business): SettingsFormValues {
     min_hours_before: String(b.min_hours_before),
     max_days_ahead: String(b.max_days_ahead),
     auto_confirm: b.auto_confirm,
+    require_client_registration: b.require_client_registration,
   };
 }

@@ -1,6 +1,6 @@
 # Том 07. База данных
 
-Источники: все 20 файлов `supabase/migrations/*.sql`, `общие/lib/database.types.ts`, `database.generated.ts`, `PROGRESS.md`.
+Источники: все 29 файлов `supabase/migrations/*.sql`, `общие/lib/database.types.ts`, `database.generated.ts`, `PROGRESS.md`.
 
 ## 1. Миграции
 
@@ -26,8 +26,18 @@
 | `0018_ready_services.sql` | `ready_services`, `partner_messages`, `partner_payouts` + индексы |
 | `0019_admin_query_indexes.sql` | Индексы для админских выборок |
 | `0020_partner_referrals.sql` | `partners.referrer_id`, тип начисления `referral_bonus`, `settings.referral_percent = 10%`, индексы |
+| `0021_staff_roles.sql` | Расширение `admin_users.role` до 14 встроенных ролей (CHECK снимается и ставится заново) |
+| `0022_custom_roles.sql` | `business_custom_roles` — сохранённые матрицы доступа; в `admin_users.role` хранится `custom:<uuid>` |
+| `0023_custom_roles_lifecycle.sql` | Жизненный цикл неиспользуемых ролей П1/П2: `removal_notified_at`, функции пометки и удаления |
+| `0024_custom_roles_cron.sql` | Регистрация задачи `cleanup-unused-roles` в `cron_registry` |
+| `0025_customers.sql` | `customers`, `bookings.customer_id` (FK SET NULL), `businesses.require_client_registration`, RLS `p_customers_deny`, `member_customer_bookings_read` |
+| `0026_rls_custom_roles.sql` | RLS + политика `p_business_custom_roles_deny` для `business_custom_roles` (таблица создана в 0022 — после цикла RLS из 0007) |
+| `0027_bookings_overlap_trigger.sql` | `bookings_check_overlap()` + `trg_bookings_no_overlap`: advisory-lock по `business_id`, пересечение активных броней → `23P01` (замена EXCLUDE-ограничения, невозможного на партиционированной `bookings`) |
+| `0028_email_attachments_bucket.sql` | Приватный бакет `email` (10 МБ) для вложений входящей почты — код писал в него, а миграции его не создавали |
+| `0029_bookings_anon_insert_lockdown.sql` | Удалена политика `p_bookings_anon_ins` и снят колоночный INSERT с `anon`: прямая вставка броней через PostgREST обходила rate limit и проверку слотов |
+| `0030_partner_earnings_unique.sql` | Частичные уникальные индексы `partner_earnings_once_per_checkout` / `partner_earnings_once_per_period` / `payments_partner_checkout_once`: повторная доставка вебхука ЮKassa не начисляет комиссию и не создаёт вторую строку выручки (ключ включает `partner_id`, чтобы разовый бонус наставника за тот же чекаут не блокировался) |
 
-Накат: `scripts/apply-migrations.cjs` / `apply-migrations-api.cjs` (Management API, минуя прямой порт 5432), `scripts/migrate.sh`, `служебное/scripts/apply-migrations*.cjs`. Миграции идемпотентны (`if not exists`, `add column if not exists`, `on conflict`). История применений хранится в `_applied_migrations`. Факт из журнала работ: 0001–0014 накатывались на реальный проект Supabase (`oryzoexstuzgpbqvpjbr`) 29.10.2026.
+Накат: `служебное/scripts/apply-migrations.cjs` / `apply-migrations-api.cjs` (Management API, минуя прямой порт 5432), `служебное/scripts/migrate.sh`. Миграции идемпотентны (`if not exists`, `add column if not exists`, `on conflict`). История применений хранится в `_applied_migrations`. Факт из журнала работ: 0001–0014 накатывались на реальный проект Supabase (`oryzoexstuzgpbqvpjbr`) 29.10.2026.
 
 ## 2. Таблицы и колонки
 
@@ -154,7 +164,7 @@ RLS включён на всех таблицах. `service_role` обходит
 Ключевые функции/политики (`0007_rls_audit.sql`):
 - `is_super_admin()` — проверка по `super_admins`/`SUPERADMIN_EMAILS`.
 - `current_auth_uid()`, `is_api_role()`, `current_business()`, `is_anon()`, `is_business_member(b)`, `accessible_business_ids()`, `owned_business_ids()`, `public_business_ids()`.
-- `p_businesses_sel/ins/upd/del`, `p_vertical_templates_sel/admin`, `p_admin_users_self`, `p_bookings_anon_ins`, `member_bookings_read` (0014).
+- `p_businesses_sel/ins/upd/del`, `p_vertical_templates_sel/admin`, `p_admin_users_self`, `member_bookings_read` (0014). Политика `p_bookings_anon_ins` удалена в 0029.
 - Циклическое создание однотипных политик `p_<table>_sel/ins/upd/del` для групп таблиц: чтение — membership, запись — `is_super_admin()`; для служебных таблиц — только супер-админ.
 - `p_analytics_events_ins/sel` (0011).
 - `p_partition_admin` для каждой партиции (`secure_partition`).
@@ -179,6 +189,7 @@ RLS включён на всех таблицах. `service_role` обходит
 | `backups` | приватный | 0002 | JSON-бэкапы таблиц, восстановление |
 | `photos` | публичный | 0003 | Фото работ бизнесов (подписанная загрузка) |
 | `logos` | публичный | 0003 | Логотипы |
+| `email` | приватный | 0028 | Вложения входящей почты (`{folder}/{filename}`, до 10 МБ) — создавался вручную, теперь миграцией |
 
 ## 6. Расширения
 

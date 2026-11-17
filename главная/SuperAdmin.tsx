@@ -68,6 +68,7 @@ import {
   ArrowsClockwise,
 } from '@phosphor-icons/react';
 import { ALL_NICHE_THEMES } from '@/шаблоны/_shared/themes';
+import { GlassBackground } from '@/главная/components/GlassBackground';
 
 // ---------- типы и мок-данные ----------
 type BusinessStatus = 'active' | 'pending' | 'suspended';
@@ -2526,8 +2527,8 @@ function Chat({ push }: { push: (m: string, k?: ToastKind) => void }) {
                       </div>
                     </div>
                   </div>
-                  {active.slug && (
-                    <a href={`/d/${active.slug}`} target="_blank" rel="noreferrer" className="btn-ghost text-caption">
+                  {active.slug && active.prefix && (
+                    <a href={`/${active.prefix}/${active.slug}`} target="_blank" rel="noreferrer" className="btn-ghost text-caption">
                       <Eye size={14} weight="bold" aria-hidden="true" /> Сайт
                     </a>
                   )}
@@ -3818,7 +3819,9 @@ function ReadyServices({ push }: { push: (m: string, k?: ToastKind) => void }) {
     setBusy(false);
     if (res.ok) {
       const breakdown = Object.entries(res.byNiche ?? {}).map(([k, v]) => `${k}: ${v}`).join(', ');
-      const photos = res.photos ? ` · фото: ${res.photos.matched}${res.photos.unmatched ? ` (без пары ${res.photos.unmatched})` : ''}` : '';
+      const photos = res.photos
+        ? ` · фото: ${res.photos.matched}${res.photos.unmatched ? ` (без пары ${res.photos.unmatched})` : ''}${res.photos.failed ? ` (ошибок ${res.photos.failed})` : ''}`
+        : '';
       push(`Загружено: ${res.inserted}${res.skipped ? ` (пропущено ${res.skipped})` : ''}${breakdown ? ` · ${breakdown}` : ''}${photos}`, 'success');
       form.reset();
       load();
@@ -4554,7 +4557,8 @@ export function SuperAdmin() {
   );
 
   return (
-    <div className="detailing-root min-h-screen">
+    <div className="detailing-root admin-glass min-h-screen">
+      <GlassBackground />
       {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link rel="stylesheet" href="/assets/detailing-scoped.css" />
       {/* eslint-disable-next-line @next/next/no-css-tags */}

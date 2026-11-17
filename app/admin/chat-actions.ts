@@ -29,6 +29,8 @@ export type ChatThread = {
   chatId: string | null;
   name: string;
   slug: string | null;
+  /** Префикс ниши: без него ссылка «Сайт» вела на /d/ для всех ниш. */
+  prefix: string | null;
   lastText: string;
   lastAt: string;
   lastDirection: 'in' | 'out';
@@ -68,27 +70,37 @@ export async function getChatThreadsAction(): Promise<ChatThread[]> {
       .map((g) => (g.businessId ? null : g.chatId))
       .filter((id): id is string => Boolean(id));
 
-    const names = new Map<string, { name: string; slug: string | null; chatId: string | null }>();
+    const names = new Map<string, { name: string; slug: string | null; prefix: string | null; chatId: string | null }>();
     /** Чат без business_id: входящие сообщения бота пишутся без привязки — ищем бизнес по telegram_chat_id. */
-    const byChat = new Map<string, { id: string; name: string; slug: string | null }>();
+    const byChat = new Map<string, { id: string; name: string; slug: string | null; prefix: string | null }>();
 
     const [byId, byChatId] = await Promise.all([
       businessIds.length > 0
-        ? db.from('businesses').select('id, name, slug, telegram_chat_id').in('id', businessIds)
+        ? db.from('businesses').select('id, name, slug, telegram_chat_id, vertical_templates(url_prefix)').in('id', businessIds)
         : Promise.resolve({ data: [] as unknown[] }),
       chatIds.length > 0
-        ? db.from('businesses').select('id, name, slug, telegram_chat_id').in('telegram_chat_id', chatIds)
+        ? db.from('businesses').select('id, name, slug, telegram_chat_id, vertical_templates(url_prefix)').in('telegram_chat_id', chatIds)
         : Promise.resolve({ data: [] as unknown[] }),
     ]);
 
     for (const raw of byId.data ?? []) {
-      const b = raw as { id: string; name?: string | null; slug?: string | null; telegram_chat_id?: string | null };
-      names.set(b.id, { name: b.name ?? b.slug ?? 'Без названия', slug: b.slug ?? null, chatId: b.telegram_chat_id ?? null });
+      const b = raw as { id: string; name?: string | null; slug?: string | null; telegram_chat_id?: string | null; vertical_templates?: { url_prefix?: string | null } | null };
+      names.set(b.id, {
+        name: b.name ?? b.slug ?? 'Без названия',
+        slug: b.slug ?? null,
+        prefix: b.vertical_templates?.url_prefix ?? null,
+        chatId: b.telegram_chat_id ?? null,
+      });
     }
     for (const raw of byChatId.data ?? []) {
-      const b = raw as { id: string; name?: string | null; slug?: string | null; telegram_chat_id?: string | null };
+      const b = raw as { id: string; name?: string | null; slug?: string | null; telegram_chat_id?: string | null; vertical_templates?: { url_prefix?: string | null } | null };
       if (b.telegram_chat_id) {
-        byChat.set(b.telegram_chat_id, { id: b.id, name: b.name ?? b.slug ?? 'Без названия', slug: b.slug ?? null });
+        byChat.set(b.telegram_chat_id, {
+          id: b.id,
+          name: b.name ?? b.slug ?? 'Без названия',
+          slug: b.slug ?? null,
+          prefix: b.vertical_templates?.url_prefix ?? null,
+        });
       }
     }
 
@@ -104,6 +116,7 @@ export async function getChatThreadsAction(): Promise<ChatThread[]> {
         chatId,
         name: business?.name ?? linked?.name ?? (group.chatId ? `Чат ${group.chatId}` : 'Без названия'),
         slug: business?.slug ?? linked?.slug ?? null,
+        prefix: business?.prefix ?? linked?.prefix ?? null,
         lastText: shortText(group.last.text),
         lastAt: group.last.created_at ?? '',
         lastDirection: direction,

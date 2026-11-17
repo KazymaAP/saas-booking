@@ -21,6 +21,10 @@ function serverEnv(): Record<string, string> {
     TELEGRAM_BOT_TOKEN: '',
     TELEGRAM_BUSINESS_BOT_TOKEN: '',
     LICENSE_ID: '',
+    // Демо-входы (/api/demo/*) выключены по умолчанию; e2e использует их, чтобы получить сессии
+    // владельца и клиента без ручной подготовки данных (см. служебное/tests/customer-my.spec.ts).
+    DEMO_ENABLED: '1',
+    DEMO_PASSWORD: process.env.DEMO_PASSWORD ?? 'demo12345',
     NEXT_TELEMETRY_DISABLED: '1',
   };
 }

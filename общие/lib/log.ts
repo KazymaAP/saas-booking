@@ -4,7 +4,7 @@
 import { adminClient } from './supabase';
 import { maskPayload, maskString, type AuditPayload } from './audit';
 
-export const LOG_SOURCES = ['email', 'generate', 'vercel', 'booking', 'import', 'cron', 'admin', 'export'] as const;
+export const LOG_SOURCES = ['email', 'generate', 'vercel', 'booking', 'import', 'cron', 'admin', 'export', 'demo'] as const;
 export type LogSource = (typeof LOG_SOURCES)[number];
 
 export const MAX_MESSAGE = 500;

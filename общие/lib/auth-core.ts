@@ -21,7 +21,7 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_BYTES = 72;
 const EMAIL_MAX_LENGTH = 254;
 
-export type AuthRealm = 'admin' | 'owner';
+export type AuthRealm = 'admin' | 'owner' | 'customer';
 
 // Итог попытки входа. 'inactive' сообщается только после верного пароля, чтобы не раскрывать статус бизнеса.
 export type SignInResult = 'ok' | 'invalid' | 'rate_limited' | 'forbidden_origin' | 'inactive' | 'role_removed';

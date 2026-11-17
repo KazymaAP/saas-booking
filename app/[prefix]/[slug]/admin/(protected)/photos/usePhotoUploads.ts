@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { callAction } from '../_lib/client-action';
 import { confirmPhotoUpload, createPhotoUpload, type PhotoRow } from './actions';
 import { compressIfNeeded, uploadToSignedUrl } from './upload-client';
-import { uploadFileError } from './rules';
+import { uploadFileError } from '@/lib/photo-rules';
 
 export type UploadStage = 'queued' | 'compress' | 'upload' | 'save' | 'done' | 'error';
 

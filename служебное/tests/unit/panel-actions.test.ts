@@ -139,6 +139,7 @@ describe('settings.saveSettings', () => {
   const form = {
     name: 'Студия', description: '', city: 'Москва', address: 'ул. Ленина, 1', phones: '8 999 123-45-67', emails: 'A@Test.ru',
     brand_color: '#AA00CC', hours, slot_step_minutes: '60', cancel_hours_before: '2', min_hours_before: '1', max_days_ahead: '30', auto_confirm: true,
+    require_client_registration: false,
   };
 
   it('роль без права settings.write не сохраняет', async () => {
@@ -154,6 +155,7 @@ describe('settings.saveSettings', () => {
       name: 'Студия', description: null, city: 'Москва', address: 'ул. Ленина, 1', phones: ['+79991234567'], emails: ['a@test.ru'],
       brand_color: '#aa00cc', working_hours: { mon: [{ open: '09:00', close: '18:00' }], tue: null, wed: null, thu: null, fri: null, sat: null, sun: null },
       slot_step_minutes: 60, cancel_hours_before: 2, min_hours_before: 1, max_days_ahead: 30, auto_confirm: true,
+      require_client_registration: false,
     });
   });
 

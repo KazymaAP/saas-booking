@@ -16,9 +16,9 @@
 
 | Кто | Где работает | Что делает |
 |---|---|---|
-| Оператор (супер-админ) | `/panel` | Импорт, воронка, рассылка, клиенты, лицензии, бэкап |
-| Владелец бизнеса | `/{prefix}/{slug}/panel` | Брони, услуги, фото, тексты, настройки, команда |
-| Менеджер бизнеса | `/{prefix}/{slug}/panel` | Брони и просмотр (без настроек, подписки и команды) |
+| Оператор (супер-админ) | `/admin` | Импорт, воронка, рассылка, клиенты, лицензии, бэкап |
+| Владелец бизнеса | `/{prefix}/{slug}/admin` | Брони, услуги, фото, тексты, настройки, команда |
+| Менеджер бизнеса | `/{prefix}/{slug}/admin` | Брони и просмотр (без настроек, подписки и команды) |
 | Клиент бизнеса | `/{prefix}/{slug}` или свой домен | Онлайн-запись без регистрации |
 
 Ниши и префиксы URL: `t` шиномонтаж, `d` детейлинг, `m` маникюр, `sa` сауна, `b` барбершоп, `av` автосервис,
@@ -28,8 +28,8 @@
 
 - Публичный сайт бизнеса: услуги и цены, фото, карта (Leaflet + OpenStreetMap), JSON-LD `LocalBusiness`, PWA.
 - Онлайн-запись: свободные слоты считаются на лету, защита от двойной брони уникальным индексом, rate limit.
-- Страницы отмены и переноса по токену (ссылка клиенту пока не отправляется — см. «Статус проекта»), напоминания
-  клиенту на email за 24 и 2 часа.
+- Страницы отмены и переноса по токену; ссылки на отмену и перенос приходят клиенту письмом вместе с подтверждением
+  брони, напоминания — на email за 24 и 2 часа.
 - Кастомный домен клиента через Vercel API, проверка SSL раз в сутки.
 - Кабинет владельца: брони, услуги, фото со сжатием в браузере, тексты, Telegram-уведомления, подписка, команда, выгрузка CSV.
 - Супер-админка: импорт 2GIS, воронка из 5 шагов, генератор прототипов, рассылка с ротацией ящиков Yandex 360,
@@ -41,18 +41,17 @@
 
 | Компонент | Технология | Версия |
 |---|---|---|
-| Фреймворк | Next.js App Router | 14.2.15 |
+| Фреймворк | Next.js App Router | 14.2.35 |
 | UI | React | 18.3.1 |
 | Язык | TypeScript | 5.6.2 |
 | Стили | Tailwind CSS (без shadcn/ui) | 3.4.13 |
 | БД, Auth, Storage | Supabase (`@supabase/supabase-js`) | 2.45.4 |
 | Формы и валидация | react-hook-form, zod | 7.53.0, 3.23.8 |
-| Email | nodemailer (SMTP), imapflow (IMAP) | 6.9.15, 1.0.164 |
-| Excel | xlsx (SheetJS) | 0.18.5 |
+| Email | nodemailer (SMTP), imapflow (IMAP) | 10.6.0, 2.12.1 |
+| Excel | xlsx (SheetJS, ставится с CDN SheetJS) | 0.20.3 |
 | Карта | Leaflet | 1.9.4 |
-| ZIP | archiver | 7.0.1 |
 | Хостинг | Vercel, регион `lhr1` | — |
-| Node | `engines.node` | 24.x |
+| Node | `engines.node` | 22.x |
 
 ## Быстрый старт
 
@@ -84,11 +83,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # ENC
 node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"   # CRON_SECRET
 ```
 
-Выполните миграции `supabase/migrations/0001…0005` в Supabase SQL Editor по порядку (подробно — [DEPLOY.md](служебное/docs/DEPLOY.md)),
+Выполните миграции `supabase/migrations/0001…0026` в Supabase SQL Editor по порядку (подробно — [DEPLOY.md](DEPLOY.md)),
 создайте пользователя в Supabase Auth с адресом из `SUPERADMIN_EMAILS` и запустите:
 
 ```bash
-pnpm dev          # http://localhost:3000, вход в супер-админку: /panel/login
+pnpm dev          # http://localhost:3000, вход в супер-админку: /admin/login
 ```
 
 Проверка перед коммитом:
@@ -105,10 +104,10 @@ pnpm typecheck && pnpm build
 | `pnpm build` | Production-сборка |
 | `pnpm start` | Запуск собранного проекта |
 | `pnpm typecheck` | Проверка типов `tsc --noEmit` |
-| `pnpm lint` | `next lint` — ESLint ещё не настроен, команда задаёт интерактивный вопрос |
+| `pnpm lint` | `next lint` (ESLint, конфиг `.eslintrc.json` → `next/core-web-vitals`) |
 | `npx tsx служебное/scripts/import-excel.ts file.xlsx --filter=шин --dry-run` | Импорт 2GIS из консоли |
 | `npx tsx служебное/scripts/migrate-legacy.ts legacy.csv --dry-run` | Перенос legacy-клиентов из CSV |
-| `powershell -ExecutionPolicy Bypass -File scripts\check.ps1` | install + typecheck + build в `check-log.txt` (Windows) |
+| `powershell -ExecutionPolicy Bypass -File служебное\scripts\check.ps1` | install + typecheck + build в `check-log.txt` (Windows) |
 | `bash служебное/scripts/smoke-test.sh https://<домен>` | Проверка после деплоя |
 
 ## Структура
@@ -118,26 +117,25 @@ saas-booking/
 ├── app/
 │   ├── page.tsx                     лендинг сервиса
 │   ├── [prefix]/[slug]/             сайт бизнеса, бронь, отмена, перенос, manifest
-│   │   └── panel/                   кабинет владельца и менеджера
-│   ├── panel/                       супер-админка
+│   │   └── admin/                   кабинет владельца и менеджера
+│   ├── admin/                       супер-админка
 │   ├── preview/[slug]/              прототип по токену (noindex)
 │   ├── domain-site/by-domain/       сайт на кастомном домене
 │   ├── api/                         route handlers: брони, cron, трекинг, лицензии, Telegram, импорт, экспорт
 │   ├── robots.ts, sitemap.ts, sw.js/
 │   └── blocked/, oferta/, privacy/
 ├── общие/                           общий код проекта
-│   ├── components/                  Hero, карта, шаблон сайта StudioTemplate
-│   ├── lib/                         Supabase, уведомления, слоты, шифрование, rate limit, импорт, генератор
-│   └── types/                       общие типы
+│   ├── components/                  карта, cookie-баннер, шаблон сайта StudioTemplate
+│   └── lib/                         Supabase, уведомления, слоты, шифрование, rate limit, импорт, генератор
 ├── главная/                        components/ и lib/ супер-админки
 ├── шаблоны/detailing/              шаблон детейлинга (DetailingSite, BookingFlow, tenant)
 ├── телеграмм-бот/                  логика бота (telegram*.ts)
 ├── связь/                          реестр шаблонов (registry.ts)
-├── supabase/migrations/             SQL-миграции 0001–0016
+├── supabase/migrations/             SQL-миграции 0001–0030
 ├── служебное/                       docs, patches, scripts, tests
 │   ├── scripts/                     импорт Excel, миграция legacy, проверка, smoke-test
-│   ├── tests/                       e2e Playwright
-│   ├── docs/                        design-spec, email, Telegram, FAQ, troubleshooting
+│   ├── tests/                       e2e Playwright + unit-тесты
+│   ├── docs/                        архив: каталог файлов, аудит-чеклист, справочники по детейлингу
 │   └── patches/                     патчи зависимостей
 ├── public/assets/                   стили шаблона и шрифты
 ├── .github/workflows/backup.yml     еженедельный pg_dump
@@ -145,39 +143,44 @@ saas-booking/
 └── vercel.json                      регион и cron-задачи
 ```
 
-Подробная карта и поток данных — [ARCHITECTURE.md](служебное/docs/ARCHITECTURE.md).
+Подробная карта и поток данных — [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Статус проекта
 
-Версия `0.1.0` — рабочий MVP: `pnpm typecheck` и `pnpm build` проходят, миграции идемпотентны.
-Перед продакшн-запуском закройте проблемы высокого приоритета из [PROGRESS.md](PROGRESS.md#известные-проблемы):
+Версия `0.1.0` — рабочий MVP. Текущие проверки: `pnpm typecheck` — 0 ошибок, `pnpm lint` — 0 предупреждений,
+`pnpm test` — 1589 тестов пройдено, 7 пропущено по платформе; миграции 0001–0030 применяются по порядку
+(`apply-migrations.cjs` / `migrate.sh` пропускают уже применённые по таблице `_applied_migrations`).
+Что готово, что частично и что осталось — [PROGRESS.md](PROGRESS.md#не-сделано); принятые отклонения от ТЗ —
+[DECISIONS.md](DECISIONS.md).
 
-- server actions супер-админки не проверяют `isSuperAdmin()` сами (защита только в layout);
-- ссылка на отмену и перенос брони клиенту не отправляется;
-- ночная задача `cleanup-prototypes` удаляет любой бизнес в статусе `archived`, созданный больше 120 дней назад,
-  включая бывших клиентов, архивированных за неуплату;
-- частые cron-задачи (`send-emails`, `check-replies`, `booking-reminders`, `unconfirmed-reminder`) нужно вызывать
-  внешним планировщиком — [DEPLOY.md, шаг 9](DEPLOY.md#шаг-9-частые-cron-задачи).
+Блокеры прошлых ревизий закрыты и закреплены тестами:
+
+- server actions супер-админки проверяют права сами (`guarded()` / `guardedBulk()` → `requireSuperAdmin()`), layout —
+  не единственная защита;
+- клиенту вместе с подтверждением брони уходят ссылки отмены и переноса (`notifyClientBooking`);
+- `cleanup-prototypes` удаляет только прототипы, заархивированные самой задачей (`cron_marks`), и никогда — бывших
+  клиентов, у которых есть или были брони/услуги (90 дней до архива, 30 — до удаления).
 
 ## Документация
 
 | Документ | Для кого | О чём |
 |---|---|---|
-| [ARCHITECTURE.md](служебное/docs/ARCHITECTURE.md) | разработчик | Карта проекта, поток данных, роли, схема БД |
-| [DEPLOY.md](служебное/docs/DEPLOY.md) | оператор | Пошаговый деплой Supabase + Vercel + домен + почта |
-| [INSTALL.md](служебное/docs/INSTALL.md) | клиент, выкупивший код | Установка single-tenant копии |
-| [TESTING.md](служебное/docs/TESTING.md) | разработчик | Проверки, smoke-test, ручные сценарии |
-| [CONTRIBUTING.md](служебное/docs/CONTRIBUTING.md) | разработчик | Ветки, стиль кода, коммиты |
-| [CHANGELOG.md](служебное/docs/CHANGELOG.md) | все | История версий |
-| [DECISIONS.md](служебное/docs/DECISIONS.md) | разработчик | Принятые решения и отклонения от ТЗ |
-| [PROGRESS.md](служебное/docs/PROGRESS.md) | все | Что готово и что осталось |
-| [KP.md](служебное/docs/KP.md) | продажи | Коммерческое предложение |
-| [DEMO.md](служебное/docs/DEMO.md) | продажи | Сценарий демо на 15 минут |
-| [служебное/docs/email-setup.md](служебное/docs/email-setup.md) | оператор | Yandex 360, SPF, DKIM, DMARC |
-| [служебное/docs/telegram-setup.md](служебное/docs/telegram-setup.md) | оператор | Два бота и webhook |
-| [служебное/docs/faq.md](служебное/docs/faq.md) | все | Частые вопросы |
-| [служебное/docs/troubleshooting.md](служебное/docs/troubleshooting.md) | оператор | Что делать при сбоях |
-| [служебное/docs/design-spec.md](служебное/docs/design-spec.md) | дизайнер | ТЗ на редизайн панелей |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | разработчик | Карта проекта, поток данных, роли, схема БД |
+| [DEPLOY.md](DEPLOY.md) | оператор | Пошаговый деплой Supabase + Vercel + домен + почта |
+| [INSTALL.md](INSTALL.md) | клиент, выкупивший код | Установка single-tenant копии |
+| [TESTING.md](TESTING.md) | разработчик | Проверки, smoke-test, ручные сценарии |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | разработчик | Ветки, стиль кода, коммиты |
+| [CHANGELOG.md](CHANGELOG.md) | все | История версий |
+| [DECISIONS.md](DECISIONS.md) | разработчик | Принятые решения и отклонения от ТЗ |
+| [PROGRESS.md](PROGRESS.md) | все | Что готово и что осталось |
+| [KP.md](KP.md) | продажи | Коммерческое предложение |
+| [OFFER.md](OFFER.md) | продажи | Оффер: позиционирование, заголовки, хуки, тексты для лендинга |
+| [DEMO.md](DEMO.md) | продажи | Сценарий демо на 15 минут |
+| [docs/email-setup.md](docs/email-setup.md) | оператор | Yandex 360, SPF, DKIM, DMARC |
+| [docs/telegram-setup.md](docs/telegram-setup.md) | оператор | Два бота и webhook |
+| [docs/faq.md](docs/faq.md) | все | Частые вопросы |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | оператор | Что делать при сбоях |
+| [docs/design-spec.md](docs/design-spec.md) | дизайнер | ТЗ на редизайн панелей |
 
 ## Безопасность
 
@@ -191,4 +194,4 @@ saas-booking/
 
 Проприетарное ПО. Все права принадлежат владельцу проекта. `package.json` содержит `"private": true`, публикация
 в npm и распространение без письменного согласия владельца запрещены. Клиент, выкупивший код, получает право
-использовать копию для одного бизнеса на доменах из своей лицензии (`LICENSE_ID`), см. [INSTALL.md](служебное/docs/INSTALL.md).
+использовать копию для одного бизнеса на доменах из своей лицензии (`LICENSE_ID`), см. [INSTALL.md](INSTALL.md).

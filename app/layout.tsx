@@ -2,6 +2,7 @@
 // brand_color передаётся через CSS-переменную --brand-color (ТЗ §47). Стили body — только в globals.css.
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
+import { CookieBannerLazy } from '@/components/CookieBannerLazy';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -42,7 +43,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </>
         ) : null}
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Баннер согласия на cookie: монтируется один раз на весь сайт, грузится ленивым чанком после
+            гидрации (ssr: false внутри CookieBannerLazy) — в SSR-HTML его нет и на LCP он не влияет.
+            Без него кнопка «Настройки cookie» в футерах отправляла событие в пустоту. */}
+        <CookieBannerLazy />
+      </body>
     </html>
   );
 }

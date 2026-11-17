@@ -39,3 +39,6 @@ export type AdminUser = Row<'admin_users'>;
 export type BusinessCustomRole = Row<'business_custom_roles'>;
 export type EmailAccount = Row<'email_accounts'>;
 export type RateLimit = Row<'rate_limits'>;
+
+// Клиент кабинета /{prefix}/{slug}/my (NEW-5). Привязан к бизнесу по (business_id, email).
+export type Customer = Row<'customers'>;

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# scripts/smoke-test.sh — проверка деплоя saas-booking после выкладки (TESTING.md, раздел «Smoke-test»).
+# служебное/scripts/smoke-test.sh — проверка деплоя saas-booking после выкладки (TESTING.md, раздел «Smoke-test»).
 #
 # Использование:
-#   bash scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]
-#   bash scripts/smoke-test.sh https://zapishisya.ru t/shinomontazh-koleso
+#   bash служебное/scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]
+#   bash служебное/scripts/smoke-test.sh https://zapishisya.ru t/shinomontazh-koleso
 #
 # Переменные окружения:
 #   SMOKE_SITE     <prefix>/<slug> публичного сайта со статусом client (то же, что второй аргумент)
@@ -17,8 +17,8 @@
 set -u
 
 usage() {
-  echo "Использование: bash scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]" >&2
-  echo "Пример:        bash scripts/smoke-test.sh https://zapishisya.ru t/shinomontazh-koleso" >&2
+  echo "Использование: bash служебное/scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]" >&2
+  echo "Пример:        bash служебное/scripts/smoke-test.sh https://zapishisya.ru t/shinomontazh-koleso" >&2
 }
 
 if [ $# -lt 1 ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
@@ -99,21 +99,22 @@ check() {
 
 echo "saas-booking smoke-test → $BASE_URL"
 
-# 1. Healthcheck из ТЗ §3.2. В коде эндпоинта нет: 404 — предупреждение, а не ошибка.
+# 1. Healthcheck (ТЗ §3.2). Эндпоинт есть (app/api/health/route.ts): 503 — БД недоступна или окружение
+# не настроено, это предупреждение, а не ошибка выкладки: сайт отвечает, деградировала только БД.
 code="$(fetch /api/health)"
 if [ "$code" = "200" ]; then
   report OK "/api/health" "$code"
 elif [ "$code" = "000" ]; then
   report FAIL "/api/health" "нет ответа за ${TIMEOUT} с — сайт недоступен"
 else
-  report WARN "/api/health" "$code (эндпоинт не реализован, см. TESTING.md)"
+  report WARN "/api/health" "$code (health вернул не 200: смотрите /api/health и журналы)"
 fi
 
 # 2. Лендинг.
 check "/" "/" 200 "<html"
 
-# 3. Вход в супер-админку: страница с формой пароля.
-check "/panel/login" "/panel/login" 200 'type="password"'
+# 3. Вход в супер-админку: страница с формой пароля. Старая /panel/* удалена (middleware отдаёт 404).
+check "вход в админку" "/admin/login" 200 'type="password"'
 
 # 4. Sitemap строится запросом к Supabase — 500 обычно означает неверные ключи или недоступную БД.
 check "/sitemap.xml" "/sitemap.xml" 200 "<urlset"
@@ -135,7 +136,7 @@ fi
 # 6. Заголовки безопасности из middleware.ts.
 code="$(fetch /)"
 missing=""
-grep -qi '^x-frame-options: *DENY' "$TMP_HEAD" || missing="$missing X-Frame-Options"
+grep -qi '^x-frame-options: *SAMEORIGIN' "$TMP_HEAD" || missing="$missing X-Frame-Options"
 grep -qi '^x-content-type-options: *nosniff' "$TMP_HEAD" || missing="$missing X-Content-Type-Options"
 if [ "$code" = "000" ]; then
   report FAIL "security headers" "нет ответа"

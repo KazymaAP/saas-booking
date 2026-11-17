@@ -115,7 +115,7 @@
 | `/api/cron/process-deletions` | `pending_deletion` с наступившей датой → удаление |
 | `/api/cron/cleanup-prototypes` | `preview_ready` > 90 дней → archived; archived > 30 → удаление |
 | `/api/cron/check-domains` | Кастомные домены через Vercel API → `ssl_status` |
-| `/api/cron/backup` | JSON-бэкап 9 таблиц в bucket `backups` (Vercel Cron: воскресенье 03:00 UTC; в коде маршрут назван «ежедневный» — расхождение комментария с `vercel.json`) |
+| `/api/cron/backup` | JSON-бэкап 10 таблиц в bucket `backups` (Vercel Cron: воскресенье 03:00 UTC, `0 3 * * 0`; список таблиц — `lib/backup-shared.ts`) |
 | `/api/cron/warmup` | Лёгкий ping БД, чтобы проект Supabase Free не засыпал |
 
 ### Email, аналитика, отписка

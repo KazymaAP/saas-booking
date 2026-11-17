@@ -51,7 +51,7 @@ describe('clientAction — права и вход', () => {
 describe('clientAction — операции', () => {
   it('оплата: один условный UPDATE, цена из настроек, audit без ПД', async () => {
     fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } });
-    fake.reply('businesses', { data: [{ id: ID }] });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [{ id: ID }] });
     const res = await clientAction(ID, 'paid');
     expect(res.ok).toBe(true);
     const [upd] = fake.find('businesses', 'update');
@@ -60,16 +60,42 @@ describe('clientAction — операции', () => {
     expect(upd.calls.find((c) => c.method === 'update')?.args[0]).toMatchObject({ status: 'client', subscription_price: 1200 });
     expect(argOf(upd, 'not', 'status')).toBe('in');
     expect(auditMock).toHaveBeenCalledWith('mark_paid', 'business', ID, expect.objectContaining({ amount: 6000 }));
+    // Выручка в отчётах считается по payments: без строки ручная оплата в неё не попадала.
+    const [pay] = fake.find('payments', 'insert');
+    expect(pay).toBeDefined();
+    expect(pay?.calls.find((c) => c.method === 'insert')?.args[0]).toMatchObject({ business_id: ID, amount: 6000, type: 'initial_5000' });
   });
   it('повторная оплата (UPDATE не вернул строк) — ошибка, audit не пишется', async () => {
-    fake.reply('businesses', { data: [] });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [] });
     const res = await clientAction(ID, 'paid');
     expect(res.ok).toBe(false);
     expect(auditMock).not.toHaveBeenCalled();
+    expect(fake.find('payments', 'insert')).toHaveLength(0);
+  });
+  it('досрочная оплата продлевает от текущей даты, а не съедает оплаченные дни', async () => {
+    fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } });
+    fake.reply(
+      'businesses',
+      { data: { subscription_until: '2099-01-01', paid_initial_at: '2026-10-01', subscription_started_at: '2026-10-01' } },
+      { data: [{ id: ID }] },
+    );
+    expect((await clientAction(ID, 'paid')).ok).toBe(true);
+    const patch = fake.find('businesses', 'update')[0]?.calls.find((c) => c.method === 'update')?.args[0] as Record<string, unknown>;
+    expect(patch.subscription_until).toBe('2099-01-31');
+    // Дата первого подключения и «Оплата настройки» повторной оплатой не перезаписываются.
+    expect(patch.subscription_started_at).toBeUndefined();
+    expect(patch.paid_initial_at).toBe('2026-10-01');
+  });
+  it('первая оплата ставит дату подключения', async () => {
+    fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [{ id: ID }] });
+    await clientAction(ID, 'paid');
+    const patch = fake.find('businesses', 'update')[0]?.calls.find((c) => c.method === 'update')?.args[0] as Record<string, unknown>;
+    expect(typeof patch.subscription_started_at).toBe('string');
   });
   it('оплата с выбранным тарифом «pro» записывает plan_type и цену тарифа', async () => {
     fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } }, { data: { value: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Премиум', price: 2500 } } } });
-    fake.reply('businesses', { data: [{ id: ID }] });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [{ id: ID }] });
     const res = await clientAction(ID, 'paid', 'pro');
     expect(res.ok).toBe(true);
     const [upd] = fake.find('businesses', 'update');
@@ -80,7 +106,7 @@ describe('clientAction — операции', () => {
   });
   it('оплата с неизвестным тарифом — берёт первый доступный (basic)', async () => {
     fake.reply('settings', { data: { value: { initial: 6000, monthly: 1200 } } }, { data: { value: { basic: { name: 'Базовый', price: 1000 }, pro: { name: 'Премиум', price: 2500 } } } });
-    fake.reply('businesses', { data: [{ id: ID }] });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [{ id: ID }] });
     const res = await clientAction(ID, 'paid', 'unknown');
     expect(res.ok).toBe(true);
     const [upd] = fake.find('businesses', 'update');
@@ -157,7 +183,7 @@ describe('clientAction — остальные операции и сбои', () 
   });
   it('нет настроек цен — значения ТЗ §14.2 (5000 + 1000)', async () => {
     fake.reply('settings', { data: null });
-    fake.reply('businesses', { data: [{ id: ID }] });
+    fake.reply('businesses', { data: { subscription_until: null, paid_initial_at: null, subscription_started_at: null } }, { data: [{ id: ID }] });
     await clientAction(ID, 'paid');
     expect(auditMock).toHaveBeenCalledWith('mark_paid', 'business', ID, expect.objectContaining({ amount: 5000, monthly: 1000 }));
   });

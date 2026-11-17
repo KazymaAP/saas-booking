@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# scripts/cron-check.sh — проверка расписаний pg_cron в Supabase (агент 2, зона cron).
-# Сверяет cron.job с реестром lib/schedules.ts (список ниже синхронизирован тестом lib/schedules.test.ts):
+# служебное/scripts/cron-check.sh — проверка расписаний pg_cron в Supabase (агент 2, зона cron).
+# Сверяет cron.job с реестром общие/lib/schedules.ts (список ниже синхронизирован тестом общие/lib/schedules.test.ts):
 #   задача есть, расписание совпадает, active = true, команда совпадает с cron_registry;
 #   лишние задачи — предупреждение.
 # Дополнительно: настройки app.site_url / app.cron_secret заданы, ошибки cron за сутки в audit_log,
 # последние неудачные запуски в cron.job_run_details.
-# Запуск: SUPABASE_DB_URL='postgresql://...' bash scripts/cron-check.sh   (или pnpm cron:check)
+# Запуск: SUPABASE_DB_URL='postgresql://...' bash служебное/scripts/cron-check.sh   (или pnpm cron:check)
 # Код выхода: 0 — всё в порядке, 1 — расхождения, нет подключения или нет psql (причина — в stderr).
 set -euo pipefail
 
@@ -13,7 +13,7 @@ readonly EXIT_OK=0
 readonly EXIT_MISMATCH=1
 readonly EXIT_SETUP=1
 
-# name|schedule — все pg_cron задачи (runner pg_cron_http и pg_cron_sql в lib/schedules.ts).
+# name|schedule — все pg_cron задачи (runner pg_cron_http и pg_cron_sql в общие/lib/schedules.ts).
 readonly EXPECTED_JOBS=(
   "send-emails|* * * * *"
   "check-replies|*/5 * * * *"
@@ -102,7 +102,7 @@ if commands="$(query "select r.name from cron_registry r join cron.job j on j.jo
     done <<<"$commands"
   fi
 else
-  echo "  НЕТ      cron_registry недоступен (миграция 0006 не применена?)"
+  echo "  НЕТ      cron_registry недоступен (миграция 0008_pg_cron.sql не применена?)"
   failures=$((failures + 1))
 fi
 

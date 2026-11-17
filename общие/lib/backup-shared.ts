@@ -1,12 +1,16 @@
 // lib/backup-shared.ts — константы и типы бэкапа без серверных зависимостей.
 // Импортируется и сервером (lib/backup.ts), и клиентскими компонентами панели (RestoreForm).
-// Порядок важен: внешние ключи (0001_init.sql). services → bookings (service_id), outreach_log → emails_outgoing.
+// Порядок важен: внешние ключи (0001_init.sql, 0025_customers.sql). services → bookings (service_id),
+// customers → bookings (customer_id), outreach_log → emails_outgoing.
+// customers обязателен: без него bookings с непустым customer_id не вставятся (FK 23503) и restore
+// потеряет всю таблицу броней.
 export const BACKUP_TABLES = [
   'vertical_templates',
   'businesses',
   'services',
   'photos',
   'admin_users',
+  'customers',
   'bookings',
   'outreach_log',
   'emails_outgoing',
@@ -21,7 +25,8 @@ export const PARENTS: Record<BackupTable, readonly BackupTable[]> = {
   services: ['businesses'],
   photos: ['businesses'],
   admin_users: ['businesses'],
-  bookings: ['businesses', 'services'],
+  customers: ['businesses'],
+  bookings: ['businesses', 'services', 'customers'],
   outreach_log: ['businesses'],
   emails_outgoing: ['businesses', 'outreach_log'],
   licenses: ['businesses'],
@@ -53,7 +58,7 @@ export type TableReport = { rows: number; status: 'ok' | 'empty' | 'error' | 'sk
 export type RestoreReport = { ok: boolean; tables: Record<BackupTable, TableReport>; total_rows: number };
 export type BackupFile = { name: string; size: number | null; created_at: string | null };
 
-// Объект «по таблице» без приведения типов: литерал со всеми 9 ключами проверяется компилятором.
+// Объект «по таблице» без приведения типов: литерал со всеми 10 ключами проверяется компилятором.
 export function perTable<T>(fn: (t: BackupTable) => T): Record<BackupTable, T> {
   return {
     vertical_templates: fn('vertical_templates'),
@@ -61,6 +66,7 @@ export function perTable<T>(fn: (t: BackupTable) => T): Record<BackupTable, T> {
     services: fn('services'),
     photos: fn('photos'),
     admin_users: fn('admin_users'),
+    customers: fn('customers'),
     bookings: fn('bookings'),
     outreach_log: fn('outreach_log'),
     emails_outgoing: fn('emails_outgoing'),

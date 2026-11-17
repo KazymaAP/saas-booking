@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 1. Типы | `pnpm typecheck` | перед каждым коммитом | ~30 с |
 | 2. Сборка | `pnpm build` | перед пушем в `main` | 1–3 мин |
-| 3. Smoke-test | `scripts/smoke-test.sh` | после каждого деплоя | ~10 с |
+| 3. Smoke-test | `служебное/scripts/smoke-test.sh` | после каждого деплоя | ~10 с |
 | 4. Ручные сценарии | этот документ | перед релизом и после изменений в брони, почте, оплате | 20–40 мин |
 
 ## Оглавление
@@ -26,7 +26,7 @@
 ```bash
 pnpm install --frozen-lockfile
 pnpm typecheck && pnpm build
-bash scripts/smoke-test.sh https://zapishisya.ru
+bash служебное/scripts/smoke-test.sh https://zapishisya.ru
 ```
 
 Windows: `powershell -ExecutionPolicy Bypass -File scripts\check.ps1` — install, typecheck и build одной командой,
@@ -60,7 +60,7 @@ pnpm build
 ## Smoke-test
 
 ```bash
-bash scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]
+bash служебное/scripts/smoke-test.sh <BASE_URL> [<prefix>/<slug>]
 ```
 
 | Аргумент / переменная | Назначение |
@@ -273,7 +273,7 @@ unit-тесты, если команда решит их добавить.
 
 ### В smoke-test
 
-Проверки — вызовы функции `check` в `scripts/smoke-test.sh`:
+Проверки — вызовы функции `check` в `служебное/scripts/smoke-test.sh`:
 
 ```bash
 # check <название> <путь> <ожидаемый HTTP-код> [<подстрока в теле>]

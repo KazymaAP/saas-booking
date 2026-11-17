@@ -11,6 +11,7 @@ import { audit } from '@/lib/audit';
 import { isValidEmail, sendTelegram } from '@/lib/notify';
 import { readSession } from '@/lib/auth-session';
 import { passwordSignIn, setUserPassword } from '@/lib/auth-provider';
+import { SITE_URL } from '@/lib/site';
 
 const API_KEY_SETTING = 'platform:api_key';
 const MAX_BROADCAST_RECIPIENTS = 200;
@@ -126,9 +127,8 @@ export type NotifSettings = { newBooking: boolean; payment: boolean; review: boo
 
 // Значения по умолчанию: пока в settings ничего не сохранено, поля не должны быть пустыми.
 function defaultPlatformSettings(): PlatformSettings {
-  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://zapishisya.ru').trim();
-  let host = 'zapishisya.ru';
-  try { host = new URL(site).hostname.replace(/^www\./, ''); } catch { /* оставляем дефолт */ }
+  // Адрес сервиса — из одного места (lib/site.ts), а не из литерала: смена домена не должна править код.
+  const host = new URL(SITE_URL).hostname.replace(/^www\./, '');
   return {
     name: 'Запишись',
     email: (process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '').trim() || `support@${host}`,

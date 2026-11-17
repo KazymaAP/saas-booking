@@ -17,7 +17,8 @@ export interface ImapClientLike {
   logout(): Promise<void>;
   close(): void;
   getMailboxLock(path: string): Promise<MailboxLockObject>;
-  search(query: SearchObject, options?: { uid?: boolean }): Promise<number[] | false>;
+  // imapflow 2 может вернуть undefined (нет ответа на SEARCH) — трактуем так же, как false.
+  search(query: SearchObject, options?: { uid?: boolean }): Promise<number[] | false | undefined>;
   fetchOne(range: string, query: { source?: boolean; size?: boolean }, options?: { uid?: boolean }): Promise<FetchMessageObject | false>;
   messageFlagsAdd(range: string, flags: string[], options?: { uid?: boolean }): Promise<boolean>;
 }

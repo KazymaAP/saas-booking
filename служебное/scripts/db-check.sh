@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# scripts/db-check.sh — проверка схемы БД после миграций 0001–0007 (ТЗ §4).
+# служебное/scripts/db-check.sh — проверка схемы БД после применения миграций (ТЗ §4).
 # Использует только чтение (см. db-check.sql). Код выхода != 0 при FAIL.
-# Пример: DATABASE_URL="postgresql://..." bash scripts/db-check.sh
+# Пример: DATABASE_URL="postgresql://..." bash служебное/scripts/db-check.sh
 set -euo pipefail
 
 : "${DATABASE_URL:?Задайте DATABASE_URL (строка подключения Postgres/Supabase)}"

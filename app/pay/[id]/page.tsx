@@ -1,4 +1,5 @@
-import { getCheckoutForPay, yookassaConfigured, getBusinessSlug } from '@/lib/partners';
+import { getCheckoutForPay, yookassaConfigured } from '@/lib/partners';
+import { getBusinessSitePath } from '@/lib/vertical-templates';
 import { SITE_URL } from '@/lib/site';
 import { simulatePaymentAction, updateCheckoutEntrepreneurAction } from '../actions';
 
@@ -31,10 +32,11 @@ export default async function PayPage({
 
   const isPaid = checkout.status === 'paid' || searchParams.paid === '1';
   if (isPaid) {
-    let siteUrl: string | null = null;
+    let sitePath: string | null = null;
     if (checkout.business_id) {
-      const slug = await getBusinessSlug(checkout.business_id);
-      if (slug) siteUrl = `${SITE_URL}/d/${slug}`;
+      // Префикс берём из ниши бизнеса: раньше здесь был жёстко '/d/', и сайты других ниш
+      // после оплаты открывались по неверному адресу (404).
+      sitePath = await getBusinessSitePath(checkout.business_id);
     }
     return (
       <main className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
@@ -42,11 +44,11 @@ export default async function PayPage({
           <div className="text-4xl">✅</div>
           <h1 className="mt-3 text-2xl font-semibold text-white">Оплата прошла</h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Спасибо! Ваша сайт-визитка готовится. С вами свяжется партнёр или команда поддержки.
+            Спасибо! Ваш сайт-визитка готовится. С вами свяжется партнёр или команда поддержки.
           </p>
-          {siteUrl && (
-            <a href={siteUrl} className="mt-5 inline-block rounded-xl bg-emerald-600 px-5 py-2.5 font-medium text-white hover:bg-emerald-500">
-              Открыть мою сайт-визитку
+          {sitePath && (
+            <a href={`${SITE_URL}${sitePath}`} className="mt-5 inline-block rounded-xl bg-emerald-600 px-5 py-2.5 font-medium text-white hover:bg-emerald-500">
+              Открыть сайт
             </a>
           )}
         </div>
@@ -88,18 +90,24 @@ export default async function PayPage({
             <a href={payUrl} className="block rounded-xl bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-500">
               Перейти к оплате (ЮKassa)
             </a>
-          ) : (
-            <form action={simulatePaymentAction}>
-              <input type="hidden" name="id" value={checkout.id} />
-              <button className="block w-full rounded-xl bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-500">
-                Оплатить (тестовый режим)
-              </button>
-            </form>
-          )}
-          {!configured && (
-            <p className="mt-2 text-center text-xs text-amber-300/80">
-              Платёжный шлюз не настроен — кнопка имитирует оплату. Для боя задайте ключи ЮKassa.
+          ) : configured ? (
+            // Шлюз настроен, но ссылка не создалась (сбой API ЮKassa). Тестовую кнопку не показываем:
+            // в боевом режиме она только перезагружает страницу и выглядит как «оплатить без денег».
+            <p className="rounded-xl border border-amber-500/40 px-4 py-3 text-center text-sm text-amber-200">
+              Платёжная ссылка не создана. Запросите новый счёт у партнёра.
             </p>
+          ) : (
+            <>
+              <form action={simulatePaymentAction}>
+                <input type="hidden" name="id" value={checkout.id} />
+                <button className="block w-full rounded-xl bg-indigo-600 px-4 py-3 text-center font-medium text-white hover:bg-indigo-500">
+                  Оплатить (тестовый режим)
+                </button>
+              </form>
+              <p className="mt-2 text-center text-xs text-amber-300/80">
+                Платёжный шлюз не настроен — кнопка имитирует оплату. Для боя задайте ключи ЮKassa.
+              </p>
+            </>
           )}
         </div>
       </div>

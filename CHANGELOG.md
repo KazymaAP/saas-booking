@@ -21,11 +21,14 @@
 - Документация: `README.md`, `ARCHITECTURE.md`, `DEPLOY.md`, `INSTALL.md`, `TESTING.md`, `KP.md`, `DEMO.md`,
   `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/email-setup.md`, `docs/telegram-setup.md`, `docs/faq.md`,
   `docs/troubleshooting.md`.
-- `scripts/smoke-test.sh`: проверка деплоя (главная, вход, sitemap, robots, заголовки безопасности, закрытость cron
+- `служебное/scripts/smoke-test.sh`: проверка деплоя (главная, вход, sitemap, robots, заголовки безопасности, закрытость cron
   и прототипов, публичный сайт), коды выхода `0 / 1 / 2`.
 
 ### Изменено
 
+- **BREAKING**: кабинет владельца переехал с `/{prefix}/{slug}/panel` на `/{prefix}/{slug}/admin`,
+  супер-админка — с `/panel` на `/admin`. Старые пути отдают `404` без редиректа (middleware), внешние
+  ссылки и закладки нужно обновить.
 - `next.config.mjs`: `experimental.staleTimes` (`dynamic: 30`, `static: 180`) — мгновенный возврат назад в панелях;
   `serverComponentsExternalPackages` для `imapflow`, `nodemailer`, `pino`; `poweredByHeader: false`.
 - `components/templates/StudioTemplate.tsx`: карта через `MapLazy`.
@@ -37,12 +40,9 @@
 
 ### Известные проблемы
 
-Перечислены в [PROGRESS.md](PROGRESS.md#известные-проблемы). Главные:
-
-- Server actions супер-админки не проверяют `isSuperAdmin()` сами.
-- Частые cron-задачи (`send-emails`, `check-replies`, `booking-reminders`, `unconfirmed-reminder`) не в `vercel.json`.
-- Ссылка на отмену и перенос брони клиенту не отправляется.
-- `cleanup-prototypes` удаляет любой `archived` бизнес с `created_at` старше 120 дней, включая бывших клиентов.
+Актуальный список — в [PROGRESS.md](PROGRESS.md#известные-проблемы). Ранее перечисленные здесь пункты
+(server actions без `isSuperAdmin`, частые cron вне `vercel.json`, неотправляемая ссылка отмены,
+`cleanup-prototypes`, удалявший бывших клиентов) закрыты — см. таблицу «Закрыты 2026-10-24» в PROGRESS.md.
 
 ## [0.1.0] — 2026-10-13
 

@@ -1,11 +1,13 @@
-// scripts/apply-migrations.cjs — накатывает миграции 0001–0014 на Supabase/Postgres одной командой.
+// служебное/scripts/apply-migrations.cjs — накатывает все миграции supabase/migrations (сейчас 0001–0030)
+// на Supabase/Postgres одной командой. Список файлов читается из каталога, поэтому новые миграции
+// подхватываются автоматически — править этот файл при добавлении 0030 не нужно.
 // Идемпотентно: ведёт таблицу _applied_migrations, пропускает уже применённые.
 // Использует pg из изолированного workspace (NODE_PATH), чтобы не трогать package-lock проекта.
 //
 // Запуск (из корня проекта):
 //   NODE_PATH="$HOME/.workbuddy-ai/binaries/node/workspace/node_modules" \
 //   MIGRATION_DB_URL="postgresql://postgres:<db-password>@127.0.0.1:5432/postgres" \
-//   node scripts/apply-migrations.cjs
+//   node служебное/scripts/apply-migrations.cjs
 //
 // MIGRATION_DB_URL — строка подключения к БД. Для локального Supabase (supabase start) это
 //   postgresql://postgres:postgres@127.0.0.1:5432/postgres (пароль из supabase/config.toml).

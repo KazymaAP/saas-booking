@@ -21,8 +21,8 @@
 
 | Инструмент | Версия | Почему |
 |---|---|---|
-| Node | 20 или новее; Vercel собирает на 24.x (`engines.node`) | Next.js 14.2 |
-| pnpm | 10 | pnpm 9 не принимает текущий `pnpm-workspace.yaml` (`packages field missing or empty`) |
+| Node | 22.x — зафиксировано в `engines.node`; на другой мажорной версии `pnpm install` предупреждает | Next.js 14.2 |
+| pnpm | 12 (проверено на 12.6.0) | `pnpm-workspace.yaml` использует `minimumReleaseAge` и `allowBuilds`; pnpm 9 не принимает файл без поля `packages` |
 | Git | любая актуальная | — |
 | Редактор | с поддержкой TypeScript | VS Code по ТЗ §0.1 |
 
@@ -84,17 +84,17 @@ pnpm dev
 
 | Область | Код |
 |---|---|
-| `booking` | `app/api/bookings/**`, `BookingForm.tsx`, `lib/slots.ts`, `lib/availability.ts` |
+| `booking` | `app/api/bookings/**`, `app/[prefix]/[slug]/BookingForm.tsx`, `lib/slots.ts`, `lib/availability.ts` |
 | `site` | `app/[prefix]/[slug]/page.tsx`, `components/**`, `public/assets/**` |
-| `owner` | `app/[prefix]/[slug]/panel/**` |
-| `admin` | `app/panel/**` |
+| `owner` | `app/[prefix]/[slug]/admin/**` |
+| `admin` | `app/admin/**` |
 | `cron` | `app/api/cron/**`, `vercel.json` |
 | `email` | `lib/notify.ts`, `lib/outreach.ts`, `email-accounts`, `inbox` |
 | `telegram` | `app/api/telegram/**`, `lib/admin-notify.ts` |
 | `license` | `app/api/license/**`, `lib/license-client.ts`, `app/api/transfer/**` |
 | `domain` | `middleware.ts`, `app/domain-site/**`, `app/api/resolve-domain/**` |
 | `db` | `supabase/migrations/**`, `lib/database.types.ts` |
-| `import` | `lib/import2gis.ts`, `scripts/import-excel.ts`, `app/api/import/**` |
+| `import` | `lib/import2gis.ts`, `служебное/scripts/import-excel.ts`, `app/api/import/**` |
 
 Примеры:
 
@@ -134,8 +134,8 @@ BREAKING CHANGE: MAIN_HOSTS больше не захардкожен; перед
 | Комментарии | на русском, коротко: зачем, а не что; ссылка на раздел ТЗ, если правило оттуда |
 | Секреты | только `process.env.*`, никаких значений в коде |
 
-Форматтер и ESLint в проекте не настроены (`pnpm lint` задаёт интерактивный вопрос). До их появления
-следуйте стилю соседнего файла.
+Форматтер (Prettier) в проекте не подключён — следуйте стилю соседнего файла. ESLint настроен
+(`.eslintrc.json`, пресет `next/core-web-vitals`): `pnpm lint` проверяет без вопросов и должен быть чистым.
 
 ### Серверный и клиентский код
 
@@ -144,7 +144,7 @@ BREAKING CHANGE: MAIN_HOSTS больше не захардкожен; перед
 - Доступ к БД — только на сервере, через `adminClient()` из `lib/supabase.ts`. Ключ `service_role` не должен
   попадать в клиентский бандл: не импортируйте `lib/supabase.ts` из файлов с `'use client'`.
 - Тяжёлые клиентские библиотеки (Leaflet, `browser-image-compression`) — через `next/dynamic` с `ssr: false`
-  (пример: `components/MapLazy.tsx`, `photos/PhotoUploaderLazy.tsx`).
+  (пример: `components/MapLazy.tsx`, `admin/(protected)/photos/PhotoUploaderLazy.tsx`).
 
 ### Права доступа
 
@@ -177,7 +177,7 @@ Server actions вызываются прямым POST-запросом, поэт
 ### UI
 
 - Tailwind без shadcn/ui; общие классы панелей — в `app/globals.css` (`.panel-shell`, `.btn-primary`, `.input`).
-- Сайт бизнеса — `components/templates/StudioTemplate.tsx` и `public/assets/studio.css`.
+- Сайт бизнеса — `общие/components/templates/StudioTemplate.tsx` и `public/assets/studio.css`.
 - Иконки — inline SVG или `@phosphor-icons/react`; новые иконочные библиотеки не добавлять.
 - Тексты интерфейса — на русском. Требования к дизайну панелей — [docs/design-spec.md](docs/design-spec.md).
 
@@ -185,17 +185,17 @@ Server actions вызываются прямым POST-запросом, поэт
 
 | Задача | Файлы |
 |---|---|
-| Новая страница кабинета | `app/[prefix]/[slug]/panel/(protected)/<раздел>/page.tsx` + пункт в массиве `nav` в `(protected)/layout.tsx` |
-| Новый раздел супер-админки | `app/panel/(protected)/<раздел>/page.tsx` + пункт в массиве `NAV` в `app/panel/(protected)/layout.tsx` |
-| Новая cron-задача | обработчик в объекте `JOBS` в `app/api/cron/[job]/route.ts` + расписание в `vercel.json` или во внешнем планировщике |
+| Новая страница кабинета | `app/[prefix]/[slug]/admin/(protected)/<раздел>/page.tsx` + пункт в массиве `nav` в `admin/(protected)/layout.tsx` |
+| Новый раздел супер-админки | `app/admin/(protected)/<раздел>/page.tsx` + пункт в массиве `NAV` в `app/admin/(protected)/layout.tsx` |
+| Новая cron-задача | обработчик в объекте `JOBS` в `lib/cron-jobs/index.ts` + строка в `SCHEDULES` в `lib/schedules.ts` (по ней сверяются `vercel.json`, pg_cron и `cron-check.sh`) |
 | Новое уведомление | `lib/notify.ts` (бизнесу, клиенту) или `lib/admin-notify.ts` (оператору) |
-| Новая ниша | строка в `vertical_templates` через `/panel/verticals` или новую миграцию; префикс уникален |
+| Новая ниша | строка в `vertical_templates` через `/admin/verticals` или новую миграцию; префикс уникален |
 | Новая переменная окружения | код + `.env.example` + таблица в [DEPLOY.md](DEPLOY.md#шаг-4-переменные-окружения) |
 | Тексты сайта по умолчанию | `default_texts` ниши, словарь в `StudioTemplate.tsx` |
 
 ## Миграции БД
 
-1. Новый файл — следующий номер: `supabase/migrations/0006_<кратко>.sql`. Старые миграции не редактируются.
+1. Новый файл — следующий номер: `supabase/migrations/0031_<кратко>.sql` (последняя — `0030`). Старые миграции не редактируются.
 2. Миграция идемпотентна: `create table if not exists`, `add column if not exists`, `create index if not exists`,
    `insert ... on conflict do nothing`. Повторный запуск не должен падать.
 3. На каждой новой таблице — `alter table ... enable row level security;` и политики (или явный комментарий,
@@ -216,12 +216,14 @@ Server actions вызываются прямым POST-запросом, поэт
 
 ```bash
 pnpm typecheck                                   # обязательно, exit 0
+pnpm lint                                        # обязательно, без предупреждений
+pnpm test                                        # обязательно: 1589 тестов (7 пропусков — только Windows)
 pnpm build                                       # обязательно, exit 0
-bash scripts/smoke-test.sh http://localhost:3000 # после pnpm start, если менялись маршруты, middleware, SEO
+bash служебное/scripts/smoke-test.sh http://localhost:3000 # после pnpm start, если менялись маршруты, middleware, SEO
 ```
 
-На Windows — `powershell -ExecutionPolicy Bypass -File scripts\check.ps1` (install + typecheck + build, лог
-в `check-log.txt`, файл в `.gitignore`).
+На Windows — `powershell -ExecutionPolicy Bypass -File служебное\scripts\check.ps1` (install + typecheck + тесты +
+build, лог в `check-log.txt`, файл в `.gitignore`).
 
 Для `pnpm build` без реального Supabase подойдут фиктивные значения env — см. [TESTING.md](TESTING.md#типы-и-сборка).
 
@@ -248,7 +250,7 @@ bash scripts/smoke-test.sh http://localhost:3000 # после pnpm start, есл
 
 ## Чего не делать
 
-- Не коммитить `.env.local`, ключи, пароли, `scripts/import/*.xlsx`, дампы БД.
+- Не коммитить `.env.local`, ключи, пароли, `служебное/scripts/import/*.xlsx`, дампы БД.
 - Не использовать `SUPABASE_SERVICE_ROLE_KEY` в клиентском коде и в `NEXT_PUBLIC_*`.
 - Не хранить состояние в памяти процесса (Map, глобальные переменные) — serverless-инстансы её не делят.
   Лимиты, очереди и счётчики — в Postgres.

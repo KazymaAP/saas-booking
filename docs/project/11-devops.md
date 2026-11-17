@@ -39,11 +39,11 @@ pnpm cron:check                    # сверка расписаний pg_cron
 
 | Файл | Назначение |
 |---|---|
-| `apply-migrations.cjs` / `apply-migrations-api.cjs` | Накат миграций 0001–0014: прямой Postgres / Supabase Management API по HTTPS (в песочнице порт 5432 недоступен, DNS `ENOTFOUND`) |
+| `apply-migrations.cjs` / `apply-migrations-api.cjs` | Накат всех миграций из `supabase/migrations` (сейчас 0001–0030): прямой Postgres / Supabase Management API по HTTPS (в песочнице порт 5432 недоступен, DNS `ENOTFOUND`) |
 | `migrate.sh` | Применение `supabase/migrations/*.sql` по порядку |
 | `configure-cron.sql` | `vault.create_secret('https://zapishisya.ru','site_url')`, `vault.create_secret('<CRON_SECRET>','cron_secret')`; `ALTER DATABASE … SET app.*` закомментирован (42501 на Supabase) |
 | `cron-check.sh` | Проверка расписаний pg_cron против `schedules.ts` (на заглушке psql в тестах) |
-| `db-check.sh`, `db-check.sql` | Проверка схемы после миграций 0001–0007 |
+| `db-check.sh`, `db-check.sql` | Проверка схемы после миграций 0001–0030 |
 | `db-supabase-shim.sql` | Имитация окружения Supabase для локальной проверки миграций |
 | `probe-db.cjs` | Диагностика локального Postgres 127.0.0.1:5432 |
 | `preflight.sh` | Smoke-проверка перед деплоем |

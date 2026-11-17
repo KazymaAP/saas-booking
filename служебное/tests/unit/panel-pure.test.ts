@@ -4,7 +4,7 @@ import { buildCsv, csvCell, exportFilename, type ExportBooking } from '../../../
 import { buildChecklist, progressPercent } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/onboarding';
 import { SECTIONS, isActiveSection, sectionHref, visibleSections } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/sections';
 import { availableActions, canApply, isActiveStatus, isBookingAction } from '../../../app/[prefix]/[slug]/admin/(protected)/bookings/status';
-import { altForIndex, isOwnPhotoPath, remainingSlots, sourceFileError, uploadFileError } from '../../../app/[prefix]/[slug]/admin/(protected)/photos/rules';
+import { altForIndex, isOwnPhotoPath, remainingSlots, sourceFileError, uploadFileError } from '@/lib/photo-rules';
 import { businessDayStart, DAY_MS } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/time';
 import { callAction } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/client-action';
 import { zodFieldErrors } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/result';
@@ -118,7 +118,7 @@ describe('bookings/status', () => {
   });
 });
 
-describe('photos/rules', () => {
+describe('photo-rules', () => {
   it('исходник и загружаемый файл', () => {
     expect(sourceFileError({ type: 'image/gif', size: 1 })).toBeTruthy();
     expect(sourceFileError({ type: 'image/jpeg', size: 0 })).toBeTruthy();
@@ -363,6 +363,7 @@ describe('settings/schema', () => {
   const base = {
     name: 'Студия', description: '', city: '', address: '', phones: '', emails: '', brand_color: '#111111', hours,
     slot_step_minutes: '60', cancel_hours_before: '2', min_hours_before: '1', max_days_ahead: '30', auto_confirm: false,
+    require_client_registration: false,
   };
 
   it('телефоны: дубли в разном формате схлопываются, больше 3 — ошибка, кривой — с текстом номера', async () => {

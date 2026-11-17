@@ -4,6 +4,7 @@
 // Логика прежняя: лиды (CRUD), готовые сайты, выставление счёта. Данные только из БД.
 import { useState } from 'react';
 import type { PartnerLead, CheckoutVariant, PartnerReadySite } from '@/lib/partners';
+import { SITE_URL } from '@/lib/site';
 import {
   addLeadAction, updateLeadAction, deleteLeadAction, markReferralSentAction,
   createCheckoutAction,
@@ -170,7 +171,7 @@ export function ReadySites({ sites, onPick }: { sites: PartnerReadySite[]; onPic
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {sites.map((s) => {
-            const url = s.preview_url ?? `https://zapishisya.ru/s/${s.slug}`;
+            const url = s.preview_url ?? `${SITE_URL}/s/${s.slug}`;
             return (
               <div key={s.id} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <span className="rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-caption text-brand-accent">{s.niche}</span>
@@ -224,7 +225,7 @@ export function CheckoutCreator({ initialSite }: { initialSite: PartnerReadySite
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-brand-accent/30 bg-brand-accent/[0.06] p-3">
           <span className="text-caption text-brand-accent">Готовый сайт:</span>
           <span className="text-body-sm font-medium">{initialSite.title}</span>
-          <CopyButton text={initialSite.preview_url ?? `https://zapishisya.ru/s/${initialSite.slug}`} label="Ссылка" />
+          <CopyButton text={initialSite.preview_url ?? `${SITE_URL}/s/${initialSite.slug}`} label="Ссылка" />
         </div>
       )}
 

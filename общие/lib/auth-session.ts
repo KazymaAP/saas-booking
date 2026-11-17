@@ -3,8 +3,8 @@
 // Обновление токенов возможно только там, где Next.js разрешает писать cookie: Server Action и Route Handler
 // (/api/auth/refresh). Server Components при истёкшем access-токене перенаправляют на /api/auth/refresh.
 import { cache } from './react-cache';
-import { accessTokenFresh, type AuthRealm, type JwtClaims } from './auth-core';
-import { clearSessionCookies, readSessionCookies, writeSessionCookies } from './auth-cookies';
+import { accessTokenFresh, type JwtClaims } from './auth-core';
+import { clearSessionCookies, type SessionKind, readSessionCookies, writeSessionCookies } from './auth-cookies';
 import { refreshTokens, revokeSession, verifyAccessToken, type ProviderSession } from './auth-provider';
 import { authEvent } from './auth-audit';
 
@@ -13,7 +13,7 @@ export type SessionState =
   | { readonly kind: 'refresh_needed' }
   | { readonly kind: 'none' };
 
-async function readSessionUncached(realm: AuthRealm): Promise<SessionState> {
+async function readSessionUncached(realm: SessionKind): Promise<SessionState> {
   const { accessToken, refreshToken } = readSessionCookies(realm);
   if (accessToken) {
     const claims = await verifyAccessToken(accessToken);
@@ -29,7 +29,7 @@ async function readSessionUncached(realm: AuthRealm): Promise<SessionState> {
 export const readSession = cache(readSessionUncached);
 
 // Обновляет пару токенов и перезаписывает cookie. Только Server Action / Route Handler.
-export async function refreshSession(realm: AuthRealm): Promise<ProviderSession | null> {
+export async function refreshSession(realm: SessionKind): Promise<ProviderSession | null> {
   const { refreshToken } = readSessionCookies(realm);
   if (!refreshToken) return null;
   const session = await refreshTokens(refreshToken);
@@ -42,12 +42,12 @@ export async function refreshSession(realm: AuthRealm): Promise<ProviderSession 
   return session;
 }
 
-export function startSession(realm: AuthRealm, session: ProviderSession): void {
+export function startSession(realm: SessionKind, session: ProviderSession): void {
   writeSessionCookies(realm, session.tokens);
 }
 
 // Действующий access-токен для отзыва: текущий, а если он истёк — полученный по refresh.
-async function accessForRevoke(realm: AuthRealm): Promise<string | null> {
+async function accessForRevoke(realm: SessionKind): Promise<string | null> {
   const { accessToken, refreshToken } = readSessionCookies(realm);
   if (accessToken && (await verifyAccessToken(accessToken))) return accessToken;
   if (!refreshToken) return null;
@@ -57,7 +57,7 @@ async function accessForRevoke(realm: AuthRealm): Promise<string | null> {
 
 // Выход: сессия отзывается у провайдера (refresh-токен из украденной cookie перестаёт работать),
 // затем cookie стираются. Сбой отзыва не мешает выходу в этом браузере — он фиксируется в журнале.
-export async function endSession(realm: AuthRealm): Promise<void> {
+export async function endSession(realm: SessionKind): Promise<void> {
   try {
     const accessToken = await accessForRevoke(realm);
     if (accessToken) await revokeSession(accessToken, 'local');
@@ -68,7 +68,7 @@ export async function endSession(realm: AuthRealm): Promise<void> {
 }
 
 // Адрес обновления сессии для Server Components: после обновления пользователь вернётся на next.
-export function refreshUrl(realm: AuthRealm, next: string): string {
+export function refreshUrl(realm: SessionKind, next: string): string {
   const params = new URLSearchParams({ realm, next });
   return `/api/auth/refresh?${params.toString()}`;
 }

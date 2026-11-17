@@ -205,3 +205,94 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
    Фон плашки всегда тёмный (rgba(0,0,0,.45)), а цвет текста брался из темы. В светлых темах
    это давало тёмный текст на тёмном стекле (1.6:1). Текст на стекле всегда белый. */
 .detailing-root .pill-glass { color: #fff; }
+
+/* === тёмная тема супер-админки (.admin-dark) ===
+   Переменные переопределяют светлую тему только внутри раздела /admin: кабинеты клиентов и партнёров не затрагиваются. */
+.admin-dark {
+  --brand-color: #38bdf8;
+  --on-accent: #04121f;
+  --ink: #e6edf7;
+  --muted: #8b9bb4;
+  --line: rgba(148, 163, 184, 0.16);
+  --surface: rgba(255, 255, 255, 0.045);
+  --soft: rgba(255, 255, 255, 0.075);
+  --panel-bg: transparent; /* фон даёт GlassBackground (fixed, за контентом) */
+  --radius: 16px;
+  min-height: 100vh;
+  color-scheme: dark;
+}
+
+/* Стеклянные карточки, таблицы и блоки в стиле дашборда */
+.admin-dark .panel-shell details,
+.admin-dark .panel-shell section > .card,
+.admin-dark .panel-shell table {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+.admin-dark .panel-shell thead th { background: rgba(255, 255, 255, 0.03); }
+.admin-dark .panel-shell h1 { letter-spacing: -0.02em; }
+.admin-dark .panel-shell option { background: #0b1b2c; color: #e6edf7; }
+.admin-dark .panel-shell ::selection { background: rgba(56, 189, 248, 0.35); }
+
+/* === стеклянные утилиты (glassmorphism) === */
+.admin-dark .glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+.admin-dark .panel-shell button.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.admin-dark .panel-shell button.glass-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* === стекло для SuperAdmin (главная/SuperAdmin.tsx, токены detailing) ===
+   detailing-scoped.css подключается позже и задаёт непрозрачные цвета, поэтому правила усилены
+   классом .detailing-root.admin-glass и стоят с !important только там, где перекрывают токены. */
+.detailing-root.admin-glass { background-color: transparent; }
+.detailing-root.admin-glass aside {
+  background: rgba(10, 16, 32, 0.55) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.detailing-root.admin-glass header.sticky {
+  background: rgba(10, 16, 32, 0.45) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.detailing-root.admin-glass .bg-brand-surface,
+.detailing-root.admin-glass .bg-brand-surface-elevated,
+.detailing-root.admin-glass .card,
+.detailing-root.admin-glass .card-premium,
+.detailing-root.admin-glass .card-hover,
+.detailing-root.admin-glass .bg-white\/\[0\.03\],
+.detailing-root.admin-glass .bg-white\/\[0\.035\] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+.detailing-root.admin-glass .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+.detailing-root.admin-glass .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.16) !important; }

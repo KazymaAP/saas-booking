@@ -14,6 +14,7 @@ import { fail, isSameOrigin, limitOrFail, ok, readJson, validationFailure } from
 import { notifyClientBooking, notifyCreated } from '@/lib/booking-notify';
 import { audit } from '@/lib/audit';
 import { logError } from '@/lib/log';
+import { readCustomerSession } from '@/lib/customer-session';
 import type { Business } from '@/lib/database.types';
 
 export const runtime = 'nodejs';
@@ -69,7 +70,14 @@ async function insertBooking(base: Record<string, unknown>, extended: Record<str
   return row.success ? { kind: 'ok', row: row.data } : { kind: 'error', message: 'insert: неожиданный ответ' };
 }
 
-function bookingRows(input: BookingInput, business: BusinessWithZone, service: ServiceRowT, phone: string, ip: string) {
+function bookingRows(
+  input: BookingInput,
+  business: BusinessWithZone,
+  service: ServiceRowT,
+  phone: string,
+  ip: string,
+  customerId: string | null,
+) {
   const status = business.auto_confirm ? 'confirmed' : 'new';
   const nowIso = new Date().toISOString();
   const base = {
@@ -85,6 +93,7 @@ function bookingRows(input: BookingInput, business: BusinessWithZone, service: S
     privacy_accepted_at: nowIso,
     privacy_ip: ip,
     privacy_version: PRIVACY_VERSION,
+    ...(customerId ? { customer_id: customerId } : {}),
   };
   const extended = {
     duration_at_booking: service.duration_minutes,
@@ -104,6 +113,17 @@ async function createBooking(req: Request, input: BookingInput): Promise<Respons
   const business: BusinessWithZone = resolved.business;
   const timeZone = businessTimeZone(business);
 
+  // Сессия клиента (кабинет /my): если бизнес требует регистрацию — вход обязателен, иначе 403.
+  // Если не требует — customer_id подставляем только при наличии сессии (иначе NULL).
+  let customerId: string | null = null;
+  const customerSession = await readCustomerSession(business.id);
+  if (business.require_client_registration) {
+    if (!customerSession) return fail({ reason: 'registration_required' });
+    customerId = customerSession.customer.id;
+  } else if (customerSession) {
+    customerId = customerSession.customer.id;
+  }
+
   // Слот должен принадлежать выбранной дате в поясе бизнеса — иначе дата и время рассинхронизированы.
   const startMs = Date.parse(input.startsAt);
   if (localDateOf(startMs, timeZone) !== input.date) return fail({ reason: 'validation', field: 'startsAt' });
@@ -115,7 +135,7 @@ async function createBooking(req: Request, input: BookingInput): Promise<Respons
   // freeSlots учитывает working_hours, business_holidays, min_hours_before, max_days_ahead и буферы (ТЗ §10.1).
   if (slotsForDay(business, service, input.date, day).includes(startMs) === false) return fail({ reason: 'slot_taken' });
 
-  const { base, extended } = bookingRows(input, business, service, phone, clientIp(req.headers));
+  const { base, extended } = bookingRows(input, business, service, phone, clientIp(req.headers), customerId);
   const inserted = await insertBooking(base, extended);
   if (inserted.kind === 'conflict') return fail({ reason: 'slot_taken' });
   if (inserted.kind === 'error') {

@@ -13,8 +13,10 @@ function fakeImap(messages: Record<number, string>, mailbox: Partial<MailboxObje
   const seen: number[] = [];
   const searches: SearchObject[] = [];
   const uids = Object.keys(messages).map(Number);
+  // MailboxObject в imapflow 2 требует delimiter; Partial<MailboxObject> в spread делает его снова опциональным,
+  // поэтому собираем объект и приводим тип — в тесте это безопасно.
   const client: ImapClientLike = {
-    mailbox: { path: 'INBOX', exists: uids.length, uidValidity: 7n, uidNext: Math.max(0, ...uids) + 1, ...mailbox },
+    mailbox: { path: 'INBOX', delimiter: '/', exists: uids.length, uidValidity: 7n, uidNext: Math.max(0, ...uids) + 1, ...mailbox } as MailboxObject,
     connect: async () => undefined,
     logout: async () => undefined,
     close: () => undefined,
@@ -108,7 +110,10 @@ describe('syncMailbox', () => {
   it('первый запуск ищет только за 7 дней', async () => {
     const imap = fakeImap({ 1: raw({}, 'x') });
     await syncMailbox(deps(memoryInbox().store), imap.client, ACC, FAR);
-    expect(imap.searches[0].since?.toISOString()).toBe(new Date(NOW.getTime() - 7 * 86_400_000).toISOString());
+    // imapflow 2 типизирует since как string | Date — нормализуем перед сравнением.
+    const since = imap.searches[0].since;
+    const sinceIso = since instanceof Date ? since.toISOString() : new Date(String(since)).toISOString();
+    expect(sinceIso).toBe(new Date(NOW.getTime() - 7 * 86_400_000).toISOString());
   });
 
   it('продолжает с uidnext и не перечитывает последнее письмо (N:* при N > max)', async () => {

@@ -7,6 +7,7 @@ import { adminClient } from '@/lib/supabase';
 import { requireSuperAdminAction } from '@/lib/admin-session';
 import { audit } from '@/lib/audit';
 import { listPartnerAccounts } from '@/lib/ready-services';
+import { defaultTemplateId } from '@/lib/vertical-templates';
 import { auditActionLabel } from './audit-labels';
 
 const DAY_MS = 86_400_000;
@@ -631,6 +632,8 @@ export async function createBusinessAction(input: { name: string; city: string; 
     name,
     city: String(input.city ?? '').trim() || null,
     category: String(input.category ?? '').trim() || null,
+    // Без ниши сайт не открывается: resolveBusiness сверяет vertical_template_id с префиксом адреса.
+    vertical_template_id: await defaultTemplateId(),
     status: 'new',
   });
   if (error) return { ok: false, error: error.message.includes('duplicate') ? 'Такой адрес уже занят' : 'Не удалось создать бизнес' };

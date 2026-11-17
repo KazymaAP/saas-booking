@@ -1,0 +1,17 @@
+# .gitattributes — единые переводы строк в репозитории.
+# Без этого файла lib/ был в CRLF, а общие/lib/ в LF: git diff показывал изменения
+# во всех 87 идентичных по смыслу файлах, а diff-ревью теряло смысл.
+* text=auto eol=lf
+
+# Двоичные файлы: git не должен их нормализовать и показывать как текст.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.zip   binary
+*.dump  binary

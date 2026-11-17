@@ -80,7 +80,9 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
     ],
-    formats: ['image/avif', 'image/webp'],
+    // webp только: AVIF-ветка оптимизатора уязвима к unauthenticated RCE
+    // (GHSA-2xp9-vwfh-vxw4, патч в next >=15.5.24). Вернём avif после перехода на 15.x.
+    formats: ['image/webp'],
     // Мобильно-ориентированный набор: основной трафик записи — с телефонов.
     // Убрали 2048/3840 (никогда не нужны на витрине), добавили 360/414 для бюджетных аппаратов.
     deviceSizes: [360, 414, 640, 750, 828, 1080, 1200, 1920],
@@ -90,7 +92,7 @@ const nextConfig = {
   },
   experimental: {
     // Тяжёлые Node-пакеты не бандлятся в серверный код, а подключаются из node_modules.
-    serverComponentsExternalPackages: ['imapflow', 'nodemailer', 'archiver', 'xlsx'],
+    serverComponentsExternalPackages: ['imapflow', 'nodemailer', 'xlsx'],
     // Импорт только используемых иконок вместо всего пакета.
     optimizePackageImports: ['@phosphor-icons/react', 'leaflet'],
     // Проверка обязательных env при старте сервера (instrumentation.ts).

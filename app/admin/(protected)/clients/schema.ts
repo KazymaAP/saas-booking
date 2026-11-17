@@ -57,7 +57,7 @@ export function extendFrom(until: string | null, now: Date = new Date(), days = 
 // №22: для оплаты можно передать выбранный тариф { type, price } — иначе basic по умолчанию.
 export function predictPatch(
   op: ClientOp,
-  row: Pick<ClientRow, 'subscription_until'>,
+  row: Pick<ClientRow, 'subscription_until'> & Partial<Pick<ClientRow, 'paid_initial_at'>>,
   now: Date = new Date(),
   monthly = DEFAULT_MONTHLY,
   plan?: { type: string; price: number } | null,
@@ -66,9 +66,11 @@ export function predictPatch(
     case 'paid':
       return {
         status: 'client',
-        paid_initial_at: now.toISOString(),
+        // Дата «Оплата настройки» — первая оплата; повторная её не перезаписывает.
+        paid_initial_at: row.paid_initial_at ?? now.toISOString(),
         subscription_active: true,
-        subscription_until: isoDate(new Date(now.getTime() + PERIOD_DAYS * DAY_MS)),
+        // Досрочная оплата продлевает от текущей даты окончания: остаток не съедается.
+        subscription_until: extendFrom(row.subscription_until, now),
         // №22: выбранный при оплате тариф, иначе basic по умолчанию.
         plan_type: plan?.type ?? 'basic',
         subscription_price: plan?.price ?? monthly,

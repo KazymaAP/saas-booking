@@ -13,7 +13,7 @@ import { ERR, fail, ok, UUID_RE, type ActionResult } from '../_lib/result';
 import {
   AltSchema, BUCKET, MAX_PHOTOS, MAX_UPLOAD_BYTES, PHOTO_TYPES,
   isOwnPhotoPath, isPhotoMime, uploadFileError,
-} from './rules';
+} from '@/lib/photo-rules';
 
 export type PhotoRow = { id: string; url: string | null; alt: string | null };
 export type UploadTicket = { path: string; signedUrl: string };

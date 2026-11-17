@@ -87,6 +87,23 @@ export async function setUserPassword(userId: string, password: string): Promise
   return !error;
 }
 
+// Запрос OTP-кода на email клиента кабинета /my (NEW-5). Supabase Auth шлёт 6-значный код письмом.
+// shouldCreateUser=true — код может получить и новый клиент (регистрация и вход совмещены).
+export async function signInWithOtp(email: string): Promise<boolean> {
+  const { error } = await anonClient().auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, data: { role: 'customer' } },
+  });
+  return !error;
+}
+
+// Проверка OTP-кода клиента. Возвращает сессию провайдера (user.id = auth_user_id) или null.
+export async function verifyEmailOtp(email: string, token: string): Promise<ProviderSession | null> {
+  const { data, error } = await anonClient().auth.verifyOtp({ email, token, type: 'email' });
+  if (error) return null;
+  return toSession(data.session);
+}
+
 export type CreateUserResult = { readonly kind: 'created'; readonly user: ProviderUser } | { readonly kind: 'exists' } | { readonly kind: 'error' };
 
 // Email подтверждён по факту: пользователь пришёл по ссылке из письма на этот адрес.

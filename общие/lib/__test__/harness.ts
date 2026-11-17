@@ -78,7 +78,8 @@ class FakeQuery {
     return created;
   }
 
-  select(): this { this.returning = true; return this; }
+  // Колонки игнорируются: фейковая БД отдаёт строку целиком, как select('*').
+  select(_columns?: string): this { this.returning = true; return this; }
   eq(col: string, value: unknown): this { this.filters.push((r) => r[col] === value); return this; }
   is(col: string, value: unknown): this { this.filters.push((r) => (r[col] ?? null) === value); return this; }
   gt(col: string, value: string): this { this.filters.push((r) => String(r[col]) > value); return this; }

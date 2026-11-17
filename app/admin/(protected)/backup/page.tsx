@@ -48,7 +48,7 @@ export default async function BackupPage() {
     <div className="grid max-w-[720px] gap-6">
       <h1 className="text-[24px] font-semibold">Резервные копии</h1>
       <p className="text-[14px] text-[#666666]">
-        Автоматически каждый день в 03:00 UTC: JSON {BACKUP_TABLES.length} таблиц ({BACKUP_TABLES.join(', ')}).
+        Автоматически по воскресеньям в 03:00 UTC: JSON {BACKUP_TABLES.length} таблиц ({BACKUP_TABLES.join(', ')}).
         Хранятся {BACKUP_RETENTION_DAYS} дней, последняя копия не удаляется. Ссылки на скачивание действуют {LINK_TTL_MIN} минут —
         обновите страницу, если ссылка истекла. Еженедельно дополнительно делается полный pg_dump (GitHub Actions).
       </p>

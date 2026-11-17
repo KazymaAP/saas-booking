@@ -19,6 +19,7 @@ export const REASON_STATUS: Record<ApiReason, number> = {
   forbidden: 403,
   server: 500,
   privacy_outdated: 409,
+  registration_required: 403,
 };
 
 const NO_STORE = 'no-store';

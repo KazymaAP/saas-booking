@@ -42,12 +42,6 @@
       "@/components/*": [
         "./общие/components/*"
       ],
-      "@/types": [
-        "./общие/types"
-      ],
-      "@/types/*": [
-        "./общие/types/*"
-      ],
       "@/*": [
         "./*"
       ]
@@ -55,7 +49,6 @@
   },
   "include": [
     "next-env.d.ts",
-    "общие/types/**/*.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
@@ -65,7 +58,11 @@
   "exclude": [
     "node_modules",
     ".next",
+    ".next-prod",
+    ".next-prod_bak_*",
+    ".tmp-vitest",
     "out",
+    "dist",
     "coverage"
   ]
 }

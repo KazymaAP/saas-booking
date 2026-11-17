@@ -4,16 +4,19 @@
 // но изолировано в отдельных демо-аккаунтах, поэтому реальные данные не затрагиваются.
 import { randomBytes, scryptSync } from 'crypto';
 import { adminClient } from './supabase';
+import { createCustomer } from './customer-session';
 import {
   DEMO_BUSINESS_NAME,
+  DEMO_CUSTOMER_EMAIL,
+  DEMO_CUSTOMER_NAME,
   DEMO_OWNER_EMAIL,
   DEMO_PARTNER_EMAIL,
   DEMO_PARTNER_NAME,
   DEMO_PARTNER_REF,
-  DEMO_PASSWORD,
   DEMO_PREFIX,
   DEMO_SLUG,
 } from './demo-constants';
+import { demoPassword } from './demo-secret';
 
 // Тот же формат, что lib/partners-auth.ts: scrypt$<salt b64>$<hash b64>.
 function hashPassword(plain: string): string {
@@ -91,7 +94,7 @@ export async function ensureDemoPartner(): Promise<{ id: string }> {
     const { data, error } = await db.from('partners').insert({
       email: DEMO_PARTNER_EMAIL,
       name: DEMO_PARTNER_NAME,
-      password_hash: hashPassword(DEMO_PASSWORD),
+      password_hash: hashPassword(demoPassword()),
       referral_code: DEMO_PARTNER_REF,
       status: 'active',
     }).select('id').single<{ id: string }>();
@@ -160,7 +163,7 @@ async function ensureDemoOwner(businessId: string): Promise<string> {
   let userId = await findAuthUserId(DEMO_OWNER_EMAIL);
   if (!userId) {
     const { data, error } = await db.auth.admin.createUser({
-      email: DEMO_OWNER_EMAIL, password: DEMO_PASSWORD, email_confirm: true,
+      email: DEMO_OWNER_EMAIL, password: demoPassword(), email_confirm: true,
     });
     userId = data.user?.id ?? null;
     if (!userId) {
@@ -230,4 +233,38 @@ export async function ensureDemoBusiness(): Promise<{ businessId: string }> {
   await seedBusinessData(businessId);
   await ensureDemoOwner(businessId);
   return { businessId };
+}
+
+// ---------- клиент (кабинет /my) ----------
+
+// Идемпотентно создаёт демо-клиента для демо-бизнеса и привязывает к нему одну демо-запись,
+// чтобы кабинет /my не был пустым при первом открытии. Возвращает клиента (строку из customers).
+export async function ensureDemoCustomer(): Promise<{ customerId: string; businessId: string }> {
+  const { businessId } = await ensureDemoBusiness();
+  const customer = await createCustomer(businessId, DEMO_CUSTOMER_EMAIL, { name: DEMO_CUSTOMER_NAME });
+
+  const { count: customerBookings } = await adminClient()
+    .from('bookings').select('id', { count: 'exact', head: true })
+    .eq('business_id', businessId).eq('customer_id', customer.id);
+  if (!customerBookings) {
+    const { data: service } = await adminClient()
+      .from('services').select('id').eq('business_id', businessId).eq('is_active', true)
+      .order('sort_order').limit(1).maybeSingle<{ id: string }>();
+    if (service) {
+      const at = new Date(Date.now() + 2 * 3600 * 1000).toISOString();
+      await adminClient().from('bookings').insert({
+        business_id: businessId,
+        service_id: service.id,
+        customer_id: customer.id,
+        client_name: DEMO_CUSTOMER_NAME,
+        client_email: DEMO_CUSTOMER_EMAIL,
+        scheduled_at: at,
+        status: 'new',
+        privacy_accepted_at: new Date().toISOString(),
+        privacy_version: 'demo',
+      });
+    }
+  }
+
+  return { customerId: customer.id, businessId };
 }

@@ -79,6 +79,7 @@ const ERROR_SOURCES: Record<string, string> = {
   cron: 'планировщик',
   admin: 'админка',
   export: 'экспорт',
+  demo: 'демо-кабинет',
 };
 
 export function isErrorAction(action: string): boolean {

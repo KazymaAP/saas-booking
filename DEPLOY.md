@@ -77,6 +77,13 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 | 12 | `supabase/migrations/0012_rate_limit_hit.sql` | атомарный rate limit (`rate_limit_hit`) |
 | 13 | `supabase/migrations/0013_data_requests_types.sql` | типы запросов ПД: `withdraw`, `unsubscribe` |
 | 14 | `supabase/migrations/0014_partition_bookings.sql` | партиционирование `bookings` (производительность при 10000+ тенантов) |
+| 15–0024 | `supabase/migrations/0015_*.sql` … `0024_*.sql` | промежуточные миграции платформы (партнёрка, кастомные роли, жизненный цикл П1/П2/П3, cron cleanup) — применяются в порядке имён тем же циклом |
+| 25 | `supabase/migrations/0025_customers.sql` | кабинет клиента /my (NEW-5): таблица `customers`, `bookings.customer_id` (FK SET NULL), `businesses.require_client_registration`, RLS `p_customers_deny` и `member_customer_bookings_read` |
+| 26 | `supabase/migrations/0026_rls_custom_roles.sql` | RLS и запрет доступа для `business_custom_roles` (таблица создана в 0022 — после цикла RLS из 0007) |
+| 27 | `supabase/migrations/0027_bookings_overlap_trigger.sql` | триггер `trg_bookings_no_overlap` с advisory-lock: запрет пересечения активных броней (замена EXCLUDE-ограничения, несовместимого с партиционированием из 0014) |
+| 28 | `supabase/migrations/0028_email_attachments_bucket.sql` | приватный бакет `email` для вложений входящей почты (раньше создавался только вручную) |
+| 29 | `supabase/migrations/0029_bookings_anon_insert_lockdown.sql` | убрана политика `p_bookings_anon_ins`: брони создаются только через `/api/bookings` (rate limit + проверка слота), не прямым PostgREST-запросом |
+| 30 | `supabase/migrations/0030_partner_earnings_unique.sql` | частичные уникальные индексы на `partner_earnings` и `payments`: повторный вебхук ЮKassa не начисляет комиссию и не пишет выручку дважды |
 
 Миграции задуманы как идемпотентные (`if not exists`, `on conflict do nothing`), но при повторном запуске смотрите вывод на ошибки: `pg_cron`-задачи и сторонние расширения при повторе могут ругаться не всегда безвредно.
 
@@ -157,7 +164,7 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"        
 **Проверка:**
 
 ```bash
-bash scripts/smoke-test.sh https://<project>.vercel.app
+bash служебное/scripts/smoke-test.sh https://<project>.vercel.app
 ```
 
 - Ожидаемо: все проверки `OK`, кроме `/api/health` (`WARN` — эндпоинта нет в коде) и публичного сайта
@@ -308,8 +315,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://zapishisya.ru/api/cron/send-ema
 Через консоль (нужен `.env.local` с ключами Supabase):
 
 ```bash
-npx tsx scripts/import-excel.ts ./scripts/import/2gis.xlsx --filter=шин --dry-run
-npx tsx scripts/import-excel.ts ./scripts/import/2gis.xlsx --filter=шин
+npx tsx служебное/scripts/import-excel.ts ./служебное/scripts/import/2gis.xlsx --filter=шин --dry-run
+npx tsx служебное/scripts/import-excel.ts ./служебное/scripts/import/2gis.xlsx --filter=шин
 ```
 
 Правила импорта: ниша определяется по рубрике; телефоны нормализуются в `+7XXXXXXXXXX`; без email — статус
@@ -322,7 +329,7 @@ npx tsx scripts/import-excel.ts ./scripts/import/2gis.xlsx --filter=шин
 ## Шаг 12. Финальная проверка
 
 ```bash
-bash scripts/smoke-test.sh https://zapishisya.ru t/<slug-клиента>
+bash служебное/scripts/smoke-test.sh https://zapishisya.ru t/<slug-клиента>
 ```
 
 Ручной сквозной сценарий — [TESTING.md](TESTING.md#сквозной-сценарий): импорт → прототип → письмо → оплата →
@@ -352,5 +359,5 @@ bash scripts/smoke-test.sh https://zapishisya.ru t/<slug-клиента>
 1. `pnpm typecheck && pnpm build` локально.
 2. Новые миграции — в SQL Editor до пуша кода, который их использует.
 3. `git push origin master` → Vercel собирает автоматически (ветка по умолчанию в репозитории — `master`).
-4. `bash scripts/smoke-test.sh https://zapishisya.ru`.
+4. `bash служебное/scripts/smoke-test.sh https://zapishisya.ru`.
 5. Запись в [CHANGELOG.md](CHANGELOG.md).

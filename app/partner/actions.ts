@@ -132,10 +132,13 @@ export async function createDraftSiteAction(formData: FormData): Promise<DraftSi
     const email = String(formData.get('email') ?? '');
     const phone = String(formData.get('phone') ?? '');
     if (!name.trim()) return { ok: false, error: 'Укажите название бизнеса' };
-    const { slug } = await createDraftSiteVizitka({ name, email, phone });
+    const { businessId, slug } = await createDraftSiteVizitka({ name, email, phone });
     revalidatePath('/partner');
+    const { getBusinessSitePath } = await import('@/lib/vertical-templates');
+    const path = await getBusinessSitePath(businessId);
+    if (!path) return { ok: false, error: 'Сайт создан, но адрес не сформирован — напишите в поддержку' };
     const { SITE_URL } = await import('@/lib/site');
-    return { ok: true, slug, url: `${SITE_URL}/d/${slug}` };
+    return { ok: true, slug, url: `${SITE_URL}${path}` };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Не удалось создать сайт' };
   }

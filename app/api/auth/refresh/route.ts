@@ -3,13 +3,17 @@
 // перенаправляет сюда. GET безопасен: он не меняет данных, только ротирует токены текущего браузера
 // (cookie sameSite=lax, refresh-токен с чужого сайта не подставить). next проверяется против open redirect.
 import { NextResponse, type NextRequest } from 'next/server';
-import { panelRootOf, sanitizePanelNext, type AuthRealm } from '@/lib/auth-core';
+import { panelRootOf, sanitizePanelNext } from '@/lib/auth-core';
 import { refreshSession } from '@/lib/auth-session';
+import type { SessionKind } from '@/lib/auth-cookies';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function parseRealm(raw: string | null): AuthRealm | null {
+// Только realm'ы, у которых есть пара access/refresh от Supabase Auth.
+// Клиентский кабинет (/my) сюда не входит: его сессия — самоподписанный JWT на 30 дней
+// (общие/lib/customer-session.ts), обновлять нечего.
+function parseRealm(raw: string | null): SessionKind | null {
   if (raw === 'admin' || raw === 'owner') return raw;
   return null;
 }

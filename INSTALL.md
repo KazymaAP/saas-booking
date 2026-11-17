@@ -182,7 +182,7 @@ select count(*) from services;                           -- как в исход
 ## Проверка
 
 ```bash
-bash scripts/smoke-test.sh https://<домен-клиента>
+bash служебное/scripts/smoke-test.sh https://<домен-клиента>
 ```
 
 На домене клиента `/` — это сайт бизнеса, а `/admin/login` — вход в кабинет, поэтому обе проверки дают 200.

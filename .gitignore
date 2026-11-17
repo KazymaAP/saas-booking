@@ -16,7 +16,9 @@ next-env.d.ts
 Thumbs.db
 .vercel
 
-scripts/import/
+# выгрузки 2GIS для CLI-импорта: реальные дампы не коммитим, образец оставляем
+служебное/scripts/import/*
+!служебное/scripts/import/2gis.xlsx
 check-log.txt
 tsconfig.tsbuildinfo
 supabase/.temp/
@@ -24,6 +26,7 @@ supabase/.temp/
 # локальные бэкапы сборки и временные каталоги (не в git)
 .next-prod/
 .next-prod_bak_*/
+.next-buildcheck/
 .next_bak_*/
 build_out/
 .tmp-vitest/

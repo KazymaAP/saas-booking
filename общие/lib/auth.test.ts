@@ -411,30 +411,6 @@ describe('owner-session: кастомные роли (П1/П3)', () => {
   });
 });
 
-describe('flash (задача 4)', () => {
-  it('принимает только известные не-секретные сообщения', async () => {
-    const { parseFlash } = await import('./flash');
-    expect(parseFlash(JSON.stringify({ kind: 'invite_sent', email: 'a@b.ru' }))).toEqual({ kind: 'invite_sent', email: 'a@b.ru' });
-    expect(parseFlash(JSON.stringify({ kind: 'error', code: 'rate_limited' }))).toEqual({ kind: 'error', code: 'rate_limited' });
-  });
-
-  it('отбрасывает пароль из cookie старого формата и мусор', async () => {
-    const { parseFlash } = await import('./flash');
-    expect(parseFlash(JSON.stringify({ email: 'a@b.ru', password: 'secret' }))).toBeNull();
-    const withExtra = parseFlash(JSON.stringify({ kind: 'access_created', email: 'a@b.ru', password: 'secret' }));
-    expect(JSON.stringify(withExtra)).not.toContain('secret');
-    expect(parseFlash('{oops')).toBeNull();
-    expect(parseFlash(undefined)).toBeNull();
-    expect(parseFlash(JSON.stringify({ kind: 'error', code: '<script>' }))).toBeNull();
-  });
-
-  it('writeFlash ставит httpOnly secure lax cookie на 5 минут', async () => {
-    const { writeFlash, FLASH_COOKIE } = await import('./flash');
-    writeFlash({ kind: 'invite_sent', email: 'a@b.ru' }, '/admin');
-    expect(harness.jar.get(FLASH_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'lax', path: '/admin', maxAge: 300 });
-  });
-});
-
 // Токен из последнего письма: в БД его нет (там только дайджест), поэтому тесты, как и пользователь, берут его из письма.
 function tokenFromLastMail(): string {
   const text = harness.sentMails.at(-1)?.text ?? '';

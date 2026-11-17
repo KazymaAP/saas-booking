@@ -152,7 +152,9 @@ export const SlotPicker = memo(function SlotPicker(props: SlotPickerProps) {
       </p>
       {state.kind === 'loading' && showSkeleton ? <SlotSkeleton /> : null}
       {state.kind === 'ready' && state.slots.length > 0 ? (
-        <div role="group" aria-labelledby={labelId} aria-describedby={errorId} aria-invalid={invalid} className={CLS.slots}>
+        // aria-invalid не поддерживается role="group" (jsx-a11y/role-supports-aria-props):
+        // ошибка озвучивается через aria-describedby на текст ошибки, а состояние — data-атрибутом для стилей.
+        <div role="group" aria-labelledby={labelId} aria-describedby={errorId} data-invalid={invalid || undefined} className={CLS.slots}>
           {state.slots.map((iso) => (
             <button
               key={iso}

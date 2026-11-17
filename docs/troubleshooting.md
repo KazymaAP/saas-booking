@@ -32,7 +32,7 @@ export CRON_SECRET='<значение из Vercel>'
 1. Прогоните smoke-test — он за 30 секунд показывает, какой слой сломан:
 
    ```bash
-   bash scripts/smoke-test.sh "$SITE" t/<slug-клиента>
+   bash служебное/scripts/smoke-test.sh "$SITE" t/<slug-клиента>
    ```
 
 2. Сопоставьте результат:
@@ -131,7 +131,7 @@ curl -sI "https://<project>.vercel.app" | head -5   # если работает 
 | сборка падает | ошибка типов или pnpm | Deployments → Build Logs; [DEPLOY.md, что делать, если упало](../DEPLOY.md#что-делать-если-упало) |
 | `402` / проект приостановлен | превышены лимиты тарифа Hobby | **Usage**; перейти на Pro |
 
-После любого восстановления: `bash scripts/smoke-test.sh "$SITE"`.
+После любого восстановления: `bash служебное/scripts/smoke-test.sh "$SITE"`.
 
 ## SMTP не работает
 
@@ -349,7 +349,7 @@ pg_restore --clean --if-exists --no-owner --no-privileges -d "$SUPABASE_DB_URL" 
 
 После восстановления:
 
-1. `bash scripts/smoke-test.sh "$SITE"` — все `OK`.
+1. `bash служебное/scripts/smoke-test.sh "$SITE"` — все `OK`.
 2. Тестовая бронь на демо-бизнесе ([TESTING.md, сквозной сценарий](../TESTING.md#сквозной-сценарий)).
 3. Письмо клиентам о восстановлении.
 4. Запись в [CHANGELOG.md](../CHANGELOG.md), если понадобилась правка кода или конфигурации.

@@ -2,8 +2,13 @@
 // БД и Storage подменяются памятью (tests/memory-backup-db.ts), Supabase не нужен.
 // Тесты route handler (cron/backup, backup/restore) — в lib/backup-routes.test.ts.
 import { describe, expect, it, vi } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 vi.mock('./supabase', () => ({ adminClient: () => { throw new Error('Supabase в unit-тестах не используется'); } }));
+
+import { PARENTS } from './backup-shared';
 
 import {
   BACKUP_FORMAT,
@@ -47,7 +52,7 @@ describe('имена файлов', () => {
 });
 
 describe('collectBackup', () => {
-  it('собирает все 9 таблиц', async () => {
+  it('собирает все таблицы списка', async () => {
     const dump = await collectBackup(new MemoryDb({ businesses: 3, photos: 2, vertical_templates: 1 }), NOW);
     expect(Object.keys(dump.tables).sort()).toEqual([...BACKUP_TABLES].sort());
     expect(dump.tables).toHaveProperty('photos');
@@ -447,5 +452,43 @@ describe('раунд 2: целостность и безопасность resto
     });
     expect(r).toEqual({ http_status: 503, body: { ok: false, reason: 'lock' } });
     expect(db.upsert_calls).toHaveLength(0);
+  });
+});
+
+// --- Полнота списка таблиц: дефект «таблицу забыли» (customers, 0025) ломал restore на внешнем ключе ---
+const MIGRATIONS_DIR = fileURLToPath(new URL('../../supabase/migrations/', import.meta.url));
+const migrationsSql = readdirSync(MIGRATIONS_DIR)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .map((f) => readFileSync(join(MIGRATIONS_DIR, f), 'utf8'))
+  .join('\n');
+
+// Пары «таблица → на кого ссылается» из create table … references X(id) и alter table … references X(id).
+// Префикс public. необязателен: 0001 создаёт таблицы без него, 0017/0022/0025 — с ним.
+const FOREIGN_KEYS: { from: string; to: string }[] = [];
+for (const stmt of migrationsSql.split(';')) {
+  const from = /(?:create table (?:if not exists )?|alter table (?:if exists )?)(?:public\.)?([a-z_]+)/i.exec(stmt)?.[1];
+  if (from === undefined) continue;
+  for (const m of stmt.matchAll(/references (?:public\.)?([a-z_]+)\s*\(id\)/gi)) {
+    FOREIGN_KEYS.push({ from, to: m[1] ?? '' });
+  }
+}
+
+describe('полнота списка таблиц бэкапа', () => {
+  it('внешний ключ из таблицы бэкапа ведёт только на таблицы бэкапа (иначе 23503 и потеря всей таблицы)', () => {
+    const known = new Set<string>(BACKUP_TABLES);
+    expect(FOREIGN_KEYS.filter((fk) => known.has(fk.from) && known.has(fk.to) === false)).toEqual([]);
+  });
+
+  it('родители стоят раньше детей, PARENTS описывает ровно список', () => {
+    const index = new Map<string, number>(BACKUP_TABLES.map((t, i) => [t, i]));
+    for (const t of BACKUP_TABLES) {
+      for (const p of PARENTS[t]) {
+        const pi = index.get(p);
+        const ti = index.get(t);
+        expect(pi !== undefined && ti !== undefined && pi < ti, `${p} должен идти в списке до ${t}`).toBe(true);
+      }
+    }
+    expect(Object.keys(PARENTS).sort()).toEqual([...BACKUP_TABLES].sort());
   });
 });

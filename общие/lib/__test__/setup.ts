@@ -44,6 +44,8 @@ vi.mock('../auth-provider', () => ({
   verifyAccessToken: vi.fn(),
   sessionWithoutPassword: vi.fn(),
   setUserPassword: vi.fn(),
+  signInWithOtp: vi.fn(),
+  verifyEmailOtp: vi.fn(),
   createUserWithPassword: vi.fn(),
   revokeAllSessions: vi.fn(),
   revokeSession: vi.fn(),

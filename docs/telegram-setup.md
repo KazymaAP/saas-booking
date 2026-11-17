@@ -272,7 +272,7 @@ curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 | `getWebhookInfo`: `Wrong response from the webhook: 403 Unauthorized` | секрет в `setWebhook` не совпадает с переменной или переменная не задана | проверить переменную, Redeploy, повторить шаг 5 |
 | `getWebhookInfo`: `404 Not Found` | неверный путь или домен не указывает на Vercel | путь `/api/telegram/webhook`, проверить DNS |
 | `getWebhookInfo`: `SSL error` | сертификат ещё не выпущен | дождаться SSL в Vercel → Domains |
-| `getWebhookInfo`: `Connection timed out` | домен не отвечает | `bash scripts/smoke-test.sh $SITE` |
+| `getWebhookInfo`: `Connection timed out` | домен не отвечает | `bash служебное/scripts/smoke-test.sh $SITE` |
 | `getUpdates`: `Conflict: can't use getUpdates method while webhook is active` | webhook уже зарегистрирован | `deleteWebhook`, получить chat id, шаг 5 |
 | `/stats` молчит, webhook без ошибок | `TELEGRAM_CHAT_ID` не совпадает с вашим чатом | шаг 2, Redeploy |
 | Владелец отправил код, бот молчит | не задан `TELEGRAM_BOT_TOKEN` (бот принимает, но не может ответить) или webhook не зарегистрирован | шаг 4, шаг 5 |

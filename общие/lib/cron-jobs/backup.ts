@@ -4,15 +4,15 @@
 // Ошибка чтения любой таблицы → исключение → 500 + logError: неполный бэкап не записывается.
 // Идемпотентно: файл backup-YYYY-MM-DD.json перезаписывается (upsert). Файлы старше 30 дней удаляются (§16.7).
 import type { CronContext, CronResult } from '../cron';
+import { BACKUP_TABLES } from '../backup-shared';
 import { DAY_MS, hasTimeLeft, unwrapRows } from './shared';
 
 export const JOB = 'backup';
 export const BACKUP_BUCKET = 'backups';
 export const BACKUP_KEEP_DAYS = 30;
-// Те же таблицы, что восстанавливает app/api/backup/restore/route.ts (порядок — родители раньше детей).
-export const BACKUP_TABLES = [
-  'vertical_templates', 'businesses', 'services', 'photos', 'admin_users', 'bookings', 'outreach_log', 'emails_outgoing', 'licenses',
-] as const;
+// Список и порядок таблиц — из общего модуля lib/backup-shared.ts, того же, что использует восстановление.
+// Своя копия списка уже приводила к расхождению: панель ждала таблицу, которую крон не выгружал.
+export { BACKUP_TABLES };
 export const PAGE_SIZE = 1000;
 // Предел страниц на таблицу: 200 × 1000 = 200 тыс. строк. Больше — бэкап не уложится в функцию Vercel, нужен pg_dump.
 const MAX_PAGES = 200;

@@ -83,7 +83,7 @@ project/
 
 **Практический вывод:** при правке бизнес-логики править нужно `общие/lib/`. Правка корневого `lib/` на работающее приложение не влияет. Это же касается `sw-source.ts` / `sw-rules.ts` (service worker берётся из `общие/lib/` через `@/lib/sw-source`).
 
-Аналогично существуют пары `components/` ↔ `общие/components/`, `types/` ↔ `общие/types/`, `scripts/` ↔ `служебное/scripts/`, `tests/` ↔ `служебное/tests/`, `docs/*.md` ↔ `служебное/docs/*.md`. В `служебное/docs/` дополнительно лежат `PROJECT_FILES_CATALOG.md`, `AUDIT-CHECKLIST.md`, `detailing-reference.md`, `detailing-template-port.md`, `glowdetailing-demo.md`.
+Аналогичные пары дублей существовали для `components/`, `types/`, `scripts/`, `tests/` и `docs/`. На 16.11.2026 дубли удалены: единственные каталоги — `общие/components/`, `служебное/scripts/`, `служебное/tests/`; каталога `общие/types/` больше нет (у `imapflow` 2.x свои типы, алиас `@/types` снят). В `служебное/docs/` остались только уникальные архивные файлы: `PROJECT_FILES_CATALOG.md`, `AUDIT-CHECKLIST.md`, `detailing-reference.md`, `detailing-template-port.md`, `glowdetailing-demo.md`; остальная документация — в корне и в `docs/`.
 
 ## 4. `app/` — организация маршрутов
 

@@ -140,7 +140,7 @@
 | `README.md` | «ссылка на отмену/перенос не отправляется» | отправляется (`notifyClientBooking`, `cancelUrl`/`rescheduleUrl`) |
 | `README.md` | «server actions не проверяют isSuperAdmin» | `requireSuperAdmin` в `app/panel/(protected)/actions.ts` |
 | `README.md` | «cleanup-prototypes удаляет бывших клиентов» | защита двухуровневая, бывшие клиенты не удаляются |
-| `README.md` | ссылки `[PROGRESS.md](PROGRESS.md#...)`, `[DEPLOY.md](DEPLOY.md#...)` | файлы в `служебное/docs/` — ссылки битые |
+| `README.md` | ссылки `[PROGRESS.md](PROGRESS.md#…)`, `[DEPLOY.md](DEPLOY.md#…)` | файлы в `служебное/docs/` — ссылки битые (исправлено 16.11.2026: дубли удалены, README ссылается на корневые файлы) |
 | `PROGRESS.md` | миграции `0001–0014` | 16 (`0001–0016`) |
 | `PROGRESS.md` | тесты 1296 / 85 файлов | 1313 passed / 87 файлов, 4 падения |
 | `PROGRESS.md` | `0005_indexes.sql` «не закоммичено» | файл в репозитории |
