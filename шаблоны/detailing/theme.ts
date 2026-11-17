@@ -3,16 +3,20 @@ import type { NicheTheme } from '@/шаблоны/_shared/niche-tenant';
 const theme: NicheTheme = {
   key: 'detailing',
   prefix: 'd',
-  accent: '#3b82f6',
-  accent2: '#22d3ee',
+  // Палитра 1:1 с референсом D:\Clode\Детейленг (src/index.css):
+  // --color-bg 0 0 0, surface 10 10 10, border 36 36 36, accent 70 144 255.
+  // NicheSite перекрывает CSS-переменные эталонного detailing-scoped.css через
+  // inline style на .detailing-root — поэтому значения обязаны совпадать с origin.
+  accent: '#4690ff',
+  accent2: '#4690ff',
   mode: 'dark',
-  bg: '#0a1020',
-  surface: '#101a30',
-  border: '#1e2d4a',
-  borderHover: '#2b3d61',
-  text: '#f2f6ff',
-  textMuted: '#9fb0cc',
-  textSubtle: '#7d8fae',
+  bg: '#000000',
+  surface: '#0a0a0a',
+  border: '#242424',
+  borderHover: '#36363c',
+  text: '#ffffff',
+  textMuted: '#91919e',
+  textSubtle: '#7d7d87',
   glyph: 'car',
   businessNoun: 'студия',
   tagline: 'Премиум-детейлинг вашего авто',
