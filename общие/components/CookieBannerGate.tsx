@@ -14,6 +14,8 @@ const NICHE_PREFIXES: ReadonlySet<string> = new Set([
 export function CookieBannerGate(): React.JSX.Element | null {
   const pathname = usePathname();
   const parts = pathname.split('/').filter(Boolean);
+  // Внутренняя рабочая таблица GERA — без баннера, он перекрывает нижние строки.
+  if (parts[0] === 'GERA') return null;
   if (parts.length === 2 && NICHE_PREFIXES.has(parts[0] ?? '')) return null;
   // Служебные страницы витрины: /{prefix}/{slug}/booking/... — тоже без баннера.
   if (parts.length >= 4 && NICHE_PREFIXES.has(parts[0] ?? '') && parts[2] === 'booking') return null;
