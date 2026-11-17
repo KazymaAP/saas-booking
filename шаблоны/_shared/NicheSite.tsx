@@ -68,44 +68,14 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
   const [bookingOpen, setBookingOpen] = useState(false);
   const [initialServiceId, setInitialServiceId] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
-  const [hasBooking, setHasBooking] = useState(false);
 
-  // Эталон: «Моя запись» ведёт к последней записи, если токен сохранён в браузере.
-  // Аккаунт клиента намеренно НЕ используется — только токен из localStorage.
-  useEffect(() => {
-    const key = `autobooking:last:${slug}`;
-    const read = () => {
-      try {
-        return !!window.localStorage.getItem(key);
-      } catch {
-        return false;
-      }
-    };
-    setHasBooking(read());
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === key) setHasBooking(read());
-    };
-    const onBookingCreated = (event: Event) => {
-      const detail = (event as CustomEvent<{ slug?: string }>).detail;
-      if (detail?.slug && detail.slug !== slug) return;
-      setHasBooking(read());
-    };
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('autobooking:booking-created', onBookingCreated);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('autobooking:booking-created', onBookingCreated);
-    };
-  }, [slug]);
-
-  // Возврат с «Моей записи», когда записи ещё нет: сразу открываем шторку записи.
+  // Переход с UtilityShell: «Услуги» открывает ту же шторку записи.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('book') === '1') setBookingOpen(true);
   }, []);
 
-  const bookingTarget = hasBooking
-    ? `/${prefix}/${slug}/booking/last`
-    : `/${prefix}/${slug}?book=1`;
+  // «Моя запись» — страница записи по токену из localStorage, не аккаунт клиента.
+  const bookingTarget = `/${prefix}/${slug}/booking/last`;
 
   const openBooking = (serviceId?: string) => {
     setInitialServiceId(serviceId);
@@ -417,10 +387,10 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             <House size={20} weight="bold" />
             <span>Главная</span>
           </a>
-          <a href="#services" aria-label="Услуги" className="bottom-nav__item press">
+          <button type="button" onClick={() => openBooking()} aria-label="Услуги" className="bottom-nav__item press border-0 bg-transparent">
             <Glyph icon={tenant.glyph} size={20} weight="bold" />
             <span>Услуги</span>
-          </a>
+          </button>
           <a href={bookingTarget} aria-label="Моя запись" className="bottom-nav__item press">
             <CalendarCheck size={20} weight="bold" />
             <span>Моя запись</span>

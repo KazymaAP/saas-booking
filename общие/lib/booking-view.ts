@@ -82,6 +82,67 @@ export async function loadBookingView(
   return toView(booking, viewStateOf(booking, action, count, nowMs), count);
 }
 
+// Полная карточка «Моя запись» (эталон: MyBooking.tsx). Без аккаунта — только токен.
+export type MyBookingView = {
+  token: string;
+  status: string;
+  serviceName: string | null;
+  businessName: string;
+  address: string;
+  phone: string | null;
+  when: string;
+  startsAt: string;
+  endsAt: string;
+  clientName: string;
+  clientPhone: string;
+  clientTelegram: string;
+  comment: string;
+  price: number;
+  cancelHours: number;
+  cancellable: boolean;
+  active: boolean;
+};
+
+export async function loadMyBooking(
+  rawToken: string,
+  expectedSlug: string,
+  nowMs: number = Date.now(),
+): Promise<MyBookingView | null> {
+  if (rawToken === 'none') return null;
+  const token = tokenSchema.safeParse(rawToken);
+  if (token.success === false) return null;
+  const booking = await bookingByToken(token.data);
+  if (booking === null || booking.businesses.slug !== expectedSlug) return null;
+
+  const timeZone = businessTimeZone(booking.businesses);
+  const startsAt = new Date(booking.scheduled_at).toISOString();
+  const durationMinutes = booking.duration_at_booking ?? booking.services?.duration_minutes ?? 60;
+  const endsAt = new Date(Date.parse(startsAt) + durationMinutes * 60_000).toISOString();
+  const cancelled = booking.status === 'cancelled';
+  const active = isActive(booking.status);
+  const address = [booking.businesses.address, booking.businesses.city].filter(Boolean).join(', ');
+
+  return {
+    token: token.data,
+    status: booking.status,
+    serviceName: booking.services?.name ?? null,
+    businessName: booking.businesses.name,
+    address,
+    phone: businessPhone(booking),
+    when: formatSlotDateTime(startsAt, timeZone),
+    startsAt,
+    endsAt,
+    clientName: booking.client_name ?? '',
+    clientPhone: booking.client_phone ?? '',
+    clientTelegram: booking.client_telegram ?? '',
+    comment: booking.comment ?? '',
+    price: booking.price_at_booking ?? booking.services?.price ?? 0,
+    cancelHours: cancelHoursBefore(booking),
+    cancellable: !cancelled && active && withinCancelWindow(booking, nowMs),
+    active,
+  };
+}
+
 // Короткий адрес из письма /booking/{action}/{token} → адрес на сайте бизнеса.
 const SiteRow = z.object({
   businesses: z.object({ slug: z.string(), vertical_templates: z.object({ url_prefix: z.string() }).nullable() }).nullable(),

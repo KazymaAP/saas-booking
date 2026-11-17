@@ -1,7 +1,7 @@
 'use client';
-// app/[prefix]/[slug]/booking/last/page.tsx — аналог эталонной кнопки «Моя запись».
-// Берёт токен последней записи из localStorage и открывает страницу управления ею.
-// Никакого аккаунта и входа не требуется: токен живёт только в браузере клиента.
+// app/[prefix]/[slug]/booking/last/page.tsx — переходник «Моя запись» без аккаунта.
+// Читает токен последней записи из localStorage и открывает страницу записи,
+// либо экран «Запись не найдена» (порт эталонного MyBooking.tsx).
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -17,10 +17,10 @@ export default function LastBookingPage({ params }: { params: { prefix: string; 
       token = '';
     }
     if (token) {
-      router.replace(`/${prefix}/${slug}/booking/cancel/${encodeURIComponent(token)}`);
+      router.replace(`/${prefix}/${slug}/booking/my/${encodeURIComponent(token)}`);
     } else {
-      // Записи ещё нет — открываем шторку записи на главной, как в эталоне.
-      router.replace(`/${prefix}/${slug}?book=1`);
+      // Нет последней записи — показываем экран «Запись не найдена» из эталона.
+      router.replace(`/${prefix}/${slug}/booking/my/none`);
     }
   }, [prefix, slug, router]);
 

@@ -35,14 +35,22 @@ const TokenBookingRow = z.object({
   service_id: z.string().nullable().optional(),
   reschedule_count: nullableInt,
   duration_at_booking: nullableInt,
+  price_at_booking: z.number().nullable().optional(),
+  client_name: z.string().nullable().optional(),
+  client_phone: z.string().nullable().optional(),
+  client_email: z.string().nullable().optional(),
+  client_telegram: z.string().nullable().optional(),
+  comment: z.string().nullable().optional(),
   services: z
-    .object({ name: z.string().nullable().optional(), duration_minutes: nullableInt, buffer_before: nullableInt, buffer_after: nullableInt })
+    .object({ name: z.string().nullable().optional(), duration_minutes: nullableInt, buffer_before: nullableInt, buffer_after: nullableInt, price: z.number().nullable().optional() })
     .nullable()
     .optional(),
   businesses: z.object({
     id: z.string(),
     slug: z.string().optional(),
     name: z.string(),
+    address: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
     phones: z.array(z.string()).nullable().optional(),
     cancel_hours_before: nullableInt,
     max_reschedules: nullableInt,
