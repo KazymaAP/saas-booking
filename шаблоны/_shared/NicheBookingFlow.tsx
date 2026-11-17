@@ -190,6 +190,14 @@ export function NicheBookingFlow({
     const res = await browserBookingClient().create(payload);
     setSubmitting(false);
     if (res.ok) {
+      // Эталон: токен последней записи хранится в браузере, чтобы кнопка
+      // «Моя запись» открывала её без регистрации и входа в аккаунт.
+      try {
+        window.localStorage.setItem(`autobooking:last:${slug}`, res.value.cancelToken);
+        window.dispatchEvent(new CustomEvent('autobooking:booking-created', { detail: { slug } }));
+      } catch {
+        // Приватный режим / запрет localStorage — кнопка просто останется в режиме записи.
+      }
       setResult(res.value);
       setStep('done');
       onBooked?.();
@@ -507,7 +515,7 @@ export function NicheBookingFlow({
             >
               <Copy size={18} weight="bold" /> Копировать ссылку
             </button>
-            <a className="btn-secondary text-body-sm" href={`/booking/cancel/${result.cancelToken}`}>
+            <a className="btn-secondary text-body-sm" href={`/${prefix}/${slug}/booking/cancel/${result.cancelToken}`}>
               Моя запись
             </a>
             <a
