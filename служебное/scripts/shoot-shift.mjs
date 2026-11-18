@@ -43,6 +43,7 @@ if (one) {
   const out = process.argv[3] || 'shot.png';
   await page.goto(`${BASE}${one}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await wait(1500);
+  console.log('страница:', page.url());
   await acceptCookies();
   await page.screenshot({ path: out, fullPage: true });
   console.log('saved', out, '→', await page.title());
