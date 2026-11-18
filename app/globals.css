@@ -5,6 +5,45 @@
    @tailwind base (preflight) намеренно не подключён: шаблон клиента (studio.css) использует свои слои и сброс.
    Все базовые правила панелей привязаны к .panel-shell, чтобы не протекать в шаблон клиента. */
 
+/* @tailwind base не подключён, поэтому нет и значений по умолчанию для --tw-*.
+   Без них transform-утилиты Tailwind (translate/rotate/skew/scale) собираются в
+   `translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(...)` с неопределёнными
+   переменными — объявление невалидно, и transform откатывается в none. Из-за этого,
+   например, мобильное меню не уезжало за край экрана.
+   Та же история с filter/backdrop-filter: `backdrop-blur-xl` у выезжающего меню не
+   применялся, и сквозь него читался текст страницы. Пустая строка — легальное значение
+   по умолчанию для этих групп. Возвращаем только transform и фильтры: тени и ring
+   не трогаем, чтобы не менять уже согласованный вид панелей. */
+*,
+::before,
+::after {
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+}
+
 :root {
   --brand-color: #111111;
   --ink: #1a1a1a;
@@ -13,6 +52,7 @@
   --surface: #ffffff;
   --soft: #f6f6f6;
   --radius: 10px;
+  --danger: #b91c1c;
 }
 
 body {
@@ -213,29 +253,57 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
   --on-accent: #04121f;
   --ink: #e6edf7;
   --muted: #8b9bb4;
-  --line: rgba(148, 163, 184, 0.16);
-  --surface: rgba(255, 255, 255, 0.045);
+  --line: rgba(148, 163, 184, 0.22);
+  --surface: rgba(255, 255, 255, 0.06);
   --soft: rgba(255, 255, 255, 0.075);
   --panel-bg: transparent; /* фон даёт GlassBackground (fixed, за контентом) */
   --radius: 16px;
+  --danger: #f87171;
   min-height: 100vh;
   color-scheme: dark;
 }
 
 /* Стеклянные карточки, таблицы и блоки в стиле дашборда */
-.admin-dark .panel-shell details,
-.admin-dark .panel-shell section > .card,
-.admin-dark .panel-shell table {
+.panel-shell.admin-dark details,
+.panel-shell.admin-dark section > .card,
+.panel-shell.admin-dark table {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.035);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.28);
 }
-.admin-dark .panel-shell thead th { background: rgba(255, 255, 255, 0.03); }
-.admin-dark .panel-shell h1 { letter-spacing: -0.02em; }
-.admin-dark .panel-shell option { background: #0b1b2c; color: #e6edf7; }
-.admin-dark .panel-shell ::selection { background: rgba(56, 189, 248, 0.35); }
+.panel-shell.admin-dark thead th { background: rgba(255, 255, 255, 0.03); }
+.panel-shell.admin-dark h1 { letter-spacing: -0.02em; }
+.panel-shell.admin-dark option { background: #0b1b2c; color: #e6edf7; }
+.panel-shell.admin-dark ::selection { background: rgba(56, 189, 248, 0.35); }
+
+/* Поля ввода в тёмной теме: на стекле полупрозрачный фон почти не читался — делаем поле
+   утопленным (тёмная заливка + заметная граница), фокус — брендовым цветом. */
+.panel-shell.admin-dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.panel-shell.admin-dark select,
+.panel-shell.admin-dark textarea {
+  background: rgba(6, 15, 26, 0.55);
+  border-color: rgba(148, 163, 184, 0.32);
+}
+.panel-shell.admin-dark input::placeholder,
+.panel-shell.admin-dark textarea::placeholder { color: rgba(230, 237, 247, 0.45); }
+.panel-shell.admin-dark input:focus,
+.panel-shell.admin-dark select:focus,
+.panel-shell.admin-dark textarea:focus {
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* Группы полей в настройках: браузерная рамка fieldset на стекле выглядела чужеродно —
+   оформляем как остальные карточки, с отступом и заголовком-легендой на рамке. */
+.panel-shell.admin-dark fieldset {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 14px 16px 16px;
+}
+.panel-shell.admin-dark legend { padding: 0 8px; font-weight: 600; }
 
 /* === стеклянные утилиты (glassmorphism) === */
 .admin-dark .glass {
@@ -246,7 +314,7 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
   border-radius: 1rem;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
-.admin-dark .panel-shell button.glass-btn {
+.panel-shell.admin-dark button.glass-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +328,7 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
   cursor: pointer;
   transition: background-color 0.2s;
 }
-.admin-dark .panel-shell button.glass-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.panel-shell.admin-dark button.glass-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
 /* === стекло для SuperAdmin (главная/SuperAdmin.tsx, токены detailing) ===
    detailing-scoped.css подключается позже и задаёт непрозрачные цвета, поэтому правила усилены
@@ -296,3 +364,60 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
   border-color: rgba(255, 255, 255, 0.16) !important;
 }
 .detailing-root.admin-glass .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.16) !important; }
+
+/* === Тёмное стекло: перевод жёстко заданных цветов светлой темы ===
+   В разметке разделов кабинета остались литералы (#595959, #e5e5e5, #f0f0f0 и т. п.).
+   Для светлой темы они верны, но на тёмном стекле дают тёмный текст на тёмном фоне
+   и белые плитки поверх градиента. Перекрашиваем их здесь, а не в тридцати файлах:
+   селектор по подстроке класса ловит ровно эти утилиты, светлые темы не затрагиваются.
+   Специфичность .admin-dark [class*=…] (0,2,0) выше утилиты Tailwind (0,1,0), !important не нужен. */
+.admin-dark [class*="text-[#595959]"],
+.admin-dark [class*="text-[#6b6b6b]"],
+.admin-dark [class*="text-[#8a8a8a]"],
+.admin-dark [class*="text-[#555555]"],
+.admin-dark [class*="text-[#666]"] { color: var(--muted); }
+/* Основной текст разделов (почти чёрный в светлой теме) — на стекле светлый. */
+.admin-dark [class*="text-[#333333]"],
+.admin-dark [class*="text-[#404040]"] { color: var(--ink); }
+
+.admin-dark [class*="border-[#e5e5e5]"],
+.admin-dark [class*="border-[#d4d4d4]"] { border-color: var(--line); }
+
+.admin-dark [class*="bg-[#f0f0f0]"],
+.admin-dark [class*="bg-[#fafafa]"],
+.admin-dark [class*="bg-[#f6f6f6]"],
+.admin-dark [class*="bg-[#ececec]"],
+.admin-dark [class*="bg-[#e5e5e5]"],
+.admin-dark [class*="bg-[#f5f5f5]"] { background-color: var(--soft); }
+
+/* Смысловые цвета: на тёмном нужны светлее, иначе не проходят по контрасту. */
+.admin-dark [class*="text-[#b91c1c]"] { color: #f87171; }
+.admin-dark [class*="text-[#14532d]"] { color: #4ade80; }
+.admin-dark [class*="text-[#1e3a8a]"] { color: #93c5fd; }
+.admin-dark [class*="text-[#b45309]"],
+.admin-dark [class*="text-[#92400e]"],
+.admin-dark [class*="text-[#713f12]"],
+.admin-dark [class*="text-[#a16207]"] { color: #fbbf24; }
+.admin-dark [class*="text-[#7f1d1d]"],
+.admin-dark [class*="text-[#dc2626]"] { color: #f87171; }
+
+/* Плашки статусов: светлая заливка остаётся, но полупрозрачной — иначе на стекле
+   получаются яркие прямоугольники. Текст внутри уже перекрашен правилами выше. */
+.admin-dark [class*="bg-[#f0fdf4]"],
+.admin-dark [class*="bg-[#dcfce7]"] { background-color: rgba(74, 222, 128, 0.16); }
+.admin-dark [class*="bg-[#eff6ff]"] { background-color: rgba(147, 197, 253, 0.14); }
+.admin-dark [class*="bg-[#fef9c3]"],
+.admin-dark [class*="bg-[#fefce8]"],
+.admin-dark [class*="bg-[#fffbeb]"] { background-color: rgba(251, 191, 36, 0.14); }
+.admin-dark [class*="bg-[#fef2f2]"],
+.admin-dark [class*="bg-[#fee2e2]"],
+.admin-dark [class*="bg-[#fdf3f3]"] { background-color: rgba(248, 113, 113, 0.14); }
+.admin-dark [class*="bg-[#f4f4f4]"] { background-color: rgba(255, 255, 255, 0.06); }
+
+.admin-dark [class*="border-[#86efac]"] { border-color: rgba(74, 222, 128, 0.35); }
+.admin-dark [class*="border-[#fca5a5]"],
+.admin-dark [class*="border-[#f0c2c2]"] { border-color: rgba(248, 113, 113, 0.35); }
+.admin-dark [class*="border-[#bfdbfe]"] { border-color: rgba(147, 197, 253, 0.35); }
+.admin-dark [class*="border-[#fde047]"] { border-color: rgba(251, 191, 36, 0.35); }
+.admin-dark [class*="border-[#16a34a]"] { border-color: rgba(74, 222, 128, 0.5); }
+.admin-dark [class*="border-[#b45309]"] { border-color: rgba(251, 191, 36, 0.4); }

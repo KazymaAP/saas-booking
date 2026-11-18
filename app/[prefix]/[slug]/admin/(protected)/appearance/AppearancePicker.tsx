@@ -46,10 +46,12 @@ export function AppearancePicker({
   siteTheme: string;
 }) {
   const toast = useToast();
-  const [panel, setPanel] = useState(panelTheme);
+  // Стиль кабинета больше не выбирается: кабинет оформлен так же, как супер-админка
+  // (тёмное стекло). Сохранённое значение не трогаем — просто отправляем прежним.
+  const [panel] = useState(panelTheme);
   const [site, setSite] = useState(siteTheme);
   const [pending, startTransition] = useTransition();
-  const dirty = panel !== panelTheme || site !== siteTheme;
+  const dirty = site !== siteTheme;
 
   function save() {
     startTransition(async () => {
@@ -65,20 +67,11 @@ export function AppearancePicker({
   return (
     <section className="card grid gap-4">
       <div>
-        <h2 className="!mb-1">Оформление</h2>
+        <h2 className="!mb-1">Стиль сайта-визитки</h2>
         <p className="!mb-0 text-[13px] text-[var(--muted)]">
-          Стиль кабинета и сайта можно выбрать отдельно. По умолчанию — оформление вашей ниши.
+          Кабинет оформлен единообразно и не настраивается. Сайт-визитку можно оформить любым стилем;
+          по умолчанию — оформление вашей ниши.
         </p>
-      </div>
-
-      <div className="grid gap-2">
-        <h3 className="!mb-1">Кабинет</h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          <Swatch item={null} active={panel === AUTO_KEY} onPick={() => setPanel(AUTO_KEY)} />
-          {APPEARANCES.map((a) => (
-            <Swatch key={a.key} item={a} active={panel === a.key} onPick={() => setPanel(a.key)} />
-          ))}
-        </div>
       </div>
 
       <div className="grid gap-2">

@@ -6,10 +6,10 @@ import { adminClient } from '@/lib/supabase';
 import { currentOwner } from '@/lib/owner-session';
 import { isRole, ROLE_LABELS, STAFF_ROLES } from '@/lib/auth-roles';
 import { canWrite } from '@/lib/sections';
-import { PANEL_THEME_KEY, resolveAppearance } from '@/lib/appearance';
-import { nicheOfTemplate } from '@/lib/business';
+import { GlassBackground } from '@/главная/components/GlassBackground';
+import { accentColor } from '../admin/(protected)/_lib/color';
+import type { ThemeStyle } from '../admin/(protected)/_lib/panel-theme';
 import { panelBase, sectionHref, visibleSections } from '../admin/(protected)/_lib/sections';
-import { panelThemeStyle } from '../admin/(protected)/_lib/panel-theme';
 import { businessDayStart, DAY_MS, formatDay, formatDateTime } from '../admin/(protected)/_lib/time';
 import { ShiftList } from './ShiftList';
 import { SHIFT_SELECT, shiftStats, toShiftRow, type ShiftDbRow } from './shift';
@@ -74,11 +74,13 @@ export default async function StaffRolePage({ params }: { params: Params }) {
   const stats = shiftStats(rows, now);
 
   const b = access.business;
-  const niche = await nicheOfTemplate(b.vertical_template_id);
-  const theme = resolveAppearance((b.custom_texts as Record<string, string> | null | undefined)?.[PANEL_THEME_KEY], niche);
+  // Оформление как у кабинета: тёмное стекло и фирменный акцент бизнеса.
+  const brand = accentColor(b.brand_color);
+  const brandStyle: ThemeStyle | undefined = brand ? { '--brand-color': brand, '--on-accent': '#ffffff' } : undefined;
 
   return (
-    <div className="panel-shell min-h-screen bg-[var(--panel-bg)] pb-10" style={panelThemeStyle(theme, b.brand_color)} data-mode={theme.mode}>
+    <div className="panel-shell admin-dark min-h-screen pb-10 text-white" style={brandStyle}>
+      <GlassBackground />
       <main className="box-border mx-auto w-full max-w-[720px] px-4 pt-5">
         <header className="mb-4">
           <p className="!mb-1 text-[12px] font-medium uppercase tracking-wide text-[var(--muted)]">

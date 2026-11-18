@@ -15,7 +15,7 @@ type Grant = '' | 'read' | 'write';
 type Grants = Record<string, Grant>;
 
 const SECONDARY = '!min-h-[40px] !border-[var(--line)] !bg-[var(--surface)] !text-[var(--ink)]';
-const DANGER = '!min-h-[40px] !border-[#b91c1c] !text-[#b91c1c]';
+const DANGER = '!min-h-[40px] !border-[var(--danger)] !text-[var(--danger)]';
 
 function emptyGrants(): Grants {
   return Object.fromEntries(SECTION_KEYS.map((k) => [k, '' as Grant])) as Grants;

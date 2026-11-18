@@ -5,7 +5,7 @@ import { SkeletonBlock, SkeletonFrame } from './_components/Skeleton';
 export default function PanelLoading() {
   return (
     <SkeletonFrame>
-      <SkeletonBlock className="h-8 w-48 !rounded-md !bg-[#ececec]" />
+      <SkeletonBlock className="h-8 w-48 !rounded-md !bg-[var(--soft)]" />
       <div className="grid gap-3 md:grid-cols-2">
         <SkeletonBlock className="h-24" />
         <SkeletonBlock className="h-24" />

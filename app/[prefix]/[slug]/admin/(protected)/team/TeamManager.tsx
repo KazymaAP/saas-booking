@@ -98,7 +98,7 @@ function MemberItem({ member, isSelf, roleLabel, onRemove }: { member: MemberRow
         <span className="text-[#595959]"> · {roleLabel(member.role)}{isSelf ? ' (вы)' : ''}</span>
       </span>
       {canRemove(member) && (
-        <button type="button" onClick={onClick} aria-label={`Удалить ${member.email ?? 'менеджера'}`} className="!min-h-[44px] !border-[#b91c1c] !text-[#b91c1c]">
+        <button type="button" onClick={onClick} aria-label={`Удалить ${member.email ?? 'менеджера'}`} className="!min-h-[44px] !border-[var(--danger)] !text-[var(--danger)]">
           Удалить
         </button>
       )}

@@ -9,7 +9,7 @@ export default function BookingsLoading() {
   return (
     <SkeletonFrame label="Загружаем брони…">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SkeletonBlock className="h-8 w-32 !rounded-md !bg-[#ececec]" />
+        <SkeletonBlock className="h-8 w-32 !rounded-md !bg-[var(--soft)]" />
         <SkeletonBlock className="h-11 w-64 !rounded-lg md:h-9" />
       </div>
       <SkeletonBlock className="h-5 w-40 !rounded-md" />

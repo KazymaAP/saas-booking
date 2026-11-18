@@ -5,7 +5,20 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type NavItem = { href: string; label: string; group?: string };
+export type NavItem = { href: string; label: string; group?: string; badge?: string | null };
+
+// Бренд и подпись меню — пропсы, а не константы: тот же сайдбар использует кабинет сервиса
+// (свой адрес, имя бизнеса и буква вместо «З»). Значения по умолчанию — супер-админка.
+export type AdminSidebarProps = {
+  items: NavItem[];
+  brandHref?: string;
+  brandTitle?: string;
+  brandSubtitle?: string;
+  brandLetter?: string;
+  navLabel?: string;
+  // Нижний блок сайдбара: выход, ссылка «Моя смена» и прочее, что зависит от сессии.
+  footer?: React.ReactNode;
+};
 
 // Корень админки совпадает только точно: иначе он подсвечивался бы на каждом разделе.
 function isActive(pathname: string, href: string): boolean {
@@ -46,11 +59,18 @@ function NavList({ items, pathname, onNavigate }: { items: NavItem[]; pathname: 
                     onClick={onNavigate}
                     className={`flex min-h-[40px] items-center rounded-xl px-3 py-2 text-[14px] no-underline transition-colors ${
                       active
-                        ? 'bg-gradient-to-r from-sky-500/25 to-blue-600/10 font-semibold text-white ring-1 ring-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.25)]'
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        ? 'bg-gradient-to-r from-sky-500/25 to-blue-600/10 font-semibold !text-white ring-1 ring-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.25)]'
+                        : '!text-white/60 hover:bg-white/5 hover:!text-white'
                     }`}
                   >
                     {n.label}
+                    {/* Отметка «требует внимания»: цвет — не единственный признак, текст для диктора рядом. */}
+                    {n.badge && (
+                      <>
+                        <span aria-hidden="true" className="ml-2 inline-block h-2 w-2 rounded-full bg-[#fbbf24]" />
+                        <span className="sr-only">, {n.badge}</span>
+                      </>
+                    )}
                   </Link>
                 </li>
               );
@@ -62,7 +82,15 @@ function NavList({ items, pathname, onNavigate }: { items: NavItem[]; pathname: 
   );
 }
 
-export function AdminSidebar({ items }: { items: NavItem[] }) {
+export function AdminSidebar({
+  items,
+  brandHref = '/admin',
+  brandTitle = 'Супер-админка',
+  brandSubtitle = 'Панель управления',
+  brandLetter = 'З',
+  navLabel = 'Разделы супер-админки',
+  footer,
+}: AdminSidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const toggle = useCallback(() => setOpen((v) => !v), []);
@@ -84,24 +112,25 @@ export function AdminSidebar({ items }: { items: NavItem[] }) {
   }, [open]);
 
   const brand = (
-    <Link href="/admin" className="flex items-center gap-3 no-underline">
+    <Link href={brandHref} className="flex items-center gap-3 no-underline">
       <span
         aria-hidden="true"
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-[15px] font-bold text-white shadow-[0_0_18px_rgba(56,189,248,0.35)]"
       >
-        З
+        {brandLetter}
       </span>
-      <span className="flex flex-col leading-tight">
-        <span className="text-[15px] font-semibold text-white">Супер-админка</span>
-        <span className="text-[12px] text-white/50">Панель управления</span>
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="truncate text-[15px] font-semibold text-white">{brandTitle}</span>
+        <span className="truncate text-[12px] text-white/50">{brandSubtitle}</span>
       </span>
     </Link>
   );
 
   return (
     <>
-      {/* Верхняя полоса только на мобильном */}
-      <div className="glass sticky top-2 z-30 mx-2 mt-2 flex items-center justify-between px-4 py-3 md:hidden">
+      {/* Верхняя полоса только на мобильном. z-50 — выше затемнения (z-40), иначе кнопка
+          «закрыть» оказывалась под ним и не нажималась. */}
+      <div className="glass sticky top-2 z-50 mx-2 mt-2 flex items-center justify-between px-4 py-3 md:hidden">
         {brand}
         <button
           type="button"
@@ -125,18 +154,22 @@ export function AdminSidebar({ items }: { items: NavItem[] }) {
 
       <aside
         id="admin-nav-drawer"
-        aria-label="Разделы супер-админки"
-        className={`fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col overflow-y-auto border-r border-white/10 bg-slate-950/85 p-5 backdrop-blur-xl transition-transform md:sticky md:top-4 md:z-auto md:m-4 md:h-[calc(100vh-2rem)] md:w-[248px] md:shrink-0 md:translate-x-0 md:rounded-3xl md:border md:bg-white/5 md:shadow-[0_4px_30px_rgba(0,0,0,0.1)] ${
+        aria-label={navLabel}
+        className={`box-border fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col overflow-y-auto border-r border-white/10 bg-slate-950/85 p-5 backdrop-blur-xl transition-transform md:sticky md:top-4 md:z-auto md:m-4 md:h-[calc(100vh-2rem)] md:w-[248px] md:shrink-0 md:translate-x-0 md:rounded-3xl md:border md:bg-white/5 md:shadow-[0_4px_30px_rgba(0,0,0,0.1)] ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="mb-4 flex justify-end md:hidden">
-          <button type="button" aria-label="Закрыть меню" onClick={close} className="glass-btn !w-10 !p-0">
-            ✕
-          </button>
-        </div>
+        {/* На мобильном меню выезжает под верхнюю полосу: она выше затемнения (z-50), поэтому
+            крестик в полосе остаётся кликабельным. Здесь — только отступ под её высоту,
+            второй крестик внутри меню не нужен. */}
+        <div className="h-12 shrink-0 md:hidden" aria-hidden="true" />
         <div className="mb-8 hidden md:block">{brand}</div>
-        <NavList items={items} pathname={pathname} onNavigate={close} />
+        <div className="flex flex-1 flex-col">
+          <nav aria-label={navLabel}>
+            <NavList items={items} pathname={pathname} onNavigate={close} />
+          </nav>
+          {footer && <div className="mt-auto border-t border-white/10 pt-4">{footer}</div>}
+        </div>
       </aside>
     </>
   );

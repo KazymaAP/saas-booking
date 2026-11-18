@@ -203,7 +203,8 @@ function PhoneLink({ phone }: { phone: string | null }) {
   const href = telHref(phone);
   // Кривой номер показываем текстом, а не битой ссылкой.
   if (!href) return <span>{phone}</span>;
-  return <a className="inline-flex min-h-[24px] items-center underline" href={href}>{phone}</a>;
+  // Номер не переносим по дефисам: в узкой колонке он рвался на две строки.
+  return <a className="inline-flex min-h-[24px] items-center whitespace-nowrap underline" href={href}>{phone}</a>;
 }
 
 function EmptyState({ text }: { text: string }) {
