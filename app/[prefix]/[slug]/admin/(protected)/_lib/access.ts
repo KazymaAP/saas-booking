@@ -66,4 +66,11 @@ export async function writeAccess(slug: string, section: SectionKey): Promise<Ow
   return access && matrix && canWriteMatrix(matrix, section) ? access : null;
 }
 
+// Для страницы: показывать ли кнопки правки. Та же матрица, что проверяет action,
+// поэтому кнопка не появится у роли, которой сервер всё равно откажет.
+export async function canWriteSection(access: OwnerAccess, section: SectionKey): Promise<boolean> {
+  const matrix = await matrixOf(access);
+  return Boolean(matrix && canWriteMatrix(matrix, section));
+}
+
 export const OWNER_ONLY: readonly Role[] = ['owner'];

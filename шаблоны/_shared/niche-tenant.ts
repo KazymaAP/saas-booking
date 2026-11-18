@@ -2,7 +2,7 @@
 // Один движок на все ниши: детейленг и ещё 9 ниш отличаются только пресетом (NicheTheme).
 // Логика перенесена 1:1 из проекта «Детейленг» (форматтеры, getStudioStatus), но
 // инфо-карточки, ресурсы, иконки и копирайт берутся из темы, а не захардкожены.
-import type { Business, Service } from '@/lib/database.types';
+import type { Business, FaqItem, Review, Service, StaffMember } from '@/lib/database.types';
 
 export type IconKey =
   | 'car' | 'scissors' | 'tooth' | 'dumbbell' | 'book' | 'camera'
@@ -22,7 +22,15 @@ export interface NicheService {
   resourceIds: string[];
   isActive: boolean;
   sortOrder: number;
+  // Плашка на карточке («Хит», «−20%») и цена до скидки — зачёркивается рядом с текущей.
+  badge: string | null;
+  oldPrice: number | null;
 }
+
+// Разделы эталонного шаблона: отзывы, команда, вопросы-ответы.
+export interface NicheReview { id: string; author: string; rating: number; body: string; serviceName: string; source: string }
+export interface NicheStaff { id: string; name: string; position: string; photo: string; experience: number | null; description: string }
+export interface NicheFaq { id: string; question: string; answer: string }
 export type NicheResourceType = 'bay' | 'lift' | 'detailer' | 'mechanic' | 'master' | 'cabinet' | 'room' | 'other';
 export interface NicheResource { id: string; name: string; type: NicheResourceType; isActive: boolean }
 export interface NicheGalleryImage { id: string; url: string; caption: string; sortOrder: number }
@@ -71,7 +79,7 @@ export interface NicheTheme {
   serviceGlyph?: Record<string, IconKey>; // keyword -> иконка (доп. к дефолтным)
   // Заголовки секций для точного совпадения с эталонным сайтом ниши.
   // Необязательны: у остальных ниш остаются универсальные значения.
-  sectionTitles?: { services?: string; gallery?: string; booking?: string };
+  sectionTitles?: { services?: string; gallery?: string; booking?: string; reviews?: string; staff?: string; faq?: string };
 }
 
 export interface NicheWorkHours {
@@ -121,6 +129,10 @@ export interface NicheTenant {
   notifications: { reminderHoursBefore: number[]; enablePush: boolean; enableEmail: boolean; enableSMS: boolean };
   seo: { title: string; description: string; ogImage: string };
   rating?: { score: number; reviews: number };
+  reviews: NicheReview[];
+  staff: NicheStaff[];
+  faq: NicheFaq[];
+  socials: Record<string, string>;
   // поля из темы (дисплей):
   businessNoun: string;
   glyph: IconKey;
@@ -200,6 +212,8 @@ export function buildNicheTenant(
   photos: { url: string | null; alt: string | null }[],
   texts: Record<string, string> = {},
   theme: NicheTheme,
+  // Разделы эталонного шаблона необязательны: демо-страницы и старые вызовы работают без них.
+  extras: { reviews?: Review[]; staff?: StaffMember[]; faq?: FaqItem[] } = {},
 ): NicheTenant {
   const heroImage = photos.find((p) => p.url)?.url ?? '';
   const gallery: NicheGalleryImage[] = photos
@@ -240,6 +254,8 @@ export function buildNicheTenant(
         resourceIds: [],
         isActive: s.is_active,
         sortOrder: s.sort_order,
+        badge: s.badge ?? null,
+        oldPrice: s.old_price === null || s.old_price === undefined ? null : Number(s.old_price),
       })),
     resources: buildResources(theme),
     slotStepMinutes: business.slot_step_minutes ?? 30,
@@ -255,6 +271,19 @@ export function buildNicheTenant(
     notifications: { reminderHoursBefore: [24], enablePush: true, enableEmail: false, enableSMS: false },
     seo: { title: business.name, description: business.description ?? '', ogImage: heroImage },
     rating: business.rating ? { score: Number(business.rating), reviews: business.reviews_count ?? 0 } : undefined,
+    reviews: (extras.reviews ?? [])
+      .filter((r) => r.is_published)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((r) => ({ id: r.id, author: r.author_name, rating: r.rating, body: r.body ?? '', serviceName: r.service_name ?? '', source: r.source ?? '' })),
+    staff: (extras.staff ?? [])
+      .filter((m) => m.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((m) => ({ id: m.id, name: m.name, position: m.position ?? '', photo: m.photo_url ?? '', experience: m.experience_years, description: m.description ?? '' })),
+    faq: (extras.faq ?? [])
+      .filter((f) => f.is_published)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((f) => ({ id: f.id, question: f.question, answer: f.answer })),
+    socials: (business.socials ?? {}) as Record<string, string>,
     businessNoun: theme.businessNoun,
     glyph: theme.glyph,
     asideTitle: theme.asideTitle,

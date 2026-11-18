@@ -4,26 +4,17 @@ import { redirect } from 'next/navigation';
 import { currentOwner, signOutOwner } from '@/lib/owner-session';
 import { PanelNav } from './_components/PanelNav';
 import { ToastProvider } from './_components/Toast';
-import { panelBase, SECTIONS } from './_lib/sections';
+import { panelBase, SECTIONS, shiftHref } from './_lib/sections';
 import { canReadMatrix } from '@/lib/sections';
 import { resolveMatrix } from '@/lib/custom-roles';
-import { accentColor } from './_lib/color';
-import { PANEL_THEME_KEY, appearanceVars, resolveAppearance } from '@/lib/appearance';
+import { PANEL_THEME_KEY, resolveAppearance } from '@/lib/appearance';
+import { panelThemeStyle } from './_lib/panel-theme';
 import { nicheOfTemplate } from '@/lib/business';
 import { subscriptionAttention } from './_lib/subscription';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = { robots: { index: false, follow: false } };
-
-// Оформление кабинета: по умолчанию — стиль ниши бизнеса (как его сайт), в настройках можно выбрать
-// любой из 10 стилей. Акцент остаётся фирменным цветом бизнеса, если он задан (design-spec §5),
-// иначе берётся акцент стиля. accentColor() гарантирует контраст 4.5:1 с белым текстом кнопок.
-type ThemeStyle = React.CSSProperties & Record<`--${string}`, string>;
-function panelThemeStyle(theme: ReturnType<typeof resolveAppearance>, brandColor: string | null): ThemeStyle {
-  const vars = appearanceVars(theme);
-  return { ...vars, '--brand-color': accentColor(brandColor) || vars['--brand-color'] };
-}
 
 export default async function OwnerLayout({ children, params }: { children: React.ReactNode; params: { prefix: string; slug: string } }) {
   const base = panelBase(params);
@@ -58,7 +49,13 @@ export default async function OwnerLayout({ children, params }: { children: Reac
         К содержимому
       </a>
       <ToastProvider>
-        <PanelNav base={base} businessName={access.business.name} items={items} logout={logout} />
+        <PanelNav
+          base={base}
+          businessName={access.business.name}
+          items={items}
+          logout={logout}
+          shiftHref={shiftHref(access.role, params)}
+        />
         <main id="panel-main" tabIndex={-1} className="mx-auto max-w-[1100px] px-4 py-6 outline-none">{children}</main>
       </ToastProvider>
     </div>

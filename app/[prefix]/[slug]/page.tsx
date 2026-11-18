@@ -45,9 +45,14 @@ export default async function BusinessPage({ params }: { params: { prefix: strin
   if (r.kind === 'notfound') notFound();
 
   const { business } = r;
-  const [services, { data: photos }] = await Promise.all([
+  // Отзывы, сотрудники и вопросы-ответы — разделы эталонного шаблона. Три запроса идут
+  // параллельно с услугами и фото; таблицы маленькие (десятки строк на бизнес), кэш страницы 1 час.
+  const [services, { data: photos }, { data: reviews }, { data: staff }, { data: faq }] = await Promise.all([
     activeServices(business.id),
     adminClient().from('photos').select('url, alt').eq('business_id', business.id).order('sort_order'),
+    adminClient().from('reviews').select('*').eq('business_id', business.id).eq('is_published', true).order('sort_order'),
+    adminClient().from('staff').select('*').eq('business_id', business.id).eq('is_active', true).order('sort_order'),
+    adminClient().from('faq_items').select('*').eq('business_id', business.id).eq('is_published', true).order('sort_order'),
   ]);
   const texts = (business.custom_texts ?? {}) as Record<string, string>;
   // Ниша определяется по url-префиксу (или slug шаблона). Совпадение → отрисовываем
@@ -93,7 +98,9 @@ export default async function BusinessPage({ params }: { params: { prefix: strin
     <>
       {theme ? (
         <NicheSite
-          tenant={buildNicheTenant(business, services, photos ?? [], texts, theme)}
+          tenant={buildNicheTenant(business, services, photos ?? [], texts, theme, {
+            reviews: reviews ?? [], staff: staff ?? [], faq: faq ?? [],
+          })}
           prefix={params.prefix}
           slug={params.slug}
         />

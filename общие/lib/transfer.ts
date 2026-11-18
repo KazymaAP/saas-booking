@@ -46,6 +46,7 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0028_email_attachments_bucket.sql',
   'supabase/migrations/0029_bookings_anon_insert_lockdown.sql',
   'supabase/migrations/0030_partner_earnings_unique.sql',
+  'supabase/migrations/0031_detailing_reference.sql',
 ] as const;
 
 export type TransferBusiness = {

@@ -8,6 +8,7 @@ export const SERVICE_LIMITS = {
   priceMax: 10_000_000,
   durationMin: 5,
   durationMax: 24 * 60,
+  badgeMax: 24,
 } as const;
 
 // Поля формы — строки (так их отдают input), схема сама приводит к числам.
@@ -30,6 +31,19 @@ export const ServiceSchema = z.object({
   price: intField('Укажите цену', 'Цена', 0, SERVICE_LIMITS.priceMax),
   duration_minutes: intField('Укажите длительность', 'Длительность', SERVICE_LIMITS.durationMin, SERVICE_LIMITS.durationMax),
   description: z.string().trim().max(SERVICE_LIMITS.descriptionMax, `Описание — до ${SERVICE_LIMITS.descriptionMax} символов`),
+  // Плашка на карточке услуги: «Хит», «−20%», «Новинка». Пусто — плашки нет.
+  // default('') — старые клиенты и тесты присылают услугу без этих полей, это не ошибка.
+  badge: z.string().trim().max(SERVICE_LIMITS.badgeMax, `Плашка — до ${SERVICE_LIMITS.badgeMax} символов`).default(''),
+  // Цена до скидки. Пустая строка — скидки нет, на сайте ничего не зачёркивается.
+  old_price: z
+    .string()
+    .trim()
+    .regex(/^\d*$/, 'Старая цена — целое число без пробелов')
+    .default('')
+    .transform((value) => (value === '' ? null : Number(value))),
+}).refine((values) => values.old_price === null || values.old_price > values.price, {
+  message: 'Старая цена должна быть больше текущей',
+  path: ['old_price'],
 });
 
 export type ServiceFormValues = z.input<typeof ServiceSchema>;
@@ -42,12 +56,21 @@ export type ServiceRow = {
   price: number;
   duration_minutes: number;
   is_active: boolean;
+  badge: string | null;
+  old_price: number | null;
 };
 
-export const EMPTY_SERVICE: ServiceFormValues = { name: '', price: '', duration_minutes: '60', description: '' };
+export const EMPTY_SERVICE: ServiceFormValues = { name: '', price: '', duration_minutes: '60', description: '', badge: '', old_price: '' };
 
 export function toFormValues(s: ServiceRow): ServiceFormValues {
-  return { name: s.name, price: String(s.price), duration_minutes: String(s.duration_minutes), description: s.description ?? '' };
+  return {
+    name: s.name,
+    price: String(s.price),
+    duration_minutes: String(s.duration_minutes),
+    description: s.description ?? '',
+    badge: s.badge ?? '',
+    old_price: s.old_price === null ? '' : String(s.old_price),
+  };
 }
 
 const PRICE = new Intl.NumberFormat('ru-RU');

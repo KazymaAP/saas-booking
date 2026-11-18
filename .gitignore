@@ -34,3 +34,6 @@ build_out/
 coverage/
 public/uploads/
 *.timestamp-*.mjs
+
+# Список логинов кабинетов: служебный артефакт, не для репозитория
+служебное/service-admins.csv

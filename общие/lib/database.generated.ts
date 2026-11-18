@@ -1915,6 +1915,48 @@ export type Database = {
           },
         ];
       };
+      faq_items: {
+        Row: {
+          answer: string;
+          business_id: string;
+          created_at: string;
+          id: string;
+          is_published: boolean;
+          question: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          answer: string;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          is_published?: boolean;
+          question: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          answer?: string;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          is_published?: boolean;
+          question?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "faq_items_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       feature_flags: {
         Row: {
           enabled: boolean;
@@ -2713,8 +2755,60 @@ export type Database = {
           },
         ];
       };
+      reviews: {
+        Row: {
+          author_name: string;
+          body: string | null;
+          business_id: string;
+          created_at: string;
+          id: string;
+          is_published: boolean;
+          rating: number;
+          service_name: string | null;
+          sort_order: number;
+          source: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_name: string;
+          body?: string | null;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          is_published?: boolean;
+          rating?: number;
+          service_name?: string | null;
+          sort_order?: number;
+          source?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          author_name?: string;
+          body?: string | null;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          is_published?: boolean;
+          rating?: number;
+          service_name?: string | null;
+          sort_order?: number;
+          source?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       services: {
         Row: {
+          badge: string | null;
           buffer_after: number;
           buffer_before: number;
           business_id: string;
@@ -2727,12 +2821,14 @@ export type Database = {
           is_online: boolean;
           max_clients: number;
           name: string;
+          old_price: number | null;
           price: number;
           sort_order: number;
           updated_at: string;
         };
         ComputedFields: never;
         Insert: {
+          badge?: string | null;
           buffer_after?: number;
           buffer_before?: number;
           business_id: string;
@@ -2745,11 +2841,13 @@ export type Database = {
           is_online?: boolean;
           max_clients?: number;
           name: string;
+          old_price?: number | null;
           price?: number;
           sort_order?: number;
           updated_at?: string;
         };
         Update: {
+          badge?: string | null;
           buffer_after?: number;
           buffer_before?: number;
           business_id?: string;
@@ -2762,6 +2860,7 @@ export type Database = {
           is_online?: boolean;
           max_clients?: number;
           name?: string;
+          old_price?: number | null;
           price?: number;
           sort_order?: number;
           updated_at?: string;
@@ -2815,6 +2914,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "slug_locks_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          description: string | null;
+          experience_years: number | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          photo_url: string | null;
+          position: string | null;
+          sort_order: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          description?: string | null;
+          experience_years?: number | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          photo_url?: string | null;
+          position?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          description?: string | null;
+          experience_years?: number | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          photo_url?: string | null;
+          position?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_business_id_fkey";
             columns: ["business_id"];
             isOneToOne: false;
             referencedRelation: "businesses";

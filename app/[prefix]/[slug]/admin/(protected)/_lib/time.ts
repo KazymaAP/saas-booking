@@ -30,9 +30,21 @@ const DATE_TIME = new Intl.DateTimeFormat('ru-RU', {
   timeZone: BUSINESS_TZ, day: 'numeric', month: 'long', weekday: 'short', hour: '2-digit', minute: '2-digit',
 });
 const DATE_ONLY = new Intl.DateTimeFormat('ru-RU', { timeZone: BUSINESS_TZ, day: 'numeric', month: 'long', year: 'numeric' });
+// Только время: в смене дата уже стоит в заголовке дня, повторять её в каждой строке незачем.
+const TIME_ONLY = new Intl.DateTimeFormat('ru-RU', { timeZone: BUSINESS_TZ, hour: '2-digit', minute: '2-digit' });
+const DAY_ONLY = new Intl.DateTimeFormat('ru-RU', { timeZone: BUSINESS_TZ, day: 'numeric', month: 'long' });
 
 export function formatDateTime(iso: string): string {
   return DATE_TIME.format(new Date(iso));
+}
+
+export function formatTime(iso: string): string {
+  return TIME_ONLY.format(new Date(iso));
+}
+
+// «18 ноября» — для подписи «сегодня» в шапке смены.
+export function formatDay(ms: number): string {
+  return DAY_ONLY.format(new Date(ms));
 }
 
 export function formatDate(iso: string): string {

@@ -42,7 +42,8 @@ export default async function OwnerLogin({ params, searchParams }: { params: Par
       <AuthMessages error={error} notice={notice} />
       <AuthForm action={login} submit="Войти" pending="Входим…">
         <HiddenField name="next" value={next} />
-        <AuthField name="email" label="Почта" type="email" autoComplete="username" invalid={Boolean(error)} focus />
+        {/* Логин, а не почта: короткое имя разворачивается во внутренний адрес кабинета. */}
+        <AuthField name="email" label="Логин" type="text" autoComplete="username" invalid={Boolean(error)} focus />
         <AuthField name="password" label="Пароль" type="password" autoComplete="current-password" invalid={Boolean(error)} />
       </AuthForm>
       <AuthLinks links={[

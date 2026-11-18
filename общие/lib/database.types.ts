@@ -33,6 +33,11 @@ export type Business = Omit<Row<'businesses'>, 'status' | 'working_hours' | 'soc
 export type Service = Row<'services'>;
 export type Photo = Row<'photos'>;
 
+// Разделы эталонного шаблона (миграция 0031): отзывы, сотрудники, вопросы-ответы.
+export type Review = Row<'reviews'>;
+export type StaffMember = Row<'staff'>;
+export type FaqItem = Row<'faq_items'>;
+
 export type Booking = Omit<Row<'bookings'>, 'status'> & { status: BookingStatus };
 
 export type AdminUser = Row<'admin_users'>;

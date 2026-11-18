@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildCsv, csvCell, exportFilename, type ExportBooking } from '../../../app/[prefix]/[slug]/admin/export/csv';
 import { buildChecklist, progressPercent } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/onboarding';
-import { SECTIONS, isActiveSection, sectionHref, visibleSections } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/sections';
+import { SECTIONS, isActiveSection, sectionHref, shiftHref, visibleSections } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/sections';
 import { availableActions, canApply, isActiveStatus, isBookingAction } from '../../../app/[prefix]/[slug]/admin/(protected)/bookings/status';
 import { altForIndex, isOwnPhotoPath, remainingSlots, sourceFileError, uploadFileError } from '@/lib/photo-rules';
 import { businessDayStart, DAY_MS } from '../../../app/[prefix]/[slug]/admin/(protected)/_lib/time';
@@ -433,5 +433,73 @@ describe('custom_texts — служебные ключи', () => {
     const current = { _panel_theme: 'detailing', hero_title: 'Старый', about: 'О нас' };
     const next = mergeTexts(current, { hero_title: '', hero_subtitle: '', about: '', cta: '' });
     expect(next).toEqual({ _panel_theme: 'detailing' });
+  });
+});
+
+describe('страница смены сотрудника — счётчики и ссылки', () => {
+  // 15 октября 2026, 12:00 МСК.
+  const now = Date.UTC(2026, 9, 15, 9, 0);
+  const shiftRow = (id: string, isoUtc: string, status: 'new' | 'confirmed' | 'done' | 'no_show' | 'cancelled') => ({
+    id,
+    time: '',
+    starts_at: Date.parse(isoUtc),
+    status,
+    client_name: 'Анна',
+    client_phone: null,
+    comment: null,
+    service: 'Полировка',
+  });
+
+  it('formatTime: время по Москве без даты, formatDay — «день месяц»', async () => {
+    const { formatTime, formatDay } = await import('../../../app/[prefix]/[slug]/admin/(protected)/_lib/time');
+    // 2026-10-15T11:30Z = 14:30 МСК.
+    expect(formatTime('2026-10-15T11:30:00Z')).toBe('14:30');
+    // 22:30Z = 01:30 МСК следующего дня: дата в UTC и МСК расходится, берём московскую.
+    expect(formatTime('2026-10-15T22:30:00Z')).toBe('01:30');
+    expect(formatDay(Date.UTC(2026, 9, 15, 9, 0))).toMatch(/15 октября/);
+  });
+
+  it('toShiftRow: услуга из связи, удалённая услуга — понятная подпись', async () => {
+    const { toShiftRow } = await import('../../../app/[prefix]/[slug]/[role]/shift');
+    const base = {
+      id: B, scheduled_at: '2026-10-15T11:30:00Z', status: 'new' as const,
+      client_name: 'Анна', client_phone: '+7 999 123-45-67', comment: null,
+    };
+    expect(toShiftRow({ ...base, services: { name: 'Полировка' } })).toMatchObject({
+      time: '14:30', service: 'Полировка', starts_at: Date.parse('2026-10-15T11:30:00Z'),
+    });
+    expect(toShiftRow({ ...base, services: null }).service).toBe('Услуга удалена');
+  });
+
+  it('shiftStats: ждут подтверждения, впереди, закрыто', async () => {
+    const { shiftStats } = await import('../../../app/[prefix]/[slug]/[role]/shift');
+    const rows = [
+      shiftRow('a', '2026-10-15T07:00:00Z', 'new'), // 10:00 МСК — уже началась
+      shiftRow('b', '2026-10-15T12:00:00Z', 'new'), // 15:00 МСК — впереди
+      shiftRow('c', '2026-10-15T13:00:00Z', 'confirmed'), // 16:00 МСК — впереди
+      shiftRow('d', '2026-10-15T06:00:00Z', 'done'),
+      shiftRow('e', '2026-10-15T05:00:00Z', 'no_show'),
+      shiftRow('f', '2026-10-15T14:00:00Z', 'cancelled'), // отменённая не «впереди» и не «закрыта»
+    ];
+    expect(shiftStats(rows, now)).toEqual({ total: 6, awaiting: 2, left: 2, done: 2 });
+    expect(shiftStats([], now)).toEqual({ total: 0, awaiting: 0, left: 0, done: 0 });
+  });
+
+  it('isOpenShiftRow: работа только с новыми и подтверждёнными', async () => {
+    const { isOpenShiftRow } = await import('../../../app/[prefix]/[slug]/[role]/shift');
+    expect(isOpenShiftRow(shiftRow('a', '2026-10-15T12:00:00Z', 'new'))).toBe(true);
+    expect(isOpenShiftRow(shiftRow('b', '2026-10-15T12:00:00Z', 'confirmed'))).toBe(true);
+    expect(isOpenShiftRow(shiftRow('c', '2026-10-15T12:00:00Z', 'done'))).toBe(false);
+    expect(isOpenShiftRow(shiftRow('d', '2026-10-15T12:00:00Z', 'cancelled'))).toBe(false);
+  });
+
+  it('shiftHref: ссылка только встроенным ролям-сотрудникам', () => {
+    const params = { prefix: 'd', slug: 'vippro' };
+    expect(shiftHref('manager', params)).toBe('/d/vippro/manager');
+    expect(shiftHref('receptionist', params)).toBe('/d/vippro/receptionist');
+    // Владелец работает в кабинете, кастомная роль не может быть сегментом пути.
+    expect(shiftHref('owner', params)).toBeNull();
+    expect(shiftHref('custom:' + B, params)).toBeNull();
+    expect(shiftHref(null, params)).toBeNull();
   });
 });

@@ -118,8 +118,20 @@ function ServiceCard({ row, slug, canEdit, editingId, isBusy, onEdit, onStopEdit
       ) : (
         <>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="!mb-0 text-[16px]">{row.name}</h3>
-            <span className="font-semibold">{formatPrice(row.price)}</span>
+            <h3 className="!mb-0 text-[16px]">
+              {row.name}
+              {row.badge && (
+                <span className="ml-2 inline-flex items-center rounded-full border border-[var(--brand-color,#2563eb)] px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-color,#2563eb)]">
+                  {row.badge}
+                </span>
+              )}
+            </h3>
+            <span className="flex items-baseline gap-2">
+              {row.old_price !== null && row.old_price > row.price && (
+                <span className="text-[13px] text-[#8a8a8a] line-through">{formatPrice(row.old_price)}</span>
+              )}
+              <span className="font-semibold">{formatPrice(row.price)}</span>
+            </span>
           </div>
           <p className="!mb-0 text-[14px] text-[#595959]">{formatDuration(row.duration_minutes)}</p>
           {row.description && <p className="!mb-0 mt-1 text-[14px]">{row.description}</p>}

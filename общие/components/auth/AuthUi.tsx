@@ -31,7 +31,7 @@ export function AuthMessages({ error, notice }: { readonly error: string | null;
 type FieldProps = {
   readonly name: 'email' | 'password' | 'confirm';
   readonly label: string;
-  readonly type: 'email' | 'password';
+  readonly type: 'email' | 'password' | 'text';
   readonly autoComplete: 'username' | 'email' | 'current-password' | 'new-password';
   readonly invalid?: boolean;
   readonly focus?: boolean;

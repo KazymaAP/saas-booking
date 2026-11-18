@@ -5,14 +5,14 @@
 // (scoped под .detailing-root), поэтому обёртка сохраняется.
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
-  ArrowRight, ArrowUpRight, CalendarCheck, Clock, Download, House,
-  MapPin, Phone, UserCircle, X,
+  ArrowRight, ArrowUpRight, CalendarCheck, CaretDown, Clock, Download, House,
+  InstagramLogo, MapPin, Phone, Star, TelegramLogo, UserCircle, WhatsappLogo, X,
 } from '@phosphor-icons/react';
 import { NicheBookingFlow } from './NicheBookingFlow';
 import { Glyph } from './glyph';
 import {
   formatCurrency, formatDuration, formatServicePrice, getStudioStatus,
-  pickServiceGlyph, resourceNoun, type NicheTenant,
+  pickServiceGlyph, plural, resourceNoun, type NicheService, type NicheTenant,
 } from './niche-tenant';
 
 // ---------- accent (точно как TenantLayout) ----------
@@ -56,6 +56,89 @@ function InfoCardIcon({ icon }: { icon: string }) {
     case 'star': return <Glyph icon="star" {...props} />;
     default: return <Glyph icon={icon} {...props} />;
   }
+}
+
+// Мессенджеры и соцсети из карточки бизнеса. Показываем только настоящие ссылки:
+// в данных встречаются и логины вида «@studio», из которых href не собрать.
+const SOCIAL_META: ReadonlyArray<{ key: string; label: string }> = [
+  { key: 'telegram', label: 'Telegram' },
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'vk', label: 'ВКонтакте' },
+];
+
+function SocialLinks({ socials }: { socials: Record<string, string> }) {
+  const items = SOCIAL_META.filter(({ key }) => /^https?:\/\//i.test(socials[key] ?? ''));
+  if (items.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2">
+      {items.map(({ key, label }) => (
+        <a
+          key={key}
+          href={socials[key]}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={label}
+          title={label}
+          className="grid size-8 place-items-center rounded-full border border-brand-border text-brand-text-muted transition-colors hover:border-brand-accent hover:text-brand-text"
+        >
+          {key === 'telegram' && <TelegramLogo size={15} weight="bold" aria-hidden="true" />}
+          {key === 'whatsapp' && <WhatsappLogo size={15} weight="bold" aria-hidden="true" />}
+          {key === 'instagram' && <InstagramLogo size={15} weight="bold" aria-hidden="true" />}
+          {key === 'vk' && <span className="text-[10px] font-bold" aria-hidden="true">VK</span>}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+// Звёзды рейтинга: заполненные — до округлённой оценки, остальные — контуром.
+function Stars({ value, size = 13 }: { value: number; size?: number }) {
+  const filled = Math.max(0, Math.min(5, Math.round(value)));
+  return (
+    <span className="inline-flex items-center gap-0.5" role="img" aria-label={`Оценка ${value} из 5`}>
+      {[1, 2, 3, 4, 5].map((index) => (
+        <Star
+          key={index}
+          size={size}
+          weight={index <= filled ? 'fill' : 'regular'}
+          className={index <= filled ? 'text-brand-accent' : 'text-brand-text-subtle'}
+          aria-hidden="true"
+        />
+      ))}
+    </span>
+  );
+}
+
+function ServiceRowButton({ service, tenant, onPick }: { service: NicheService; tenant: NicheTenant; onPick: (id: string) => void }) {
+  return (
+    <button type="button" onClick={() => onPick(service.id)} className="service-row-flat group">
+      <span className="icon-badge-neutral size-11">
+        <Glyph icon={pickServiceGlyph(service.name, tenant)} size={20} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="block text-[15px] font-semibold leading-5">{service.name}</span>
+          {service.badge && (
+            <span className="inline-flex items-center rounded-full border border-brand-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-wide text-brand-accent">
+              {service.badge}
+            </span>
+          )}
+        </span>
+        <span className="mt-1 block text-[13px] leading-5 text-brand-text-muted">{formatDuration(service.durationMinutes)}</span>
+      </span>
+      <span className="flex shrink-0 items-start gap-2 pt-0.5">
+        <span className="flex flex-col items-end gap-0.5">
+          {service.oldPrice !== null && service.oldPrice > service.price && (
+            <span className="whitespace-nowrap text-[11px] leading-none text-brand-text-subtle line-through">{formatServicePrice(service.oldPrice)}</span>
+          )}
+          <span className="whitespace-nowrap text-[13px] font-semibold sm:text-sm">{formatServicePrice(service.price)}</span>
+          <span className="hidden text-[11px] text-brand-text-subtle sm:block">Выбрать</span>
+        </span>
+        <ArrowUpRight size={15} className="mt-0.5 text-brand-text-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+      </span>
+    </button>
+  );
 }
 
 export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefix: string; slug: string }) {
@@ -158,10 +241,17 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
 
   const activeServices = tenant.services.filter((s) => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
   const previewServices = activeServices.slice(0, 4);
+  const restServices = activeServices.slice(4);
+  // Полный прайс раскрывается здесь же: у студии нет отдельной страницы услуг.
+  const [showAllServices, setShowAllServices] = useState(false);
   const minPrice = activeServices.length > 0 ? Math.min(...activeServices.map((s) => s.price)) : null;
   const gallery = [...tenant.gallery].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 3);
   const resourceCount = tenant.resources.filter((r) => r.isActive).length;
   const status = getStudioStatus(tenant.workHours, tenant.timezone, now);
+  // Средняя оценка по опубликованным отзывам: на сайте показываем её, а не рейтинг из карточки.
+  const reviewAverage = tenant.reviews.length > 0
+    ? tenant.reviews.reduce((sum, review) => sum + review.rating, 0) / tenant.reviews.length
+    : null;
 
   return (
     <div className="detailing-root min-h-screen bg-brand-bg" style={paletteStyle} data-mode={tenant.mode}>
@@ -253,31 +343,43 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               <section id="services">
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.services ?? 'Услуги'}</h2>
-                  <a href="#services" className="inline-flex items-center gap-1 text-[13px] text-brand-text-muted transition-colors hover:text-brand-text">
-                    Все услуги
-                    <ArrowRight size={15} weight="bold" aria-hidden="true" />
-                  </a>
+                  {restServices.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllServices((v) => !v)}
+                      aria-expanded={showAllServices}
+                      className="box-border inline-flex appearance-none items-center gap-1 border-0 bg-transparent p-0 text-[13px] text-brand-text-muted transition-colors hover:text-brand-text"
+                    >
+                      {showAllServices ? 'Свернуть' : 'Все услуги'}
+                      <ArrowRight size={15} weight="bold" className={`transition-transform ${showAllServices ? 'rotate-90' : ''}`} aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="overflow-hidden rounded-3xl border border-brand-border bg-brand-surface">
                   {previewServices.map((service) => (
-                    <button key={service.id} type="button" onClick={() => openBooking(service.id)} className="service-row-flat group">
-                      <span className="icon-badge-neutral size-11">
-                        <Glyph icon={pickServiceGlyph(service.name, tenant)} size={20} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[15px] font-semibold leading-5">{service.name}</span>
-                        <span className="mt-1 block text-[13px] leading-5 text-brand-text-muted">{formatDuration(service.durationMinutes)}</span>
-                      </span>
-                      <span className="flex shrink-0 items-start gap-2 pt-0.5">
-                        <span className="flex flex-col items-end gap-0.5">
-                          <span className="whitespace-nowrap text-[13px] font-semibold sm:text-sm">{formatServicePrice(service.price)}</span>
-                          <span className="hidden text-[11px] text-brand-text-subtle sm:block">Выбрать</span>
-                        </span>
-                        <ArrowUpRight size={15} className="mt-0.5 text-brand-text-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
-                      </span>
-                    </button>
+                    <ServiceRowButton key={service.id} service={service} tenant={tenant} onPick={openBooking} />
                   ))}
+                  {/* Полный прайс не уводит на отдельную страницу: студия — одностраничник,
+                      остальные услуги раскрываются здесь же, в той же вёрстке. */}
+                  {restServices.length > 0 && (
+                    <>
+                      {showAllServices && restServices.map((service) => (
+                        <ServiceRowButton key={service.id} service={service} tenant={tenant} onPick={openBooking} />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setShowAllServices((v) => !v)}
+                        aria-expanded={showAllServices}
+                        className="box-border flex w-full appearance-none items-center justify-between gap-2 border-0 border-t border-brand-border bg-transparent px-5 py-3.5 text-left text-[13px] font-medium text-brand-text-muted transition-colors hover:text-brand-text"
+                      >
+                        {showAllServices
+                          ? 'Свернуть прайс'
+                          : `Ещё ${restServices.length} ${plural(restServices.length, 'услуга', 'услуги', 'услуг')}`}
+                        <CaretDown size={15} weight="bold" className={`transition-transform ${showAllServices ? 'rotate-180' : ''}`} aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
                   {previewServices.length === 0 && (
                     <p className="p-5 text-body-sm text-brand-text-muted">Прайс обновляется — скоро добавим услуги.</p>
                   )}
@@ -301,6 +403,68 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
                 </section>
               )}
 
+              {tenant.reviews.length > 0 && (
+                <section className="mt-10">
+                  <div className="mb-5 flex items-end justify-between gap-4">
+                    <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.reviews ?? 'Отзывы'}</h2>
+                    {reviewAverage !== null && (
+                      <span className="inline-flex items-center gap-1.5 text-[13px] text-brand-text-muted">
+                        <Stars value={reviewAverage} />
+                        <span className="tabular-nums">{reviewAverage.toFixed(1)}</span>
+                        <span className="text-brand-text-subtle">· {tenant.reviews.length}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {tenant.reviews.slice(0, 4).map((review) => (
+                      <article key={review.id} className="rounded-3xl border border-brand-border bg-brand-surface p-4 md:p-5">
+                        <div className="flex items-center justify-between gap-3">
+                          <Stars value={review.rating} />
+                          {review.source && <span className="text-[11px] text-brand-text-subtle">{review.source}</span>}
+                        </div>
+                        {review.body && <p className="mt-3 text-[13px] leading-5 text-brand-text-muted">{review.body}</p>}
+                        <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px]">
+                          <span className="font-medium text-brand-text">{review.author}</span>
+                          {review.serviceName && <span className="text-brand-text-subtle">· {review.serviceName}</span>}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {tenant.staff.length > 0 && (
+                <section className="mt-10">
+                  <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.staff ?? 'Команда'}</h2>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {tenant.staff.slice(0, 6).map((member) => (
+                      <div key={member.id} className="rounded-3xl border border-brand-border bg-brand-surface p-4">
+                        <div className="flex items-center gap-3">
+                          {member.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={member.photo} alt={member.name} loading="lazy" className="size-12 shrink-0 rounded-full border border-brand-border object-cover" />
+                          ) : (
+                            <span className="grid size-12 shrink-0 place-items-center rounded-full border border-brand-border text-brand-text-muted">
+                              <UserCircle size={24} weight="bold" aria-hidden="true" />
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <div className="truncate text-[15px] font-semibold leading-5">{member.name}</div>
+                            {member.position && <div className="mt-0.5 truncate text-[12px] leading-4 text-brand-text-muted">{member.position}</div>}
+                          </div>
+                        </div>
+                        {member.experience !== null && member.experience > 0 && (
+                          <div className="mt-3 text-[12px] text-brand-text-subtle">
+                            Стаж {member.experience} {plural(member.experience, 'год', 'года', 'лет')}
+                          </div>
+                        )}
+                        {member.description && <p className="mt-1.5 text-[12px] leading-5 text-brand-text-muted">{member.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {tenant.infoCards.length > 0 && (
                 <section className="mt-10">
                   <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">Почему выбирают нас</h2>
@@ -313,6 +477,23 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
                         <h3 className="mt-4 text-[15px] font-semibold leading-5">{card.title}</h3>
                         <p className="mt-1.5 text-[13px] leading-5 text-brand-text-muted">{card.description}</p>
                       </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {tenant.faq.length > 0 && (
+                <section className="mt-10">
+                  <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.faq ?? 'Частые вопросы'}</h2>
+                  <div className="overflow-hidden rounded-3xl border border-brand-border bg-brand-surface">
+                    {tenant.faq.map((item, index) => (
+                      <details key={item.id} className={`group ${index > 0 ? 'border-t border-brand-border' : ''}`}>
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-[14px] font-medium leading-5 [&::-webkit-details-marker]:hidden">
+                          {item.question}
+                          <CaretDown size={16} weight="bold" className="shrink-0 text-brand-text-subtle transition-transform group-open:rotate-180" aria-hidden="true" />
+                        </summary>
+                        <p className="px-5 pb-4 text-[13px] leading-5 text-brand-text-muted">{item.answer}</p>
+                      </details>
                     ))}
                   </div>
                 </section>
@@ -386,9 +567,12 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
         <footer className="mx-auto mt-16 max-w-[69rem] px-4 md:px-6">
           <div className="footer-bar">
             <span className="text-[13px] font-semibold text-brand-text">{tenant.name}</span>
-            <a href={`tel:${tenant.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1.5 text-caption text-brand-text-muted transition-colors hover:text-brand-text">
-              Связаться <span aria-hidden="true">↗</span>
-            </a>
+            <div className="flex items-center gap-3">
+              <SocialLinks socials={tenant.socials} />
+              <a href={`tel:${tenant.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1.5 text-caption text-brand-text-muted transition-colors hover:text-brand-text">
+                Связаться <span aria-hidden="true">↗</span>
+              </a>
+            </div>
           </div>
         </footer>
       </main>

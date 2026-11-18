@@ -3,15 +3,18 @@ import { BUILTIN_ROLES, type Role } from './auth-roles';
 
 export type SectionKey =
   | 'home' | 'bookings' | 'services' | 'photos' | 'texts'
+  | 'reviews' | 'staff' | 'faq'
   | 'notifications' | 'settings' | 'appearance' | 'subscription' | 'team' | 'data';
 
 export const SECTION_KEYS: readonly SectionKey[] = [
   'home', 'bookings', 'services', 'photos', 'texts',
+  'reviews', 'staff', 'faq',
   'notifications', 'settings', 'appearance', 'subscription', 'team', 'data',
 ];
 
 export const SECTION_LABELS: Readonly<Record<SectionKey, string>> = {
   home: 'Главная', bookings: 'Брони', services: 'Услуги', photos: 'Фото', texts: 'Тексты',
+  reviews: 'Отзывы', staff: 'Сотрудники', faq: 'Вопросы',
   notifications: 'Уведомления', settings: 'Настройки', appearance: 'Оформление',
   subscription: 'Подписка', team: 'Команда', data: 'Данные',
 };
@@ -25,12 +28,12 @@ const allRead = (): RoleMatrix => Object.fromEntries(SECTION_KEYS.map((key) => [
 // Базовая матрица встроенных ролей. write подразумевает read.
 export const ROLE_MATRIX: Readonly<Record<Role, RoleMatrix>> = {
   owner: allWrite(),
-  manager: { home: 'write', bookings: 'write', services: 'write', photos: 'write', texts: 'write', notifications: 'write', settings: 'write', data: 'write' },
+  manager: { home: 'write', bookings: 'write', services: 'write', photos: 'write', texts: 'write', reviews: 'write', staff: 'write', faq: 'write', notifications: 'write', settings: 'write', data: 'write' },
   receptionist: { home: 'read', bookings: 'write', notifications: 'write' },
-  content: { services: 'write', photos: 'write', texts: 'write' },
+  content: { services: 'write', photos: 'write', texts: 'write', reviews: 'write', staff: 'write', faq: 'write' },
   viewer: allRead(),
   finance: { home: 'read', subscription: 'read', data: 'write' },
-  marketing: { texts: 'write', photos: 'write' },
+  marketing: { texts: 'write', photos: 'write', reviews: 'write' },
   callcenter: { bookings: 'write', notifications: 'write' },
   analyst: { home: 'read', bookings: 'read', data: 'read' },
   photographer: { photos: 'write' },

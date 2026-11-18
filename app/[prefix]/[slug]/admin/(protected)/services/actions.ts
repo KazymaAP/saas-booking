@@ -9,7 +9,7 @@ import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_l
 import { ServiceSchema, type ServiceFormValues, type ServiceRow } from './schema';
 
 const Id = z.string().regex(UUID_RE);
-const SELECT = 'id, name, description, price, duration_minutes, is_active';
+const SELECT = 'id, name, description, price, duration_minutes, is_active, badge, old_price';
 // Новые услуги — в конец списка: sort_order больше любого реального (порядок меняется в супер-админке).
 const SORT_LAST = 999;
 
@@ -24,6 +24,8 @@ function toDb(values: z.output<typeof ServiceSchema>) {
     price: values.price,
     duration_minutes: values.duration_minutes,
     description: values.description || null,
+    badge: values.badge || null,
+    old_price: values.old_price,
   };
 }
 

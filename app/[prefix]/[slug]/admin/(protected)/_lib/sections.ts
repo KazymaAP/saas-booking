@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/admin/(protected)/_lib/sections.ts — разделы кабинета и правила видимости по ролям.
 // Чистый модуль: используется и сервером (layout, проверки), и клиентом (меню), и тестами.
 // Матрица прав — единый источник истины в общие/lib/sections.ts.
-import { BUILTIN_ROLES, isRole, type Role } from '@/lib/auth-roles';
+import { BUILTIN_ROLES, isRole, STAFF_ROLES, type Role } from '@/lib/auth-roles';
 import { canRead, SECTION_KEYS, SECTION_LABELS, type SectionKey } from '@/lib/sections';
 
 export type PanelParams = { prefix: string; slug: string };
@@ -19,6 +19,7 @@ export type Section = {
 
 const PATHS: Readonly<Record<SectionKey, string>> = {
   home: '', bookings: 'bookings', services: 'services', photos: 'photos', texts: 'texts',
+  reviews: 'reviews', staff: 'staff', faq: 'faq',
   notifications: 'notifications', settings: 'settings', appearance: 'appearance',
   subscription: 'subscription', team: 'team', data: 'data',
 };
@@ -41,6 +42,13 @@ export function panelBase(params: PanelParams): string {
 
 export function sectionHref(base: string, section: Pick<Section, 'path'>): string {
   return section.path ? `${base}/${section.path}` : base;
+}
+
+// Страница «Моя смена» ({prefix}/{slug}/{role}) — только сотрудникам: у владельца есть дашборд кабинета,
+// а кастомная роль (custom:<uuid>) не может быть сегментом пути.
+export function shiftHref(role: string | null, params: PanelParams): string | null {
+  if (!role || !isRole(role) || !STAFF_ROLES.includes(role)) return null;
+  return `/${params.prefix}/${params.slug}/${role}`;
 }
 
 // Роль приходит из БД как text: неизвестное значение не получает ни одного раздела.

@@ -118,7 +118,7 @@ describe('services', () => {
     queueResult('services', { data: [row] });
     const r = await services.addService(SLUG, values);
     expect(r).toMatchObject({ ok: true, data: row });
-    expect(argOf('services', 'insert')).toEqual({ name: 'Маникюр', price: 1500, duration_minutes: 60, description: null, business_id: BUSINESS_ID, sort_order: 999, is_active: true });
+    expect(argOf('services', 'insert')).toEqual({ name: 'Маникюр', price: 1500, duration_minutes: 60, description: null, badge: null, old_price: null, business_id: BUSINESS_ID, sort_order: 999, is_active: true });
   });
 
   it('updateService: чужая услуга → notFound', async () => {

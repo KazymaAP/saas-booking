@@ -7,11 +7,13 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { isActiveSection, sectionHref, type NavItem } from '../_lib/sections';
 
-export function PanelNav({ base, businessName, items, logout }: {
+export function PanelNav({ base, businessName, items, logout, shiftHref }: {
   base: string;
   businessName: string;
   items: NavItem[];
   logout: () => Promise<void>;
+  // Ссылка «Моя смена» — только сотрудникам (не владельцу): мобильная страница записей на день.
+  shiftHref?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -48,6 +50,15 @@ export function PanelNav({ base, businessName, items, logout }: {
           </span>
           <span className="truncate">{businessName}</span>
         </Link>
+        {shiftHref && (
+          <Link
+            href={shiftHref}
+            prefetch={null}
+            className="box-border hidden min-h-[40px] items-center rounded-md border border-[var(--line)] px-3 text-[13px] font-medium !no-underline md:inline-flex"
+          >
+            Моя смена
+          </Link>
+        )}
         <button
           ref={toggleRef}
           type="button"
@@ -93,6 +104,13 @@ export function PanelNav({ base, businessName, items, logout }: {
               </li>
             );
           })}
+          {shiftHref && (
+            <li className="md:hidden">
+              <Link href={shiftHref} prefetch={null} className="box-border flex min-h-[44px] items-center rounded-md px-3 text-[15px] font-medium !no-underline hover:bg-[var(--soft)]">
+                Моя смена
+              </Link>
+            </li>
+          )}
           <li className="md:hidden">
             <form action={logout}>
               <button type="submit" className="mt-1 w-full !min-h-[44px] !border-[var(--line)] !bg-[var(--surface)] !text-[var(--ink)]">Выйти</button>

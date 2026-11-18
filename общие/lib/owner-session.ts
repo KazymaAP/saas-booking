@@ -113,13 +113,27 @@ export async function completeOwnerSignIn(session: ProviderSession, slug: string
   return 'ok';
 }
 
+// Логин кабинета. Supabase Auth знает только email, поэтому короткий логин разворачивается
+// во внутренний адрес этого же кабинета: «admin» на /d/vippro/admin → admin@vippro.panel.zapishisya.ru.
+// Адрес уникален для пары (логин, кабинет), письма на него не отправляются.
+const LOGIN_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/;
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}$/;
+
+export function resolveOwnerLogin(raw: unknown, slug: string): string | null {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim().toLowerCase();
+  if (value.includes('@')) return normalizeEmail(value);
+  if (!LOGIN_RE.test(value) || !SLUG_RE.test(slug)) return null;
+  return `${value}@${slug}.panel.zapishisya.ru`;
+}
+
 export async function signInOwner(rawEmail: string, password: string, slug: string): Promise<SignInResult> {
   const ctx = requestContext();
   if (!ctx.sameOrigin) {
     await authEvent('csrf_rejected', { realm: 'owner', ip: ctx.ip });
     return 'forbidden_origin';
   }
-  const email = normalizeEmail(rawEmail);
+  const email = resolveOwnerLogin(rawEmail, slug);
   const allowed = await allowAll([['login_ip', ctx.ip], ['login_email', email ?? rawEmail]]);
   if (!allowed) {
     await authEvent('login_rate_limited', { realm: 'owner', email, ip: ctx.ip });

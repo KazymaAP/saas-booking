@@ -11,9 +11,11 @@ import { applyServerErrors } from '../_lib/form';
 import type { ActionResult } from '../_lib/result';
 import { SERVICE_LIMITS, ServiceSchema, type ServiceFormValues, type ServiceRow } from './schema';
 
-const FIELDS: readonly Path<ServiceFormValues>[] = ['name', 'price', 'duration_minutes', 'description'];
+const FIELDS: readonly Path<ServiceFormValues>[] = ['name', 'price', 'duration_minutes', 'description', 'badge', 'old_price'];
 const PRICE_HINT = '0 — бесплатно';
 const DESCRIPTION_HINT = 'Необязательно';
+const BADGE_HINT = 'Хит, −20%, Новинка. Пусто — без плашки';
+const OLD_PRICE_HINT = 'Пусто — без скидки';
 
 export function ServiceForm({ defaults, submitLabel, onSubmit, onDone, onCancel, resetOnDone = false }: {
   defaults: ServiceFormValues;
@@ -56,6 +58,14 @@ export function ServiceForm({ defaults, submitLabel, onSubmit, onDone, onCancel,
       <div className="grid gap-3 sm:grid-cols-2">
         <FieldFrame id={id('price')} label="Цена, ₽" hint={PRICE_HINT} error={err('price')}>
           <input {...register('price')} {...fieldA11y(id('price'), err('price'), PRICE_HINT)} inputMode="numeric" autoComplete="off" />
+        </FieldFrame>
+        <FieldFrame id={id('old_price')} label="Цена до скидки, ₽" hint={OLD_PRICE_HINT} error={err('old_price')}>
+          <input {...register('old_price')} {...fieldA11y(id('old_price'), err('old_price'), OLD_PRICE_HINT)} inputMode="numeric" autoComplete="off" />
+        </FieldFrame>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FieldFrame id={id('badge')} label="Плашка" hint={BADGE_HINT} error={err('badge')}>
+          <input {...register('badge')} {...fieldA11y(id('badge'), err('badge'), BADGE_HINT)} maxLength={SERVICE_LIMITS.badgeMax} autoComplete="off" />
         </FieldFrame>
         <FieldFrame id={id('duration_minutes')} label="Длительность, мин" error={err('duration_minutes')}>
           <input {...register('duration_minutes')} {...fieldA11y(id('duration_minutes'), err('duration_minutes'))} inputMode="numeric" autoComplete="off" />
