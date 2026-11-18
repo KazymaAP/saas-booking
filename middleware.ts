@@ -164,6 +164,14 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   // Старая супер-админка /panel/* удалена: 404 без редиректа (ТЗ NEW-4).
   if (path === '/panel' || path.startsWith('/panel/')) return new NextResponse(null, { status: 404 });
 
+  // Маршруты Next.js регистрозависимы: /gera и /Gera отдают 404, хотя страница живёт на /GERA.
+  // Приводим написание к каноническому — на основном домене, только для точного /gera.
+  if (path !== '/GERA' && /^\/gera\/?$/i.test(path) && isMainHost(host)) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/GERA';
+    return NextResponse.redirect(url, 308);
+  }
+
   if (!isMainHost(host) && !isSystemPath(path, host)) return customDomain(req, host);
 
   // Внутренний маршрут кастомных доменов не открывается напрямую на основном домене.
