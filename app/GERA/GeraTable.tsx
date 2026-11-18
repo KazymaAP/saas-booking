@@ -4,10 +4,10 @@
 // и отдельные кнопки связи по каждому контакту.
 // На телефоне таблица заменяется карточками: горизонтальной прокрутки нет,
 // сортировка и фильтры вынесены в отдельную панель.
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowCounterClockwise, ArrowsDownUp, Check, Copy, Globe, MagnifyingGlass,
-  MapPin, Phone, TelegramLogo, WhatsappLogo,
+  ArrowCounterClockwise, ArrowsDownUp, CalendarCheck, CaretDown, Check, Copy, Gauge, Globe,
+  ListBullets, MagnifyingGlass, MapPin, Phone, TelegramLogo, UserCircle, WhatsappLogo,
 } from '@phosphor-icons/react';
 
 type Service = { name: string; price: number };
@@ -84,6 +84,33 @@ function telHref(value: string): string {
 function hasContacts(row: GeraRow): boolean {
   return row.phones.length > 0 || Boolean(row.telegram || row.whatsapp || row.max || row.vk);
 }
+
+// Адрес сайта клиента — это и есть адрес его кабинета: /{prefix}/{slug}/admin.
+// Панели существуют только у тех, кому уже выкатили сайт (siteUrl не пустой).
+function tenantBase(siteUrl: string | null): string | null {
+  if (!siteUrl) return null;
+  try {
+    const parts = new URL(siteUrl).pathname.split('/').filter(Boolean);
+    return parts.length >= 2 ? `/${parts[0]}/${parts[1]}` : null;
+  } catch {
+    return null;
+  }
+}
+
+// Разделы кабинета владельца — ровно те, что лежат в app/[prefix]/[slug]/admin/(protected).
+const PANEL_SECTIONS: ReadonlyArray<{ path: string; label: string }> = [
+  { path: '', label: 'Обзор' },
+  { path: '/bookings', label: 'Записи' },
+  { path: '/services', label: 'Услуги' },
+  { path: '/photos', label: 'Фото' },
+  { path: '/texts', label: 'Тексты' },
+  { path: '/appearance', label: 'Оформление' },
+  { path: '/team', label: 'Сотрудники' },
+  { path: '/notifications', label: 'Уведомления' },
+  { path: '/subscription', label: 'Подписка' },
+  { path: '/settings', label: 'Настройки' },
+  { path: '/data', label: 'Данные' },
+];
 
 function messageFor(row: GeraRow, templateUrl: string): string {
   const example = row.siteUrl ?? row.exampleUrl ?? templateUrl;
@@ -164,6 +191,94 @@ function ContactLinks({ row }: { row: GeraRow }) {
       {row.vk && <ContactLink href={row.vk} label="VK" tone="vk" icon={<span className="text-[9px] font-black">VK</span>} />}
       {row.map && <ContactLink href={row.map} label="Карта" tone="map" icon={<MapPin size={11} weight="bold" />} />}
       {row.siteUrl && <ContactLink href={row.siteUrl} label="Сайт" tone="site" icon={<Globe size={11} weight="bold" />} />}
+    </div>
+  );
+}
+
+// Панели конкретного сервиса. Показываем только когда у бизнеса уже есть сайт:
+// без сайта нет и кабинета, поэтому у 5 639 строк из 5 907 блока просто не будет.
+// card — карточка на телефоне (крупные чипы), row — строка таблицы (плотная строка текста).
+function PanelLinks({ row, variant }: { row: GeraRow; variant: 'card' | 'row' }) {
+  const [open, setOpen] = useState(false);
+  const base = tenantBase(row.siteUrl);
+  if (!base) return null;
+
+  const primary = [
+    { href: `${base}/admin`, label: 'Админка', title: 'Кабинет владельца', icon: <Gauge size={12} weight="bold" /> },
+    { href: `${base}/admin/bookings`, label: 'Записи', title: 'Журнал записей', icon: <CalendarCheck size={12} weight="bold" /> },
+    { href: `${base}/admin/services`, label: 'Услуги', title: 'Услуги и цены', icon: <ListBullets size={12} weight="bold" /> },
+    { href: `${base}/my`, label: 'Клиент', title: 'Кабинет клиента', icon: <UserCircle size={12} weight="bold" /> },
+  ];
+
+  const all = [
+    ...PANEL_SECTIONS.map((section) => ({ href: `${base}/admin${section.path}`, label: section.label })),
+    { href: `${base}/admin/export`, label: 'Экспорт' },
+  ];
+
+  // Список раскрываем в потоке, а не поверх строки — иначе его обрежет overflow таблицы.
+  const toggle = (
+    <button
+      type="button"
+      onClick={() => setOpen((value) => !value)}
+      aria-expanded={open}
+      className="box-border inline-flex appearance-none items-center gap-1 border-0 bg-transparent p-0 text-[11px] text-white/40 transition-colors hover:text-white/70"
+    >
+      <CaretDown size={10} weight="bold" className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      {open ? 'Свернуть' : `Все панели (${all.length})`}
+    </button>
+  );
+
+  const expanded = open && (
+    <ul className={`mt-1.5 grid list-none gap-x-3 gap-y-1 pl-0 text-[11px] ${variant === 'card' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+      {all.map((item) => (
+        <li key={item.href}>
+          <a href={item.href} target="_blank" rel="noopener noreferrer" className="no-underline text-white/55 transition-colors hover:text-white">
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (variant === 'card') {
+    return (
+      <div className="mt-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {primary.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={item.title}
+              className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/[0.07] px-2 py-1 text-[11px] font-medium text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              {item.icon} {item.label}
+            </a>
+          ))}
+        </div>
+        <div className="mt-1.5">{toggle}</div>
+        {expanded}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1.5">
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-none">
+        <span className="text-white/35">Панели:</span>
+        {primary.map((item, index) => (
+          <Fragment key={item.href}>
+            {index > 0 && <span className="text-white/20">·</span>}
+            <a href={item.href} target="_blank" rel="noopener noreferrer" title={item.title} className="no-underline font-medium text-white/70 transition-colors hover:text-white">
+              {item.label}
+            </a>
+          </Fragment>
+        ))}
+        <span className="text-white/20">·</span>
+        {toggle}
+      </div>
+      {expanded}
     </div>
   );
 }
@@ -531,6 +646,10 @@ export function GeraTable() {
                     ? `${data.total.toLocaleString('ru-RU')} организаций · ${data.withSite} с готовым сайтом · отправлено ${statusCounts.sent.toLocaleString('ru-RU')}${updatedAt ? ` · база от ${updatedAt}` : ''}`
                     : 'Загрузка базы…'}
                 </p>
+                <p className="mt-0.5 hidden text-[11px] leading-snug text-white/30 md:block">
+                  Панели сервисов открываются под сессией супер-админа: сначала войдите на{' '}
+                  <a href="/admin" target="_blank" rel="noopener noreferrer" className="no-underline text-white/50 hover:text-white/80">/admin</a>.
+                </p>
               </div>
               {/* На телефоне ссылка на шаблон — иконкой в строке заголовка, чтобы не отнимать ширину у поиска. */}
               <a
@@ -738,6 +857,8 @@ export function GeraTable() {
                           <ContactLinks row={row} />
                         </div>
 
+                        <PanelLinks row={row} variant="card" />
+
                         <div className="mt-2.5 sm:max-w-[380px]">
                           <StatusControl
                             value={statuses[row.id] ?? 'new'}
@@ -785,6 +906,7 @@ export function GeraTable() {
                                   <Globe size={12} weight="bold" /> Готовый сайт
                                 </a>
                               )}
+                              <PanelLinks row={row} variant="row" />
                             </td>
                             <td className="px-3 py-3"><ServicesCell row={row} /></td>
                             <td className="px-3 py-3"><ContactLinks row={row} /></td>

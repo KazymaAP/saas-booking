@@ -526,3 +526,80 @@ describe('auth-mail: тексты писем', () => {
     }
   });
 });
+
+// Режим поддержки: супер-админ открывает кабинет бизнеса, у которого ещё нет владельца
+// (у сгенерированных сайтов строк в admin_users нет). Право даёт только действующая сессия
+// супер-админа из SUPERADMIN_EMAILS — арендатору этот путь не открывается.
+describe('owner-session: режим поддержки супер-админа', () => {
+  const farExp = Math.floor(Date.now() / 1000) + 3600;
+  const SUPER = 'boss@example.com';
+
+  function adminSession(email = SUPER, sub = 'sa-1') {
+    harness.cookiesMock.set('sa_session', 'sa-token', {});
+    vi.mocked(provider.verifyAccessToken).mockResolvedValue({ sub, email, exp: farExp });
+  }
+
+  beforeEach(() => {
+    harness.seed('businesses', [
+      { id: 'b1', slug: 'vippro', status: 'client', name: 'Vippro' },
+      { id: 'b2', slug: 'frozen', status: 'refused', name: 'Заморожен' },
+    ]);
+    // Ни одной строки в admin_users: именно так выглядят сгенерированные сайты.
+    harness.seed('admin_users', []);
+  });
+
+  it('superAdminSupportAccess отдаёт синтетического владельца для существующего бизнеса', async () => {
+    adminSession();
+    const access = await owner.superAdminSupportAccess('vippro');
+    expect(access?.business.id).toBe('b1');
+    expect(access?.role).toBe('owner');
+    expect(access?.member.id).toBe('superadmin:b1');
+    expect(access?.member.auth_user_id).toBe('sa-1');
+    expect(access?.member.email).toBe(SUPER);
+  });
+
+  it('superAdminSupportAccess молчит без сессии супер-админа и для несуществующего slug', async () => {
+    expect(await owner.superAdminSupportAccess('vippro')).toBeNull();
+    adminSession();
+    expect(await owner.superAdminSupportAccess('no-such-slug')).toBeNull();
+  });
+
+  it('сессия обычного админа (не из SUPERADMIN_EMAILS) режим поддержки не включает', async () => {
+    adminSession('random@example.com');
+    expect(await owner.superAdminSupportAccess('vippro')).toBeNull();
+    expect(await owner.currentOwner('vippro')).toBeNull();
+    expect((await owner.ownerAccess('vippro')).kind).toBe('none');
+  });
+
+  it('currentOwner открывает кабинет бизнеса без владельца, включая приостановленный', async () => {
+    adminSession();
+    expect((await owner.currentOwner('vippro'))?.role).toBe('owner');
+    // Приостановленному владельцу кабинет закрыт, супер-админу — открыт.
+    expect((await owner.currentOwner('frozen'))?.role).toBe('owner');
+  });
+
+  it('ownerAccess отдаёт ok, чтобы login-страница не показывала форму уже вошедшему супер-админу', async () => {
+    adminSession();
+    expect((await owner.ownerAccess('vippro')).kind).toBe('ok');
+    expect((await owner.ownerAccess('frozen')).kind).toBe('ok');
+    expect((await owner.ownerAccess('no-such-slug')).kind).toBe('none');
+  });
+
+  it('requireOwnerAction разрешает действия в режиме поддержки и проверяет роль', async () => {
+    adminSession();
+    expect((await owner.requireOwnerAction('vippro', ['owner']))?.business.id).toBe('b1');
+    expect(await owner.requireOwnerAction('vippro', ['manager'])).toBeNull();
+  });
+
+  it('живая сессия владельца приоритетнее режима поддержки', async () => {
+    adminSession();
+    harness.cookiesMock.set('biz_session', 'tok', {});
+    // verifyAccessToken вызывается для owner-сессии; admin-сессия читается отдельным токеном.
+    vi.mocked(provider.verifyAccessToken).mockImplementation(async (token: string) =>
+      token === 'tok' ? { sub: 'owner-1', email: 'owner@biz.ru', exp: farExp } : { sub: 'sa-1', email: SUPER, exp: farExp },
+    );
+    harness.seed('admin_users', [{ id: 'm1', business_id: 'b1', auth_user_id: 'owner-1', role: 'owner', email: 'owner@biz.ru' }]);
+    const access = await owner.currentOwner('vippro');
+    expect(access?.member.id).toBe('m1');
+  });
+});

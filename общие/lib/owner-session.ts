@@ -11,6 +11,7 @@ import { passwordSignIn, type ProviderSession } from './auth-provider';
 import { endSession, readSession, refreshSession, startSession } from './auth-session';
 import { cookieNames } from './auth-cookies';
 import { customRoleId, isCustomRole } from './sections';
+import { isSuperAdminEmail } from './admin-session';
 import type { AdminUser, Business } from './database.types';
 
 export const OWNER_COOKIE = cookieNames('owner').access;
@@ -39,6 +40,34 @@ export async function findMembership(userId: string, slug: string): Promise<Memb
   if (!member) return { kind: 'none' };
   if (business.status !== ACTIVE_BUSINESS_STATUS) return { kind: 'inactive', businessId: business.id };
   return { kind: 'member', data: { business, member, adminUser: member, role: isRole(member.role) ? member.role : null } };
+}
+
+// Режим поддержки: супер-админ открывает кабинет любого бизнеса, даже если он не в admin_users.
+// Нужно для эксплуатации платформы: у сгенерированных сайтов владельца ещё нет, а проверить кабинет надо.
+// Доступ даёт только действующая сессия супер-админа (SUPERADMIN_EMAILS), поэтому арендаторам это не открывает.
+export async function superAdminSupportAccess(slug: string): Promise<OwnerAccessData | null> {
+  const state = await readSession('admin');
+  if (state.kind !== 'active' || !isSuperAdminEmail(state.claims.email)) return null;
+  const { data: business } = await adminClient()
+    .from('businesses').select('*').eq('slug', slug).maybeSingle<Business>();
+  if (!business) return null;
+  const now = new Date().toISOString();
+  const member: AdminUser = {
+    id: `superadmin:${business.id}`,
+    business_id: business.id,
+    auth_user_id: state.claims.sub,
+    email: state.claims.email,
+    name: 'Супер-админ (поддержка)',
+    phone: null,
+    role: 'owner',
+    status: 'active',
+    invited_at: null,
+    invited_by: null,
+    last_login: null,
+    created_at: now,
+    updated_at: now,
+  };
+  return { business, member, adminUser: member, role: 'owner' };
 }
 
 // Общая часть входа по паролю и по magic-link: проверка членства и выдача cookie.
@@ -117,10 +146,22 @@ export type OwnerAccess =
 async function ownerAccessUncached(slug: string): Promise<OwnerAccess> {
   const state = await readSession('owner');
   if (state.kind === 'refresh_needed') return { kind: 'refresh' };
-  if (state.kind === 'none') return { kind: 'none' };
+  if (state.kind === 'none') {
+    // Сессии владельца нет — но супер-админ может открыть кабинет в режиме поддержки.
+    const support = await superAdminSupportAccess(slug);
+    return support ? { kind: 'ok', data: support } : { kind: 'none' };
+  }
   const membership = await findMembership(state.claims.sub, slug);
-  if (membership.kind === 'none') return { kind: 'none' };
-  if (membership.kind === 'inactive') return { kind: 'inactive' };
+  if (membership.kind === 'none') {
+    const support = await superAdminSupportAccess(slug);
+    return support ? { kind: 'ok', data: support } : { kind: 'none' };
+  }
+  if (membership.kind === 'inactive') {
+    // Приостановленный бизнес: владельцу кабинет закрыт, супер-админу в режиме поддержки — открыт.
+    // Так же ведёт себя currentOwner, иначе layout и login-страница разошлись бы в решении.
+    const support = await superAdminSupportAccess(slug);
+    return support ? { kind: 'ok', data: support } : { kind: 'inactive' };
+  }
   return state.refreshSoon ? { kind: 'refresh' } : { kind: 'ok', data: membership.data };
 }
 
@@ -129,9 +170,10 @@ export const ownerAccess = cache(ownerAccessUncached);
 
 async function currentOwnerUncached(slug: string): Promise<OwnerAccessData | null> {
   const state = await readSession('owner');
-  if (state.kind !== 'active') return null;
+  if (state.kind !== 'active') return superAdminSupportAccess(slug);
   const membership = await findMembership(state.claims.sub, slug);
-  return membership.kind === 'member' ? membership.data : null;
+  if (membership.kind === 'member') return membership.data;
+  return superAdminSupportAccess(slug);
 }
 
 // Бизнес и роль текущего пользователя или null. Кэш в рамках запроса: layout и страница не дублируют запросы.
@@ -144,10 +186,12 @@ export async function requireOwnerAction(slug: string, roles: readonly OwnerRole
   let access = await currentOwner(slug);
   if (!access) {
     const refreshed = await refreshSession('owner');
-    if (!refreshed) return null;
-    const membership = await findMembership(refreshed.user.id, slug);
-    access = membership.kind === 'member' ? membership.data : null;
+    if (refreshed) {
+      const membership = await findMembership(refreshed.user.id, slug);
+      access = membership.kind === 'member' ? membership.data : null;
+    }
   }
+  if (!access) access = await superAdminSupportAccess(slug);
   return access && access.role !== null && roles.includes(access.role) ? access : null;
 }
 
