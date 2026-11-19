@@ -112,10 +112,10 @@ function withNoindex(res: NextResponse, noindex: boolean): NextResponse {
   return res;
 }
 
-// Копии страниц: в поиск не кладём, но читать и обходить по ссылкам не запрещаем.
-// Отдельно от NOINDEX ('noindex, nofollow') — именно nofollow мешает агентам изучать раздел.
+// Копии страниц: никаких X-Robots-Tag. Раньше здесь стоял noindex — часть ИИ-агентов
+// понимает его как «страницу читать не нужно», а раздел существует ровно для чтения.
+// Поисковые боты закрыты в robots.txt отдельной группой (Googlebot, Yandex и т.д.).
 function copyRobots(res: NextResponse): NextResponse {
-  res.headers.set('X-Robots-Tag', 'noindex');
   return res;
 }
 

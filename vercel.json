@@ -5,6 +5,12 @@
   "outputDirectory": ".next",
   "installCommand": "pnpm install",
   "regions": ["lhr1"],
+  "rewrites": [
+    {
+      "source": "/test/ful/sts/",
+      "destination": "/test/ful/sts"
+    }
+  ],
   "crons": [
     { "path": "/api/cron/backup", "schedule": "0 3 * * 0" },
     { "path": "/api/cron/cleanup-audit-log", "schedule": "0 6 * * *" }

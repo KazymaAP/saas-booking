@@ -109,7 +109,12 @@ const nextConfig = {
   },
   async headers() {
     // Cache-Control и Service-Worker-Allowed для /sw.js ставит сам route handler (app/sw.js/route.ts).
-    return [{ source: '/:path*', headers: buildSecurityHeaders() }];
+    return [
+      { source: '/:path*', headers: buildSecurityHeaders() },
+      // robots.txt меняется при правках доступа: сутки в кэше CDN означали бы, что краулер
+      // (в том числе ИИ-агент) ещё долго видит старые запреты. Пусть проверяет свежесть каждый раз.
+      { source: '/robots.txt', headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }] },
+    ];
   },
 };
 

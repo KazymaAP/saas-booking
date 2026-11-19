@@ -11,7 +11,10 @@ import { STAFF_ROLES, ROLE_LABELS } from '@/lib/auth-roles';
 import { COPY_PREFIX } from '@/lib/copy-mode-paths';
 import { CopyIndex } from './CopyIndex';
 
-export const dynamic = 'force-dynamic';
+// Список сервисов меняется редко, а страница нужна как справочник. Без кэша каждый заход
+// тянул два запроса в Supabase: при сетевом сбое ответ зависал на десятки секунд и обрывался —
+// для читающего это выглядит как «страница недоступна». Кэш на 10 минут убирает эту зависимость.
+export const revalidate = 600;
 export const metadata: Metadata = {
   title: 'Копии страниц — временный раздел',
   robots: { index: false, follow: false },
@@ -138,10 +141,12 @@ const COPY_CSS = `
 
 export default async function CopyIndexPage() {
   const db = adminClient();
+  // Сбой базы не должен ронять страницу: лучше показать разделы без списка сервисов,
+  // чем отдать ошибку. Кэш (revalidate) всё равно перезапросит данные позже.
   const [{ data: businesses }, { data: templates }] = await Promise.all([
     db.from('businesses').select('slug, name, status, vertical_template_id').order('name'),
     db.from('vertical_templates').select('id, url_prefix'),
-  ]);
+  ]).catch(() => [{ data: [] }, { data: [] }] as const);
 
   const prefixById = new Map<string, string>();
   for (const t of (templates ?? []) as TemplateRow[]) {
