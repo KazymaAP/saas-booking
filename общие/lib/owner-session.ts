@@ -12,6 +12,7 @@ import { endSession, readSession, refreshSession, startSession } from './auth-se
 import { cookieNames } from './auth-cookies';
 import { customRoleId, isCustomRole } from './sections';
 import { isSuperAdminEmail } from './admin-session';
+import { copyPath, inCopyMode } from './copy-mode';
 import type { AdminUser, Business } from './database.types';
 
 export const OWNER_COOKIE = cookieNames('owner').access;
@@ -70,6 +71,35 @@ export async function superAdminSupportAccess(slug: string): Promise<OwnerAccess
     updated_at: now,
   };
   return { business, member, adminUser: member, role: 'owner' };
+}
+
+// Режим копии (временный раздел /test/ful/sts): кабинет открывается без входа.
+// Роль берём из адреса, если это страница сотрудника (/d/slug/receptionist), иначе — владелец:
+// страница сотрудника сверяет роль из URL с ролью доступа и без этого отдала бы 404.
+export async function copyAccess(slug: string): Promise<OwnerAccessData | null> {
+  const { data: business } = await adminClient()
+    .from('businesses').select('*').eq('slug', slug).maybeSingle<Business>();
+  if (!business) return null;
+  const now = new Date().toISOString();
+  const requested = /^\/[^/]+\/[^/]+\/([a-z]+)\/?$/.exec(copyPath())?.[1] ?? '';
+  const role: Role = isRole(requested) && requested !== 'owner' ? requested : 'owner';
+  const member: AdminUser = {
+    id: `copy:${business.id}`,
+    business_id: business.id,
+    auth_user_id: `copy:${business.id}`,
+    email: `copy@${business.slug}.panel.zapishisya.ru`,
+    name: 'Копия страницы',
+    phone: null,
+    role,
+    status: 'active',
+    invited_at: null,
+    invited_by: null,
+    last_login: null,
+    must_change_password: false,
+    created_at: now,
+    updated_at: now,
+  };
+  return { business, member, adminUser: member, role };
 }
 
 // Общая часть входа по паролю и по magic-link: проверка членства и выдача cookie.
@@ -167,6 +197,11 @@ export type OwnerAccess =
   | { readonly kind: 'none' };
 
 async function ownerAccessUncached(slug: string): Promise<OwnerAccess> {
+  // Копия страницы (/test/ful/sts): кабинет и формы смены пароля работают без сессии.
+  if (inCopyMode()) {
+    const copy = await copyAccess(slug);
+    return copy ? { kind: 'ok', data: copy } : { kind: 'none' };
+  }
   const state = await readSession('owner');
   if (state.kind === 'refresh_needed') return { kind: 'refresh' };
   if (state.kind === 'none') {
@@ -192,6 +227,7 @@ async function ownerAccessUncached(slug: string): Promise<OwnerAccess> {
 export const ownerAccess = cache(ownerAccessUncached);
 
 async function currentOwnerUncached(slug: string): Promise<OwnerAccessData | null> {
+  if (inCopyMode()) return copyAccess(slug);
   const state = await readSession('owner');
   if (state.kind !== 'active') return superAdminSupportAccess(slug);
   const membership = await findMembership(state.claims.sub, slug);
@@ -205,6 +241,10 @@ export const currentOwner = cache(currentOwnerUncached);
 // Для Server Actions кабинета: Origin, при необходимости обновление сессии, проверка роли.
 // Server Action — отдельный POST-эндпоинт: проверка в layout его не защищает.
 export async function requireOwnerAction(slug: string, roles: readonly OwnerRole[] = ['owner', 'manager']): Promise<OwnerAccessData | null> {
+  if (inCopyMode()) {
+    const copy = await copyAccess(slug);
+    return copy && copy.role !== null && roles.includes(copy.role as OwnerRole) ? copy : null;
+  }
   if (!requestContext().sameOrigin) return null;
   let access = await currentOwner(slug);
   if (!access) {

@@ -7,6 +7,7 @@ import {
   DOMAIN_MAP_COOKIE, DOMAIN_MAP_MARKER, RESOLVE_HOST_HEADER, RESOLVE_NEXT_HEADER, RESOLVE_RETRY_HEADER, verifyDomainMap,
 } from './общие/lib/domain-map';
 import { LICENSE_COOKIE, pingLicense, type LicenseStatus } from './общие/lib/license-client';
+import { COPY_MODE_HEADER, COPY_PATH_HEADER, COPY_PREFIX } from './общие/lib/copy-mode-paths';
 
 const NOINDEX = 'noindex, nofollow';
 const LICENSE_TTL_MS = 86_400_000;
@@ -160,6 +161,21 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
     return NextResponse.json({ ok: false, reason: 'bad_origin' }, { status: 403 });
   }
   if (licenseBlocked(req, event, host)) return blockedResponse(req);
+
+  // ---------- Временный раздел копий /test/ful/sts ----------
+  // Срезаем префикс и переписываем запрос на настоящий маршрут: адрес в браузере остаётся
+  // с префиксом, а рендерится тот же компонент. Это rewrite, а не redirect — страница
+  // не «уезжает» на оригинал. Заголовки сообщают приложению, что доступ не проверяем.
+  if (path === COPY_PREFIX || path.startsWith(`${COPY_PREFIX}/`)) {
+    if (path === COPY_PREFIX) return withNoindex(NextResponse.next(), true);
+    const inner = path.slice(COPY_PREFIX.length) || '/';
+    const url = req.nextUrl.clone();
+    url.pathname = inner;
+    const forward = new Headers(req.headers);
+    forward.set(COPY_MODE_HEADER, '1');
+    forward.set(COPY_PATH_HEADER, inner);
+    return withNoindex(NextResponse.rewrite(url, { request: { headers: forward } }), true);
+  }
 
   // Старая супер-админка /panel/* удалена: 404 без редиректа (ТЗ NEW-4).
   if (path === '/panel' || path.startsWith('/panel/')) return new NextResponse(null, { status: 404 });

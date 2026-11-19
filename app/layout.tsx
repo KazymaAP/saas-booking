@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { CookieBannerGate } from '@/components/CookieBannerGate';
+import { CopyLinks } from './test/ful/sts/CopyLinks';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -49,6 +50,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             гидрации (ssr: false внутри CookieBannerLazy) — в SSR-HTML его нет и на LCP он не влияет.
             Без него кнопка «Настройки cookie» в футерах отправляла событие в пустоту. */}
         <CookieBannerGate />
+        {/* Временный раздел копий: удерживает переходы внутри /test/ful/sts. На обычных
+            страницах компонент ничего не делает (проверка пути внутри). */}
+        <CopyLinks />
       </body>
     </html>
   );

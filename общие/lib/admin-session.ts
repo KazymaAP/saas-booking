@@ -9,6 +9,7 @@ import { authEvent } from './auth-audit';
 import { passwordSignIn } from './auth-provider';
 import { endSession, readSession, refreshSession, startSession } from './auth-session';
 import { cookieNames } from './auth-cookies';
+import { inCopyMode } from './copy-mode';
 
 // Имя cookie сохранено для совместимости: на него могут ссылаться внешние проверки.
 export const SESSION_COOKIE = cookieNames('admin').access;
@@ -52,6 +53,8 @@ export async function signInSuperAdmin(rawEmail: string, password: string): Prom
 export type AdminAccess = 'ok' | 'refresh' | 'none';
 
 async function superAdminAccessUncached(): Promise<AdminAccess> {
+  // Временный раздел копий (/test/ful/sts): студия открыта без входа — по требованию заказчика.
+  if (inCopyMode()) return 'ok';
   const state = await readSession('admin');
   if (state.kind === 'refresh_needed') return 'refresh';
   if (state.kind === 'none' || !isSuperAdminEmail(state.claims.email)) return 'none';
@@ -62,6 +65,7 @@ async function superAdminAccessUncached(): Promise<AdminAccess> {
 export const superAdminAccess = cache(superAdminAccessUncached);
 
 async function isSuperAdminUncached(): Promise<boolean> {
+  if (inCopyMode()) return true;
   const state = await readSession('admin');
   return state.kind === 'active' && isSuperAdminEmail(state.claims.email);
 }
@@ -72,6 +76,7 @@ export const isSuperAdmin = cache(isSuperAdminUncached);
 // Для Server Actions: при истёкшем access-токене обновляет сессию (здесь писать cookie можно).
 // Server Action — отдельный POST-эндпоинт, защиты layout для него недостаточно.
 export async function requireSuperAdminAction(): Promise<boolean> {
+  if (inCopyMode()) return true;
   if (!requestContext().sameOrigin) return false;
   if (await isSuperAdmin()) return true;
   const refreshed = await refreshSession('admin');
