@@ -13,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
         // /admin и /dev — служебные экраны (раньше админка была на /admin, и правило устарело:
         // /admin и предпросмотры шаблонов оставались открытыми для обхода).
         // /GERA — внутренняя база лидов, доступна только супер-админу; в индексе ей делать нечего.
-        disallow: ['/preview/', '/admin', '/dev/', '/partner', '/api/', '/booking/', '/unsubscribe/', '/GERA', '/test/'],
+        disallow: ['/preview/', '/admin', '/dev/', '/partner', '/api/', '/booking/', '/unsubscribe/', '/GERA'],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

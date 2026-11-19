@@ -112,6 +112,13 @@ function withNoindex(res: NextResponse, noindex: boolean): NextResponse {
   return res;
 }
 
+// Копии страниц: в поиск не кладём, но читать и обходить по ссылкам не запрещаем.
+// Отдельно от NOINDEX ('noindex, nofollow') — именно nofollow мешает агентам изучать раздел.
+function copyRobots(res: NextResponse): NextResponse {
+  res.headers.set('X-Robots-Tag', 'noindex');
+  return res;
+}
+
 // ---------- Кастомный домен клиента (ТЗ §3.2, §40) ----------
 async function customDomain(req: NextRequest, host: string): Promise<NextResponse> {
   const url = req.nextUrl.clone();
@@ -166,15 +173,28 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   // Срезаем префикс и переписываем запрос на настоящий маршрут: адрес в браузере остаётся
   // с префиксом, а рендерится тот же компонент. Это rewrite, а не redirect — страница
   // не «уезжает» на оригинал. Заголовки сообщают приложению, что доступ не проверяем.
-  if (path === COPY_PREFIX || path.startsWith(`${COPY_PREFIX}/`)) {
-    if (path === COPY_PREFIX) return withNoindex(NextResponse.next(), true);
+  //
+  // robots.txt раздел НЕ закрывает: иначе ИИ-агенты (ClaudeBot и подобные) отказываются его
+  // читать. От индексации защищает X-Robots-Tag: noindex — краулеры страницу читают, но
+  // в поиск не кладут. nofollow здесь тоже не ставим: агент должен проходить по ссылкам.
+  if (path === COPY_PREFIX || path === `${COPY_PREFIX}/`) {
+    // Со слэшем на конце Next отвечает 308 — лишний редирект, который проходит не каждый агент.
+    // Переписываем сразу на канонический адрес, без редиректа.
+    if (path.endsWith('/')) {
+      const url = req.nextUrl.clone();
+      url.pathname = COPY_PREFIX;
+      return copyRobots(NextResponse.rewrite(url));
+    }
+    return copyRobots(NextResponse.next());
+  }
+  if (path.startsWith(`${COPY_PREFIX}/`)) {
     const inner = path.slice(COPY_PREFIX.length) || '/';
     const url = req.nextUrl.clone();
     url.pathname = inner;
     const forward = new Headers(req.headers);
     forward.set(COPY_MODE_HEADER, '1');
     forward.set(COPY_PATH_HEADER, inner);
-    return withNoindex(NextResponse.rewrite(url, { request: { headers: forward } }), true);
+    return copyRobots(NextResponse.rewrite(url, { request: { headers: forward } }));
   }
 
   // Старая супер-админка /panel/* удалена: 404 без редиректа (ТЗ NEW-4).
