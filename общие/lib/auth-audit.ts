@@ -21,6 +21,8 @@ export type AuthAction =
   | 'invite_accepted'
   | 'invite_rejected'
   | 'csrf_rejected'
+  | 'password_changed'
+  | 'password_change_failed'
   | 'rate_limit_unavailable';
 
 export type AuthEventDetails = {

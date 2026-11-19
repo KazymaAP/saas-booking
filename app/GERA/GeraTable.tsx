@@ -437,7 +437,8 @@ export function GeraTable() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/gera-data.json')
+    // Данные отдаёт серверный роут только супер-админу (файл убран из public/).
+    fetch('/api/gera')
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json() as Promise<Payload>;

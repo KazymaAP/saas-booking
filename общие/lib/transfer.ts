@@ -47,6 +47,8 @@ export const MIGRATION_FILES = [
   'supabase/migrations/0029_bookings_anon_insert_lockdown.sql',
   'supabase/migrations/0030_partner_earnings_unique.sql',
   'supabase/migrations/0031_detailing_reference.sql',
+  'supabase/migrations/0032_cron_site_url_fix.sql',
+  'supabase/migrations/0033_force_password_change.sql',
 ] as const;
 
 export type TransferBusiness = {

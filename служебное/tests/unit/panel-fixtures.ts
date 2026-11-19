@@ -28,6 +28,8 @@ export function makeMember(role: AdminUser['role']): AdminUser {
     invited_at: null,
     invited_by: null,
     last_login: null,
+    // По умолчанию пароль «свой»: иначе каждый тест кабинета упирался бы в форму смены пароля.
+    must_change_password: false,
     name: null,
     phone: null,
     status: 'active',

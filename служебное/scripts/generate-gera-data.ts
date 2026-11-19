@@ -1,5 +1,5 @@
 // служебное/scripts/generate-gera-data.ts
-// Готовит public/gera-data.json для страницы /GERA: все организации из Excel,
+// Готовит data/gera-data.json для страницы /GERA: все организации из Excel,
 // контакты, услуги и ссылка на готовый сайт (если он уже создан в Supabase).
 //
 // Запуск:
@@ -214,7 +214,8 @@ async function main() {
     rows,
   };
 
-  const output = join(PROJECT_DIR, 'public', 'gera-data.json');
+  // Файл лежит вне public/: его отдаёт только /api/gera под сессией супер-админа.
+  const output = join(PROJECT_DIR, 'data', 'gera-data.json');
   writeFileSync(output, JSON.stringify(payload), 'utf8');
   console.log(JSON.stringify({
     output,

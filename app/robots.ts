@@ -12,7 +12,8 @@ export default function robots(): MetadataRoute.Robots {
         // /unsubscribe/ — персональные токены отписки не должны попадать в индекс (страница ещё и noindex).
         // /admin и /dev — служебные экраны (раньше админка была на /admin, и правило устарело:
         // /admin и предпросмотры шаблонов оставались открытыми для обхода).
-        disallow: ['/preview/', '/admin', '/dev/', '/partner', '/api/', '/booking/', '/unsubscribe/'],
+        // /GERA — внутренняя база лидов, доступна только супер-админу; в индексе ей делать нечего.
+        disallow: ['/preview/', '/admin', '/dev/', '/partner', '/api/', '/booking/', '/unsubscribe/', '/GERA'],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

@@ -46,6 +46,8 @@ export const AUDIT_LABELS: Record<string, string> = {
   'auth:logout': 'Выход из системы',
   'auth:login_failed': 'Неудачная попытка входа',
   'auth:login_rate_limited': 'Вход заблокирован лимитом',
+  'auth:password_changed': 'Пароль кабинета изменён',
+  'auth:password_change_failed': 'Не удалось сменить пароль кабинета',
   'auth:csrf_rejected': 'Запрос отклонён (Origin)',
 };
 

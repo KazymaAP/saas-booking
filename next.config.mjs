@@ -93,6 +93,10 @@ const nextConfig = {
   experimental: {
     // Тяжёлые Node-пакеты не бандлятся в серверный код, а подключаются из node_modules.
     serverComponentsExternalPackages: ['imapflow', 'nodemailer', 'xlsx'],
+    // База лидов лежит вне public/ (её отдаёт только /api/gera под супер-админом).
+    // Файл читается с диска через fs, поэтому трассировщик о нём не знает — включаем вручную,
+    // иначе на Vercel функция получит 404.
+    outputFileTracingIncludes: { '/api/gera': ['./data/gera-data.json'] },
     // Импорт только используемых иконок вместо всего пакета.
     optimizePackageImports: ['@phosphor-icons/react', 'leaflet'],
     // Проверка обязательных env при старте сервера (instrumentation.ts).

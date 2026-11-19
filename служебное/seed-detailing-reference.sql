@@ -77,4 +77,43 @@ select b.id, v.question, v.answer, v.sort_order
  where b.slug = 'vippro'
    and not exists (select 1 from public.faq_items f where f.business_id = b.id);
 
+-- Записи на сегодня: без них «Моя смена» и дашборд выглядят пустыми.
+-- Время привязано к текущей дате (слот + Europe/Moscow), поэтому сид можно перезапускать
+-- в любой день и он не «протухает», как фиксированные даты.
+-- Статус: прошедший слот → past_status, будущий → future_status. Так на смене всегда есть
+-- и завершённые визиты, и то, что ещё предстоит.
+insert into public.bookings (
+  business_id, client_name, client_phone, service_id, scheduled_at, comment, status,
+  duration_at_booking, price_at_booking, timezone, source, cancel_token, privacy_accepted_at, privacy_version
+)
+select b.id, v.client_name, v.client_phone, s.id,
+       ((now() at time zone 'Europe/Moscow')::date + v.slot) at time zone 'Europe/Moscow',
+       v.comment,
+       case
+         when ((now() at time zone 'Europe/Moscow')::date + v.slot) at time zone 'Europe/Moscow' < now()
+           then v.past_status
+         else v.future_status
+       end,
+       coalesce(s.duration_minutes, 90), s.price, b.timezone, 'panel',
+       gen_random_uuid(), now(), '1.0'
+  from public.businesses b
+  cross join (values
+    -- Слоты идут подряд без пересечений: триггер bookings_check_overlap не даст наложить
+    -- записи, а длительности у услуг разные (60…480 мин), поэтому порядок важен.
+    ('Дмитрий', '+7 913 794-88-00', 'Шиномонтаж', time '09:00', 'Зимняя резина в багажнике', 'done', 'new'),
+    ('Сергей',  '+7 913 111-22-33', 'Химчистка салона', time '10:00', 'Салон после собаки, нужен озонатор', 'done', 'confirmed'),
+    ('Игорь',   '+7 913 222-33-44', 'Ремонт вмятин без покраски', time '13:00', 'Вмятина на задней двери', 'no_show', 'confirmed'),
+    ('Алексей', '+7 913 333-44-55', 'Полировка кузова', time '15:00', null, 'confirmed', 'confirmed'),
+    ('Павел',   '+7 913 444-55-66', 'Шиномонтаж', time '19:00', 'Второй комплект на балансировку', 'done', 'new')
+  ) as v(client_name, client_phone, service_name, slot, comment, past_status, future_status)
+  join public.services s on s.business_id = b.id and s.name = v.service_name
+ where b.slug = 'vippro'
+   -- Идемпотентность: не плодим дубли, если на сегодня записи уже есть.
+   and not exists (
+     select 1 from public.bookings bk
+      where bk.business_id = b.id
+        and bk.scheduled_at >= ((now() at time zone 'Europe/Moscow')::date) at time zone 'Europe/Moscow'
+        and bk.scheduled_at <  ((now() at time zone 'Europe/Moscow')::date + 1) at time zone 'Europe/Moscow'
+   );
+
 commit;

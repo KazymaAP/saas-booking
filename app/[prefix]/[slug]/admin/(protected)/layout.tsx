@@ -34,6 +34,10 @@ export default async function OwnerLayout({ children, params }: { children: Reac
   const access = await currentOwner(params.slug);
   if (!access) redirect(`${base}/login`);
 
+  // Пароль выдан платформой (временный) — пока владелец не задал свой, кабинет закрыт.
+  // Страница /password лежит вне группы (protected), поэтому петли нет.
+  if (access.member.must_change_password) redirect(`${base}/password`);
+
   async function logout() {
     'use server';
     signOutOwner();

@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 // служебное/scripts/provision-service-admins.cjs — заводит владельца кабинета каждому сервису.
-// Логин у всех один — admin, пароль по умолчанию admin123 (можно передать аргументом).
+// Логин у всех один — admin, пароль генерируется отдельный для каждого кабинета
+// и сразу помечается must_change_password: владелец обязан задать свой при первом входе.
 // Короткий логин разворачивается в admin@<slug>.panel.zapishisya.ru (см. resolveOwnerLogin
 // в общие/lib/owner-session.ts): Supabase Auth умеет только email, а форме входа хватает «admin».
 //
 // Запуск:
 //   node служебное/scripts/provision-service-admins.cjs            # только отчёт, ничего не пишет
 //   node служебное/scripts/provision-service-admins.cjs --apply     # создать аккаунты
-//   node служебное/scripts/provision-service-admins.cjs --apply --password='ДругойПароль'
+//
+// Пароли попадают в служебное/service-admins.csv (в git не входит) — оттуда их и рассылают.
 'use strict';
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { generatePanelPassword } = require('./lib/panel-password.cjs');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const LOGIN = 'admin';
@@ -30,13 +33,6 @@ function loadEnv() {
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
-const passwordArg = args.find((a) => a.startsWith('--password='));
-const PASSWORD = passwordArg ? passwordArg.slice('--password='.length) : 'admin123';
-
-if (PASSWORD.length < 8) {
-  console.error('Пароль короче 8 символов — Supabase Auth такой не примет.');
-  process.exit(1);
-}
 
 const env = loadEnv();
 const URL = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -91,7 +87,7 @@ async function main() {
 
   for (const b of businesses) {
     const email = `${LOGIN}@${b.slug}.${DOMAIN}`;
-    const line = { slug: b.slug, name: b.name, login: LOGIN, email };
+    const line = { slug: b.slug, name: b.name, login: LOGIN, email, password: '' };
 
     if (ownersByBusiness.has(b.id)) {
       line.result = `уже есть владелец (${ownersByBusiness.get(b.id).email})`;
@@ -107,15 +103,25 @@ async function main() {
     }
 
     try {
+      // Пароль уникален для кабинета: общий пароль на всех — это открытые двери во все кабинеты.
+      const password = generatePanelPassword();
       let user = authByEmail.get(email);
       if (!user) {
         const createdUser = await api('/auth/v1/admin/users', {
           method: 'POST',
-          body: JSON.stringify({ email, password: PASSWORD, email_confirm: true }),
+          body: JSON.stringify({ email, password, email_confirm: true }),
         });
         if (!createdUser.ok) throw new Error(`auth ${createdUser.status}: ${JSON.stringify(createdUser.body).slice(0, 160)}`);
         user = createdUser.body;
+      } else {
+        // Пользователь уже был (например, остался от прежнего прогона) — пароль всё равно меняем.
+        const rotated = await api(`/auth/v1/admin/users/${user.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ password }),
+        });
+        if (!rotated.ok) throw new Error(`auth ${rotated.status}: ${JSON.stringify(rotated.body).slice(0, 160)}`);
       }
+      line.password = password;
 
       const inserted = await api('/rest/v1/admin_users', {
         method: 'POST',
@@ -127,6 +133,8 @@ async function main() {
           name: b.name,
           role: 'owner',
           status: 'active',
+          // Временный пароль: до смены владельцем кабинет не открывается.
+          must_change_password: true,
         }]),
       });
       if (!inserted.ok) throw new Error(`admin_users ${inserted.status}: ${JSON.stringify(inserted.body).slice(0, 160)}`);

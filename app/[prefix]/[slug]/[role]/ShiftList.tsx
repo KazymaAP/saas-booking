@@ -52,7 +52,7 @@ export function ShiftList({ slug, rows, now, canWrite }: {
         setAnnounce(`Ошибка: ${res.error}`);
       }
     });
-  }, [busyId, slug]);
+  }, [busyId, slug, setOptimistic]);
 
   if (optimisticRows.length === 0) {
     return (
@@ -67,7 +67,7 @@ export function ShiftList({ slug, rows, now, canWrite }: {
       {/* aria-live: подтверждение смены статуса для скринридера — без визуального toast. */}
       <p className="sr-only" role="status" aria-live="polite">{announce}</p>
       {error && (
-        <p className="box-border !mb-0 rounded-[var(--radius)] border border-[#f0c2c2] bg-[#fdf3f3] px-3 py-2 text-[13px] text-[#a12a2a]" role="alert">
+        <p className="box-border !mb-0 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--danger)]" role="alert">
           {error}
         </p>
       )}
@@ -152,11 +152,12 @@ function statusClass(status: BookingStatus): string {
   if (status === 'confirmed') return 'bg-[#eef4ff] text-[#1f4b99]';
   if (status === 'done') return 'bg-[#eef7ee] text-[#2a6b2a]';
   if (status === 'no_show') return 'bg-[#f4f4f4] text-[#595959]';
-  return 'bg-[#fdf3f3] text-[#a12a2a]';
+  // Отменённая — та же пара, что в списке броней: тёмная тема перекрашивает и фон, и текст.
+  return 'bg-[#fee2e2] text-[#7f1d1d]';
 }
 
 function buttonClass(action: BookingAction): string {
   if (action === 'confirm') return 'border-[var(--brand-color)] bg-[var(--brand-color)] text-white';
-  if (action === 'cancel') return 'border-[#f0c2c2] text-[#a12a2a]';
+  if (action === 'cancel') return 'border-[var(--danger)] text-[var(--danger)]';
   return 'border-[var(--line)] text-[var(--ink)]';
 }

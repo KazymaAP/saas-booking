@@ -65,6 +65,7 @@ export type Database = {
           invited_at: string | null;
           invited_by: string | null;
           last_login: string | null;
+          must_change_password: boolean;
           name: string | null;
           phone: string | null;
           role: string;
@@ -81,6 +82,7 @@ export type Database = {
           invited_at?: string | null;
           invited_by?: string | null;
           last_login?: string | null;
+          must_change_password?: boolean;
           name?: string | null;
           phone?: string | null;
           role?: string;
@@ -96,6 +98,7 @@ export type Database = {
           invited_at?: string | null;
           invited_by?: string | null;
           last_login?: string | null;
+          must_change_password?: boolean;
           name?: string | null;
           phone?: string | null;
           role?: string;

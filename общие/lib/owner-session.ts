@@ -64,6 +64,8 @@ export async function superAdminSupportAccess(slug: string): Promise<OwnerAccess
     invited_at: null,
     invited_by: null,
     last_login: null,
+    // Поддержка платформы пароль не меняет — иначе супер-админа уводило бы на форму смены пароля.
+    must_change_password: false,
     created_at: now,
     updated_at: now,
   };
@@ -97,6 +99,13 @@ export async function completeOwnerSignIn(session: ProviderSession, slug: string
   }
   startSession('owner', session);
   await authEvent('login_success', { realm: 'owner', email: session.user.email, ip, businessId: business.id });
+  // Отметка входа: без неё в супер-админке не видно, пользуется ли клиент кабинетом вообще.
+  // Best-effort — сбой записи не должен ломать вход.
+  await Promise.resolve(
+    adminClient().from('admin_users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', membership.data.member.id),
+  ).catch(() => undefined);
   // П1: фиксируем использование кастомной роли и снимаем флаг предупреждения об удалении.
   // Если роль «ожила» (сотрудник снова вошёл), отсчёт 30 дней неактивности начинается заново.
   if (isCustomRole(role)) {
