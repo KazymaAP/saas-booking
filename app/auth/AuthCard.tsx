@@ -13,8 +13,10 @@ import {
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 type Role = 'entrepreneur' | 'partner';
 
+// bg-zinc-800/60, а не bg-zinc-950: на карточке zinc-900 поле почти чёрным сливалось с фоном
+// и читалось как дырка, а не как поле ввода.
 const inputClass =
-  'box-border mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-indigo-500';
+  'box-border mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-3 py-2.5 text-white outline-none transition-colors placeholder:text-zinc-500 focus:border-indigo-500';
 
 export function AuthCard({
   initialMode = 'login',
@@ -92,8 +94,11 @@ export function AuthCard({
     mode === 'reset' ? 'Введите код из письма' :
     'Вход';
 
+  // justify-center: карточка входа висела у верхнего края, под ней оставалось пол-экрана
+  // пустоты. min-h-screen не мешает: если содержимое выше экрана, контейнер растёт и
+  // центрирование просто не срабатывает — верх остаётся доступным.
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
+    <main className="flex min-h-screen flex-col justify-center bg-zinc-950 px-4 py-10 text-zinc-100">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 text-center">
           <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-indigo-600 text-lg font-semibold text-white">З</div>
@@ -249,13 +254,17 @@ export function AuthCard({
             )}
           </div>
 
-          <p className="mt-4 text-center text-[11px] leading-4 text-zinc-400">
-            {mode === 'register' && role === 'entrepreneur'
-              ? 'После регистрации мы свяжемся с вами и активируем сайт.'
-              : mode === 'register'
-                ? 'Партнёр получает доступ к готовым сайтам и вознаграждению.'
-                : 'Код действует 10 минут.'}
-          </p>
+          {/* Для входа подсказки нет: раньше здесь висело «Код действует 10 минут.» —
+              остаток от сценария со ссылкой-кодом, хотя вход идёт по паролю. */}
+          {(mode === 'register' || mode === 'forgot' || mode === 'reset') && (
+            <p className="mt-4 text-center text-[11px] leading-4 text-zinc-400">
+              {mode === 'register' && role === 'entrepreneur'
+                ? 'После регистрации мы свяжемся с вами и активируем сайт.'
+                : mode === 'register'
+                  ? 'Партнёр получает доступ к готовым сайтам и вознаграждению.'
+                  : 'Ссылка для сброса пароля действует 10 минут.'}
+            </p>
+          )}
         </div>
       </div>
     </main>

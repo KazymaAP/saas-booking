@@ -126,6 +126,16 @@ body {
   max-width: 100%;
 }
 
+/* Юридические документы (оферта, политика, согласия): preflight отключён, поэтому ссылки
+   внутри .legal-doc рисовались браузерным синим с подчёркиванием и выбивались из остального
+   сайта — оглавление выглядело как необработанный HTML. */
+.legal-doc a {
+  color: var(--brand-color, #111111);
+  text-decoration-color: rgba(17, 17, 17, 0.35);
+  text-underline-offset: 2px;
+}
+.legal-doc a:hover { text-decoration-color: currentColor; }
+
 /* ===== Панели ===== */
 /* Фон кабинета берётся из выбранного стиля (по умолчанию — стиль ниши бизнеса). */
 .panel-shell { background: var(--panel-bg, var(--surface)); color: var(--ink); }

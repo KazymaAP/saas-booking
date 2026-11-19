@@ -407,8 +407,11 @@ function Dashboard({ businesses, push, onOpenAudit }: { businesses: Business[]; 
 
       {loading && <p className="text-caption text-brand-text-subtle">Считаем показатели…</p>}
 
+      {/* min-w-0 на карточках: у grid-элемента min-width:auto равен min-content, а внутри
+          строки журнала лежит truncate — он держал min-content 386 px, и колонка не сжималась
+          на мобиле (54 px горизонтального скролла). */}
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="rounded-3xl border border-brand-border bg-brand-surface p-5 md:p-6">
+        <div className="min-w-0 rounded-3xl border border-brand-border bg-brand-surface p-5 md:p-6">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-heading-sm">Последняя активность</h3>
             <button type="button" className="text-caption text-brand-accent transition-colors hover:text-white" onClick={() => onOpenAudit?.()}>Весь журнал →</button>
@@ -432,7 +435,7 @@ function Dashboard({ businesses, push, onOpenAudit }: { businesses: Business[]; 
           </ul>
         </div>
 
-        <div className="rounded-3xl border border-brand-border bg-brand-surface p-5 md:p-6">
+        <div className="min-w-0 rounded-3xl border border-brand-border bg-brand-surface p-5 md:p-6">
           <h3 className="text-heading-sm">Топ по выручке за месяц</h3>
           <ul className="mt-3 space-y-1">
             {top.length === 0 && <li className="rounded-2xl px-2 py-2 text-caption text-brand-text-subtle">Оплат за этот месяц ещё не было</li>}

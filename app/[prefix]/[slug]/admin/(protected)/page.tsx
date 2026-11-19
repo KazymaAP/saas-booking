@@ -218,7 +218,9 @@ export default async function OwnerHome({ params }: { params: { prefix: string; 
         <StatCard href={`${base}/bookings`} label="Завершено сегодня" value={counts.doneToday} />
         <StatCard label="Выручка сегодня" value={money(counts.revenueToday)} />
         <StatCard label="Выручка за 7 дней" value={money(counts.revenueWeek)} accent />
-        <StatCard href={`${base}/bookings`} label="На 7 дней" value={counts.week} />
+        {/* «На 7 дней» читалось как дата, а не как счётчик: это количество записей
+            на ближайшие семь дней вперёд (см. week выше). */}
+        <StatCard href={`${base}/bookings`} label="Записей на неделю" value={counts.week} />
         <StatCard href={`${base}/bookings`} label="Ждут подтверждения" value={counts.pending} accent={counts.pending > 0} />
       </section>
 
