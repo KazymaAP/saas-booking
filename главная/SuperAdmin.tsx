@@ -438,7 +438,10 @@ function Dashboard({ businesses, push, onOpenAudit }: { businesses: Business[]; 
             {top.length === 0 && <li className="rounded-2xl px-2 py-2 text-caption text-brand-text-subtle">Оплат за этот месяц ещё не было</li>}
             {top.map((x) => (
               <li key={x.id} className="flex items-center justify-between gap-3 rounded-2xl px-2 py-2 hover:bg-white/[0.04]">
-                <span className="truncate text-body-sm">{x.name}</span>
+                {/* min-w-0 обязателен: truncate ставит white-space:nowrap, и без него
+                    min-width:auto у flex-элемента равен ширине всей строки — карточка
+                    распирала сетку, и на 390 px страница уезжала на 54 px вбок. */}
+                <span className="min-w-0 truncate text-body-sm">{x.name}</span>
                 <span className="shrink-0 text-body-sm text-brand-text-muted">{rub(x.revenueMonth)}</span>
               </li>
             ))}

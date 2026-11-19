@@ -5,6 +5,18 @@
    @tailwind base (preflight) намеренно не подключён: шаблон клиента (studio.css) использует свои слои и сброс.
    Все базовые правила панелей привязаны к .panel-shell, чтобы не протекать в шаблон клиента. */
 
+/* @tailwind base не подключён, поэтому нет и box-sizing: border-box из preflight.
+   Шаблон клиента (detailing-scoped.css / studio.css) задаёт border-box сам внутри .detailing-root,
+   а кабинет (.panel-shell) оставался на браузерном content-box: каждый p-5 и border прибавлялись
+   к заданной ширине. Замер до правки: 267 элементов с content-box против 28 с border-box,
+   из-за чего карточки кабинета выходили шире своей колонки сетки.
+   Возвращаем единственный правильный для утилит вариант. */
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
 /* @tailwind base не подключён, поэтому нет и значений по умолчанию для --tw-*.
    Без них transform-утилиты Tailwind (translate/rotate/skew/scale) собираются в
    `translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(...)` с неопределёнными
@@ -102,6 +114,17 @@ body {
 .panel-shell input:focus,
 .panel-shell select:focus,
 .panel-shell textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06); }
+
+/* Ширина select по умолчанию равна самому длинному пункту списка: в кабинете это названия
+   услуг вроде «Ремонт вмятин без покраски». Вместе с min-width:auto у grid-элемента поле
+   распирало всю колонку — замер на 390 px давал 20 px горизонтального скролла.
+   Ограничиваем поле его ячейкой; текст длинного пункта остаётся доступен в выпадающем списке. */
+.panel-shell input,
+.panel-shell select,
+.panel-shell textarea {
+  min-width: 0;
+  max-width: 100%;
+}
 
 /* ===== Панели ===== */
 /* Фон кабинета берётся из выбранного стиля (по умолчанию — стиль ниши бизнеса). */

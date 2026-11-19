@@ -3,50 +3,20 @@
 // Порт разметки/классов DetailingSite (1:1), но весь копирайт/иконки/ресурсы берутся
 // из NicheTenant (темы). Один компонент на все 10 ниш. CSS — общий detailing-scoped.css
 // (scoped под .detailing-root), поэтому обёртка сохраняется.
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, CalendarCheck, CaretDown, Clock, Download, House,
   InstagramLogo, MapPin, Phone, Star, TelegramLogo, UserCircle, WhatsappLogo, X,
 } from '@phosphor-icons/react';
 import { NicheBookingFlow } from './NicheBookingFlow';
 import { Glyph } from './glyph';
+import { buildPalette, hexToRgbTuple } from './palette';
 import {
   formatCurrency, formatDuration, formatServicePrice, getStudioStatus,
   pickServiceGlyph, plural, resourceNoun, type NicheService, type NicheTenant,
 } from './niche-tenant';
 
 // ---------- accent (точно как TenantLayout) ----------
-function hexToRgbTuple(hex: string): [number, number, number] {
-  const m = hex.replace('#', '').trim();
-  const full = m.length === 3 ? m.split('').map((c) => c + c).join('') : m;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  if ([r, g, b].some((v) => Number.isNaN(v))) return [70, 144, 255];
-  return [r, g, b];
-}
-function scaleRgb(rgb: [number, number, number], k: number): string {
-  return rgb.map((v) => Math.round(v * k)).join(' ');
-}
-function channelLuminance(v: number): number {
-  const s = v / 255;
-  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-function relativeLuminance([r, g, b]: [number, number, number]): number {
-  return 0.2126 * channelLuminance(r) + 0.7152 * channelLuminance(g) + 0.0722 * channelLuminance(b);
-}
-function contrastWithWhite(rgb: [number, number, number]): number {
-  return 1.05 / (relativeLuminance(rgb) + 0.05);
-}
-function ensureWhiteContrast(rgb: [number, number, number], min = 4.5): [number, number, number] {
-  for (let i = 16; i >= 1; i--) {
-    const k = i * 0.05;
-    const candidate: [number, number, number] = [Math.round(rgb[0] * k), Math.round(rgb[1] * k), Math.round(rgb[2] * k)];
-    if (contrastWithWhite(candidate) >= min) return candidate;
-  }
-  return [0, 0, 0];
-}
-
 function InfoCardIcon({ icon }: { icon: string }) {
   const props = { size: 19, weight: 'bold' as const, 'aria-hidden': true };
   switch (icon) {
@@ -132,8 +102,9 @@ function ServiceRowButton({ service, tenant, onPick }: { service: NicheService; 
           {service.oldPrice !== null && service.oldPrice > service.price && (
             <span className="whitespace-nowrap text-[11px] leading-none text-brand-text-subtle line-through">{formatServicePrice(service.oldPrice)}</span>
           )}
+          {/* Подпись «Выбрать» убрана: она делала правую колонку на строку выше названия услуги,
+              а affordance уже даёт стрелка и подсветка всей строки при наведении. */}
           <span className="whitespace-nowrap text-[13px] font-semibold sm:text-sm">{formatServicePrice(service.price)}</span>
-          <span className="hidden text-[11px] text-brand-text-subtle sm:block">Выбрать</span>
         </span>
         <ArrowUpRight size={15} className="mt-0.5 text-brand-text-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
       </span>
@@ -213,31 +184,20 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
     };
   }, [tenant.bg, tenant.text, tenant.mode]);
 
-  const accentChannels = useMemo(() => hexToRgbTuple(tenant.accentColor), [tenant.accentColor]);
-  const accent2Channels = useMemo(() => hexToRgbTuple(tenant.accent2), [tenant.accent2]);
-  const paletteStyle = useMemo(() => {
-    const accentSolid = ensureWhiteContrast(accentChannels);
-    const t = (hex: string) => hexToRgbTuple(hex).join(' ');
-    return {
-      '--color-bg': t(tenant.bg),
-      '--color-surface': t(tenant.surface),
-      '--color-border': t(tenant.border),
-      '--color-border-hover': t(tenant.borderHover),
-      '--color-text': t(tenant.text),
-      '--color-text-muted': t(tenant.textMuted),
-      '--color-text-subtle': t(tenant.textSubtle),
-      '--color-accent': accentChannels.join(' '),
-      '--color-accent-2': accent2Channels.join(' '),
-      // В светлых темах стандартный зелёный #22c55e даёт 2.3:1 на белом — статус «Открыто до…»
-      // не читался. Для светлого режима берём тёмный зелёный (4.9:1), для тёмного оставляем прежний.
-      '--color-success': tenant.mode === 'light' ? '21 128 61' : '34 197 94',
-      // Подсказки формы записи: один и тот же серый не проходит AA и на белом, и на тёмном,
-      // поэтому цвет зависит от режима темы (см. booking-ui.tsx).
-      '--booking-muted': tenant.mode === 'light' ? '#595959' : '#a1a1aa',
-      '--color-accent-solid': accentSolid.join(' '),
-      '--color-accent-solid-hover': scaleRgb(accentSolid, 0.9),
-    } as CSSProperties;
-  }, [accentChannels, accent2Channels, tenant.bg, tenant.surface, tenant.border, tenant.borderHover, tenant.text, tenant.textMuted, tenant.textSubtle]);
+  // Палитра вынесена в ./palette: тот же набор переменных используют служебные страницы
+  // («Моя запись»), иначе они красились жёстко синим независимо от темы ниши.
+  const paletteStyle = useMemo(() => buildPalette({
+    accent: tenant.accentColor,
+    accent2: tenant.accent2,
+    mode: tenant.mode,
+    bg: tenant.bg,
+    surface: tenant.surface,
+    border: tenant.border,
+    borderHover: tenant.borderHover,
+    text: tenant.text,
+    textMuted: tenant.textMuted,
+    textSubtle: tenant.textSubtle,
+  }), [tenant]);
 
   const activeServices = tenant.services.filter((s) => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
   const previewServices = activeServices.slice(0, 4);
@@ -323,7 +283,9 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
             </div>
             <div className="rounded-3xl border border-brand-border bg-brand-surface p-4 md:p-5">
               <div className="flex items-center gap-3">
-                <Glyph icon={tenant.glyph} size={20} weight="bold" className="text-brand-text" />
+                {/* Раньше в первой и второй карточке стоял один и тот же глиф ниши — в ряду из трёх
+                    плиток это читалось как дубль. Для «в работе» берём часы, для прайса — глиф ниши. */}
+                <Clock size={20} weight="bold" className="text-brand-text" aria-hidden="true" />
                 <div className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{resourceCount}</div>
               </div>
               <div className="mt-3 text-[13px] text-brand-text-muted">{resourceNoun(resourceCount, tenant.resourceLabel)} в работе</div>
@@ -332,13 +294,17 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               <div className="flex items-center gap-3">
                 <Glyph icon="calendar" size={20} weight="bold" className="text-brand-text" />
                 <div className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{minPrice !== null ? `от ${formatCurrency(minPrice)}` : '—'}</div>
-                <div className="ml-auto mr-12 text-[13px] text-brand-text-muted md:hidden">за услугу</div>
               </div>
-              <div className="mt-3 hidden text-[13px] text-brand-text-muted md:block">за услугу</div>
+              {/* Подпись всегда под значением, как у первых двух плиток: на мобиле она стояла
+                  справа через mr-12 и ломала общий ритм ряда. */}
+              <div className="mt-3 text-[13px] text-brand-text-muted">за услугу</div>
             </div>
           </section>
 
-          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,620px)_320px] lg:justify-between lg:gap-6">
+          {/* Раньше колонки были жёстко 620 + 320 при контейнере 1056: свободные 92 px уходили
+              в промежуток между колонками (lg:justify-between), и вместо 24 px получалось 116 —
+              левая колонка выглядела оторванной от правой. Теперь остаток забирает левая колонка. */}
+          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
             <div className="order-2 lg:order-1">
               <section id="services">
                 <div className="mb-5 flex items-end justify-between gap-4">
@@ -389,16 +355,28 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               {gallery.length > 0 && (
                 <section className="mt-10">
                   <h2 className="mb-5 text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.gallery ?? 'Наши работы'}</h2>
-                  <div className="grid max-w-[520px] grid-cols-2 gap-x-4 gap-y-5">
-                    {gallery.map((item) => (
-                      <figure key={item.id} className="group min-w-0">
-                        <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={item.url} alt={item.caption} loading="lazy" className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                        </div>
-                        <figcaption className="mt-2.5 text-[12px] leading-4 text-brand-text-muted">{item.caption}</figcaption>
-                      </figure>
-                    ))}
+                  {/* Раньше галерея была 2 колонки шириной 520 px при колонке контента 620:
+                      третья работа оставалась одна во втором ряду, а справа от неё зияла
+                      пустая половина. При трёх кадрах первый становится крупным на всю ширину,
+                      при двух — равные половины, при одном — один широкий. */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                    {gallery.map((item, index) => {
+                      const featured = index === 0 && gallery.length !== 2;
+                      return (
+                        <figure key={item.id} className={`group min-w-0 ${featured ? 'col-span-2' : ''}`}>
+                          <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.url}
+                              alt={item.caption}
+                              loading="lazy"
+                              className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${featured ? 'aspect-[16/9]' : 'aspect-[4/3]'}`}
+                            />
+                          </div>
+                          <figcaption className="mt-2.5 text-[12px] leading-4 text-brand-text-muted">{item.caption}</figcaption>
+                        </figure>
+                      );
+                    })}
                   </div>
                 </section>
               )}
@@ -500,7 +478,10 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
               )}
             </div>
 
-            <aside className="order-1 space-y-4 lg:order-2">
+            {/* Правая колонка короче левой (443 px против 2289 px): раньше под карточками
+                оставалось почти два экрана пустоты. Приклеиваем её под шапку — блок записи
+                остаётся на виду, пока посетитель читает прайс, работы и отзывы. */}
+            <aside className="order-1 space-y-4 lg:sticky lg:top-[108px] lg:order-2 lg:self-start">
               <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.booking ?? 'Запись'}</h2>
 
               <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-5">

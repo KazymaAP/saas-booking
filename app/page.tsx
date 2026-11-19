@@ -85,7 +85,9 @@ export default async function Home() {
                 <span className="size-1.5 rounded-full bg-brand-success" aria-hidden="true" /> Онлайн-запись для бизнеса
               </span>
               <h1 className="mt-5 max-w-[640px] !text-[38px] !font-semibold leading-[1.05] tracking-[-0.035em] text-balance md:!text-[54px]">
-                Готовый сайт с онлайн-записью за 1 день
+                {/* nowrap: иначе text-balance рвёт «онлайн-записью» по дефису и в заголовке
+                    остаётся висящее «с онлайн-» в конце строки. */}
+                Готовый сайт с <span className="whitespace-nowrap">онлайн-записью</span> за 1 день
               </h1>
               <p className="mt-4 max-w-[560px] text-[16px] leading-7 text-brand-text-muted">
                 Делаем сайты-визитки для детейлинга, салонов, клиник, фитнеса и других ниш. Клиенты записываются с телефона за пару касаний.

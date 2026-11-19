@@ -9,7 +9,7 @@ import { SwRegister } from './SwRegister';
 import { StudioTemplate } from '@/components/templates/StudioTemplate';
 import { NicheSite } from '@/шаблоны/_shared/NicheSite';
 import { buildNicheTenant } from '@/шаблоны/_shared/niche-tenant';
-import { getNicheTheme, getNicheThemeBySlug } from '@/шаблоны/_shared/themes';
+import { resolveSiteTheme } from '@/шаблоны/_shared/theme-for';
 import { SITE_THEME_KEY, appearanceByKey } from '@/lib/appearance';
 
 export const revalidate = 3600; // кэш сайта клиента на 1 час: слоты брони всё равно живые (клиентский API),
@@ -57,24 +57,17 @@ export default async function BusinessPage({ params }: { params: { prefix: strin
   const texts = (business.custom_texts ?? {}) as Record<string, string>;
   // Ниша определяется по url-префиксу (или slug шаблона). Совпадение → отрисовываем
   // готовый нишевой сайт через общий движок; иначе — универсальный StudioTemplate.
-  const baseTheme = getNicheTheme(params.prefix) ?? (r.template?.slug ? getNicheThemeBySlug(r.template.slug) : null);
   // Владелец может отдельно сменить стиль сайта (независимо от стиля кабинета).
   // Наложение палитры на тему ниши: раскладка и тексты остаются свои, меняются цвета и режим.
+  // Сама логика живёт в resolveSiteTheme — её же использует страница «Моя запись»,
+  // иначе служебные страницы расходились с витриной по акценту.
   const styleOverride = appearanceByKey(texts[SITE_THEME_KEY]);
-  const theme = baseTheme && styleOverride
-    ? {
-        ...baseTheme,
-        mode: styleOverride.mode,
-        bg: styleOverride.bg,
-        surface: styleOverride.surface,
-        border: styleOverride.line,
-        borderHover: styleOverride.line,
-        text: styleOverride.ink,
-        textMuted: styleOverride.muted,
-        textSubtle: styleOverride.muted,
-        accent: business.brand_color || styleOverride.accent,
-      }
-    : baseTheme;
+  const theme = resolveSiteTheme({
+    prefix: params.prefix,
+    templateSlug: r.template?.slug,
+    texts,
+    brandColor: business.brand_color,
+  });
 
   const jsonLd = (
     <script
