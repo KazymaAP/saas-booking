@@ -216,7 +216,7 @@ function RefreshBtn({ push, label = 'Обновить', message = 'Данные 
           setBusy(true);
           try {
             await onRefresh?.();
-            setAt(new Date().toLocaleTimeString('ru-RU'));
+            setAt(new Date().toLocaleTimeString('ru-RU', { timeZone: PLATFORM_TZ }));
             push(message, 'success');
           } catch (e) {
             push(e instanceof Error ? e.message : 'Не удалось обновить', 'error');
@@ -285,10 +285,16 @@ function SendMailSheet({
   );
 }
 
+// Дата платформы всегда в московском времени — как во всех остальных разделах админки
+// (ClientsTable, LicensesTable, History, InboxThread). Без явной зоны сервер (UTC) и браузер
+// (местное время) показывали разные сутки: в 19:01 UTC в Екатеринбурге уже 20-е, и React
+// падал с hydration mismatch (#425/#418) на каждом открытии дашборда.
+const PLATFORM_TZ = 'Europe/Moscow';
+
 function ClockLabel() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => { const t = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(t); }, []);
-  return <>{now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</>;
+  return <>{now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: PLATFORM_TZ })}</>;
 }
 
 // ---------- графики (чистый SVG, без зависимостей) ----------
@@ -429,7 +435,7 @@ function Dashboard({ businesses, push, onOpenAudit }: { businesses: Business[]; 
                   <span className="block truncate text-body-sm" title={a.action}>{a.label}</span>
                   <span className="block truncate text-caption text-brand-text-subtle">{a.entity || '—'}</span>
                 </span>
-                <span className="shrink-0 text-caption text-brand-text-subtle">{a.created_at ? new Date(a.created_at).toLocaleTimeString('ru-RU') : ''}</span>
+                <span className="shrink-0 text-caption text-brand-text-subtle">{a.created_at ? new Date(a.created_at).toLocaleTimeString('ru-RU', { timeZone: PLATFORM_TZ }) : ''}</span>
               </li>
             ))}
           </ul>
@@ -656,7 +662,7 @@ function BusinessDrawer({
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-3">
           <StatusBadge status={b.status} />
-          <span className="text-caption text-brand-text-subtle">с {new Date(b.created).toLocaleDateString('ru-RU')}</span>
+          <span className="text-caption text-brand-text-subtle">с {new Date(b.created).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ })}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -948,7 +954,7 @@ function Settings({ push, demoData, onToggleDemo }: { push: (m: string, k?: Toas
     setPlatformBusy(true);
     try {
       const r = await savePlatformSettingsAction(platform);
-      if (r.ok) { setSavedAt(new Date().toLocaleTimeString('ru-RU')); push('Настройки платформы сохранены', 'success'); }
+      if (r.ok) { setSavedAt(new Date().toLocaleTimeString('ru-RU', { timeZone: PLATFORM_TZ })); push('Настройки платформы сохранены', 'success'); }
       else push(r.error ?? 'Не удалось сохранить', 'error');
     } catch {
       push('Не удалось сохранить', 'error');
@@ -960,7 +966,7 @@ function Settings({ push, demoData, onToggleDemo }: { push: (m: string, k?: Toas
     setPlatformBusy(true);
     try {
       const r = await saveNotificationSettingsAction(notif);
-      if (r.ok) { setNotifSavedAt(new Date().toLocaleTimeString('ru-RU')); push('Настройки уведомлений сохранены', 'success'); }
+      if (r.ok) { setNotifSavedAt(new Date().toLocaleTimeString('ru-RU', { timeZone: PLATFORM_TZ })); push('Настройки уведомлений сохранены', 'success'); }
       else push(r.error ?? 'Не удалось сохранить', 'error');
     } catch {
       push('Не удалось сохранить', 'error');
@@ -1381,7 +1387,7 @@ function UsersSection({ push }: { push: (m: string, k?: ToastKind) => void }) {
               </span>
               <span className="text-body-sm text-brand-text-muted">{ROLE_LABEL[u.role] ?? u.role}</span>
               <span className="text-caption text-brand-text-subtle">{u.source === 'super_admin' ? 'super_admins' : 'admin_users'}</span>
-              <span className="text-caption text-brand-text-subtle">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('ru-RU') : '—'}</span>
+              <span className="text-caption text-brand-text-subtle">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
             </li>
           ))}
         </ul>
@@ -1415,7 +1421,7 @@ function Finance({ push }: { push: (m: string, k?: ToastKind) => void }) {
   const exportCsv = () => {
     const header = 'Дата;Бизнес;Сумма;Тип;Комментарий';
     const lines = rows.map((r) => [
-      r.paidAt ? new Date(r.paidAt).toLocaleDateString('ru-RU') : '—',
+      r.paidAt ? new Date(r.paidAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—',
       r.business,
       r.amount,
       r.type,
@@ -1462,7 +1468,7 @@ function Finance({ push }: { push: (m: string, k?: ToastKind) => void }) {
           )}
           {rows.map((r) => (
             <li key={r.id} className="grid grid-cols-2 gap-x-3 gap-y-1 px-5 py-3.5 md:grid-cols-[1fr_1.4fr_0.9fr_1fr_1.2fr] md:items-center">
-              <span className="text-body-sm">{r.paidAt ? new Date(r.paidAt).toLocaleDateString('ru-RU') : '—'}</span>
+              <span className="text-body-sm">{r.paidAt ? new Date(r.paidAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
               <span className="truncate text-body-sm">{r.business}</span>
               <span className="text-body-sm font-medium">{rub(r.amount)}</span>
               <span className="text-caption text-brand-text-muted">{r.type}</span>
@@ -1718,7 +1724,7 @@ function Health({ push, demoData = true }: { push: (m: string, k?: ToastKind) =>
         version: json.version ?? '—',
         uptime: Number(json.uptime_s ?? 0),
       });
-      setLastUpdated(new Date().toLocaleTimeString('ru-RU'));
+      setLastUpdated(new Date().toLocaleTimeString('ru-RU', { timeZone: PLATFORM_TZ }));
       push(json.status === 'ok' ? 'Все проверки пройдены' : `Деградация: БД ${json.checks?.db ?? 'неизвестно'}`, json.status === 'ok' ? 'success' : 'error');
     } catch {
       setLive(null);
@@ -2275,7 +2281,7 @@ function Leads({ push }: { push: (m: string, k?: ToastKind) => void }) {
                   {l.message && <span className="mt-1 block truncate text-caption text-brand-text-muted">{l.message}</span>}
                 </span>
                 <span className={`shrink-0 rounded-full border px-2 py-0.5 text-caption ${st.cls}`}>{st.label}</span>
-                <span className="shrink-0 text-caption text-brand-text-subtle">{l.createdAt ? new Date(l.createdAt).toLocaleDateString('ru-RU') : ''}</span>
+                <span className="shrink-0 text-caption text-brand-text-subtle">{l.createdAt ? new Date(l.createdAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : ''}</span>
               </li>
             );
           })}
@@ -2628,7 +2634,7 @@ function PromosLive({ push }: { push: (m: string, k?: ToastKind) => void }) {
               <span className="rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-1 font-mono text-body-sm font-semibold text-brand-accent">{r.code}</span>
               <span className="text-body-sm text-brand-text-muted">{typeLabel(r.type, r.value)}</span>
               <span className="text-caption text-brand-text-subtle">использовано {r.used}{r.maxUses > 0 ? ` из ${r.maxUses}` : ''}</span>
-              <span className="text-caption text-brand-text-subtle">до {r.validUntil ? new Date(r.validUntil).toLocaleDateString('ru-RU') : 'бессрочно'}</span>
+              <span className="text-caption text-brand-text-subtle">до {r.validUntil ? new Date(r.validUntil).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : 'бессрочно'}</span>
               <span className={`ml-auto rounded-full border px-2 py-0.5 text-caption ${r.active ? 'border-brand-success/30 text-brand-success' : 'border-white/15 text-brand-text-subtle'}`}>{r.active ? 'активен' : 'выключен'}</span>
             </li>
           ))}
@@ -2883,7 +2889,7 @@ function ClientsLive({ push }: { push: (m: string, k?: ToastKind) => void }) {
                 <span className="block truncate text-caption text-brand-text-subtle">{[r.phone, r.email].filter(Boolean).join(' · ') || 'нет контактов'}</span>
               </span>
               <span className="text-caption text-brand-text-muted">записей: {r.bookings}</span>
-              <span className="text-caption text-brand-text-subtle">{r.lastVisit ? new Date(r.lastVisit).toLocaleDateString('ru-RU') : '—'}</span>
+              <span className="text-caption text-brand-text-subtle">{r.lastVisit ? new Date(r.lastVisit).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
             </li>
           ))}
         </ul>
@@ -3147,7 +3153,7 @@ function Domains({ push }: { push: (m: string, k?: ToastKind) => void }) {
             <li key={d.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
               <span className="min-w-0 flex-1 truncate text-body-sm">{d.business}</span>
               <span className="truncate font-mono text-caption text-brand-text-muted">{d.domain}</span>
-              <span className="text-caption text-brand-text-subtle">до {d.subscriptionUntil ? new Date(d.subscriptionUntil).toLocaleDateString('ru-RU') : '—'}</span>
+              <span className="text-caption text-brand-text-subtle">до {d.subscriptionUntil ? new Date(d.subscriptionUntil).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
               <span className={`rounded-full border px-2 py-0.5 text-caption ${d.active ? 'border-brand-success/30 text-brand-success' : 'border-brand-error/30 text-brand-error'}`}>{d.active ? 'активен' : 'не оплачен'}</span>
             </li>
           ))}
@@ -4243,7 +4249,7 @@ function Partners({ push }: { push: (m: string, k?: ToastKind) => void }) {
             <div className="grid grid-cols-2 gap-2">
               {([
                 ['Код', selected.referral_code],
-                ['Регистрация', selected.createdAt ? new Date(selected.createdAt).toLocaleDateString('ru-RU') : '—'],
+                ['Регистрация', selected.createdAt ? new Date(selected.createdAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'],
                 ['Лидов', String(selected.leadsCount)],
                 ['Счетов', String(selected.checkoutsCount)],
                 ['Оплачено', String(selected.paidCount)],

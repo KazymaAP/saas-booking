@@ -108,7 +108,7 @@ export function VersionList({ templateId, current, versions }: { templateId: str
         {versions.map((v) => (
           <li key={v.version} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#f0f0f0] p-2">
             <span>
-              v{v.version}{v.version === current ? ' (текущая)' : ''} · {v.created_at ? new Date(v.created_at).toLocaleString('ru-RU') : ''}
+              v{v.version}{v.version === current ? ' (текущая)' : ''} · {v.created_at ? new Date(v.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) : ''}
               <span className="block text-[#666666]">{v.subject}</span>
             </span>
             {v.version !== current && (

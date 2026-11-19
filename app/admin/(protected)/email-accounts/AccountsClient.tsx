@@ -104,7 +104,7 @@ function AccountRow({ a, run, onEdit }: { a: PublicEmailAccount; run: (p: Patch 
           <span className="text-[#666666]">
             <span className={a.active ? 'text-[#166534]' : 'text-[#b91c1c]'}>{a.active ? 'активен' : 'выключен'}</span>
             {' · '}сегодня {a.sent_today} из {a.daily_limit}
-            {a.last_checked_at && ` · проверен ${new Date(a.last_checked_at).toLocaleString('ru-RU')}`}
+            {a.last_checked_at && ` · проверен ${new Date(a.last_checked_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`}
           </span>
           <progress max={100} value={usage} aria-label={`Использовано ${usage}% дневного лимита`} className="h-1 w-[200px]" />
           {a.last_error && <span role="note" className="text-[#b91c1c]">Последняя ошибка: {a.last_error}</span>}
