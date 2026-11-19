@@ -1,6 +1,6 @@
 // lib/auth-core.ts — чистые функции аутентификации (ТЗ 4.0 §5, §7, §17.4).
 // Здесь нет обращений к сети, cookies и БД: всё детерминировано и покрыто unit-тестами (lib/auth.test.ts).
-import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, createPublicKey, randomUUID, timingSafeEqual, verify as verifySignature } from 'crypto';
 
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
@@ -290,6 +290,51 @@ export function verifyJwtHs256(token: string, secret: string, now: Date): JwtCla
   const claims = readClaims(decodeJsonPart(payloadPart));
   if (!claims || claims.exp <= Math.floor(now.getTime() / 1000)) return null;
   return claims;
+}
+
+// Публичный ключ из JWKS проекта Supabase. Новые проекты подписывают access-токены асимметрично
+// (ES256), и проверить такую подпись можно локально — секрет для этого не нужен.
+export type Jwk = {
+  readonly kid?: string;
+  readonly kty?: string;
+  readonly crv?: string;
+  readonly x?: string;
+  readonly y?: string;
+};
+
+// Локальная проверка access-токена Supabase с подписью ES256 (ECDSA P-256).
+// Подпись в JWT — это r||s фиксированной длины, поэтому Node нужен dsaEncoding: 'ieee-p1363'
+// (по умолчанию он ждёт DER и отверг бы любую настоящую подпись).
+export function verifyJwtEs256(token: string, keys: readonly Jwk[], now: Date): JwtClaims | null {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [headerPart, payloadPart, signaturePart] = parts;
+  if (!headerPart || !payloadPart || !signaturePart) return null;
+  const header = decodeJsonPart(headerPart);
+  if (typeof header !== 'object' || header === null || Reflect.get(header, 'alg') !== 'ES256') return null;
+
+  const kid: unknown = Reflect.get(header, 'kid');
+  const signed = Buffer.from(`${headerPart}.${payloadPart}`);
+  const signature = Buffer.from(signaturePart, 'base64url');
+
+  for (const jwk of keys) {
+    if (jwk.kty !== 'EC' || jwk.crv !== 'P-256') continue;
+    // kid в токене указывает на конкретный ключ; без kid пробуем все подходящие.
+    if (typeof kid === 'string' && jwk.kid && jwk.kid !== kid) continue;
+    let ok = false;
+    try {
+      // Собираем ключ явно: тип JsonWebKey из node:crypto не принимает «сырой» объект из JWKS.
+      const key = createPublicKey({ key: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y }, format: 'jwk' });
+      ok = verifySignature('sha256', signed, { key, dsaEncoding: 'ieee-p1363' }, signature);
+    } catch {
+      continue; // битый или неподходящий ключ — пробуем следующий
+    }
+    if (!ok) continue;
+    const claims = readClaims(decodeJsonPart(payloadPart));
+    if (!claims || claims.exp <= Math.floor(now.getTime() / 1000)) return null;
+    return claims;
+  }
+  return null;
 }
 
 const OWNER_PANEL_RE = /^\/[a-z0-9-]+\/[a-z0-9-]+\/admin(?=\/|$)/i;

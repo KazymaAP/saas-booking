@@ -40,12 +40,24 @@ if (!URL || !KEY) throw new Error('Нет NEXT_PUBLIC_SUPABASE_URL или SUPABA
 
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
+// Сеть до Supabase периодически отваливается на ровном месте («fetch failed»),
+// поэтому каждый запрос пробуем несколько раз с паузой — иначе скрипт бросает
+// половину кабинетов с новым паролем, а половину со старым.
 async function api(pathname, init = {}) {
-  const res = await fetch(`${URL}${pathname}`, { ...init, headers: { ...H, ...(init.headers || {}) } });
-  const text = await res.text();
-  let body = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
-  return { ok: res.ok, status: res.status, body };
+  let lastError = null;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const res = await fetch(`${URL}${pathname}`, { ...init, headers: { ...H, ...(init.headers || {}) } });
+      const text = await res.text();
+      let body = null;
+      try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+      return { ok: res.ok, status: res.status, body };
+    } catch (error) {
+      lastError = error;
+      if (attempt < 4) await new Promise((r) => setTimeout(r, 800 * attempt));
+    }
+  }
+  throw new Error(`сеть недоступна (${pathname}): ${lastError?.message ?? 'fetch failed'}`);
 }
 
 async function listAllAuthUsers() {

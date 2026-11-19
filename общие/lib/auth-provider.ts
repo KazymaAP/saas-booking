@@ -3,7 +3,7 @@
 // Пароли и токены никогда не логируются и не возвращаются наружу, кроме пары токенов сессии.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { adminClient } from './supabase';
-import { jwtAlg, verifyJwtHs256, type JwtClaims } from './auth-core';
+import { jwtAlg, verifyJwtEs256, verifyJwtHs256, type Jwk, type JwtClaims } from './auth-core';
 import type { SessionTokens } from './auth-cookies';
 
 export type ProviderUser = { readonly id: string; readonly email: string };
@@ -62,9 +62,46 @@ export function jwtSecretTrusted(secret: string | undefined = process.env.SUPABA
   return value.length > 0 && process.env.NODE_ENV !== 'production';
 }
 
+// Публичные ключи проекта (JWKS). Кеш живёт в памяти процесса: ключи меняются раз в месяцы,
+// а запрос за ними — единственный сетевой вызов на пути проверки сессии. Без кеша каждая
+// страница кабинета ждала бы Supabase Auth, и при сетевом сбое выкидывала владельца на логин.
+const JWKS_TTL_MS = 60 * 60 * 1000;
+let jwksCache: { readonly keys: readonly Jwk[]; readonly at: number } | null = null;
+
+async function projectJwks(force = false): Promise<readonly Jwk[]> {
+  if (!force && jwksCache && Date.now() - jwksCache.at < JWKS_TTL_MS) return jwksCache.keys;
+  try {
+    const res = await fetch(`${requiredEnv('NEXT_PUBLIC_SUPABASE_URL')}/auth/v1/.well-known/jwks.json`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return jwksCache?.keys ?? [];
+    const body: unknown = await res.json();
+    const keys: unknown = typeof body === 'object' && body !== null ? Reflect.get(body, 'keys') : null;
+    if (Array.isArray(keys) && keys.length > 0) {
+      jwksCache = { keys: keys as Jwk[], at: Date.now() };
+      return jwksCache.keys;
+    }
+    return jwksCache?.keys ?? [];
+  } catch {
+    return jwksCache?.keys ?? [];
+  }
+}
+
 export async function verifyAccessToken(token: string, now: Date = new Date()): Promise<JwtClaims | null> {
+  const alg = jwtAlg(token);
   const secret = process.env.SUPABASE_JWT_SECRET;
-  if (secret && jwtAlg(token) === 'HS256' && jwtSecretTrusted(secret)) return verifyJwtHs256(token, secret, now);
+  if (secret && alg === 'HS256' && jwtSecretTrusted(secret)) return verifyJwtHs256(token, secret, now);
+
+  // ES256 — штатный алгоритм новых проектов Supabase: проверяем по публичному ключу, без сети.
+  if (alg === 'ES256') {
+    const local = verifyJwtEs256(token, await projectJwks(), now);
+    if (local) return local;
+    // Не сошлось: возможно, Supabase провернул ключ. Один раз обновляем кеш и пробуем снова,
+    // прежде чем идти в Auth — иначе после ротации ключей все сессии разом улетали бы в сеть.
+    const refreshed = verifyJwtEs256(token, await projectJwks(true), now);
+    if (refreshed) return refreshed;
+  }
+
   const { data, error } = await anonClient().auth.getUser(token);
   const email = data.user?.email?.toLowerCase();
   if (error || !data.user || !email) return null;
