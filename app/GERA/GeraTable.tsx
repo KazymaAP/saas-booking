@@ -648,8 +648,8 @@ export function GeraTable() {
                     : 'Загрузка базы…'}
                 </p>
                 <p className="mt-0.5 hidden text-[11px] leading-snug text-white/30 md:block">
-                  Панели сервисов открываются под сессией супер-админа: сначала войдите на{' '}
-                  <a href="/admin" target="_blank" rel="noopener noreferrer" className="no-underline text-white/50 hover:text-white/80">/admin</a>.
+                  Сама таблица открыта без входа. Кнопки «Админка», «Записи» и «Услуги» ведут в панель
+                  сервиса — она по-прежнему под логином владельца.
                 </p>
               </div>
               {/* На телефоне ссылка на шаблон — иконкой в строке заголовка, чтобы не отнимать ширину у поиска. */}
