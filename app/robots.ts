@@ -18,8 +18,11 @@ const SERVICE_PATHS = [
   '/api/',         // API
   '/booking/',     // персональные токены записей
   '/unsubscribe/', // персональные токены отписки
-  '/GERA',         // внутренняя база лидов
 ];
+// /GERA здесь намеренно НЕТ. Страница открыта всем, а от индексации её держит
+// meta robots «noindex, nofollow» в app/GERA/page.tsx. Disallow в robots.txt мешал бы
+// ровно наоборот: робот не смог бы прочитать noindex, и внешняя ссылка на базу лидов
+// всё равно попала бы в выдачу — пусть лучше зайдёт и увидит запрет индексации.
 
 export default function robots(): MetadataRoute.Robots {
   return {
