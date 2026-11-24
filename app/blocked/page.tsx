@@ -40,7 +40,7 @@ export default function Blocked() {
             <li key={c.href}>
               {/* Цвет задан явно: preflight отключён, и ссылка рисовалась браузерным
                   синим с подчёркиванием — на нейтральной странице это единственный цвет. */}
-              <a className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted" href={c.href} rel="noopener noreferrer">{c.label}</a>
+              <a className="text-[#111111] underline underline-offset-4 hover:text-[#666666]" href={c.href} rel="noopener noreferrer">{c.label}</a>
             </li>
           ))}
         </ul>

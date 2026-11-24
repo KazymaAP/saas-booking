@@ -19,7 +19,7 @@ export default async function DataRequestPage() {
   const requisites = await getRequisites();
   return (
     <main id="main-content" className="mx-auto max-w-[640px] px-4 py-8 md:px-8">
-      <p className="text-[14px]"><Link href="/" className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted">На главную</Link></p>
+      <p className="text-[14px]"><Link href="/" className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">На главную</Link></p>
       <h1 className="mt-4 text-[28px] font-bold leading-tight md:text-[32px]">Запрос о персональных данных</h1>
       <div className="mt-3 grid gap-3 leading-relaxed">
         <p>
@@ -40,9 +40,9 @@ export default async function DataRequestPage() {
         <p className="mt-2">
           Запрос можно отправить и письмом:{' '}
           {requisites.email
-            ? <a href={`mailto:${requisites.email}`} className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted">{requisites.email}</a>
+            ? <a href={`mailto:${requisites.email}`} className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">{requisites.email}</a>
             : 'адрес будет опубликован в разделе «Реквизиты» политики'}
-          . Подробнее — в <Link href="/privacy#rights" className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted">Политике обработки персональных данных</Link>.
+          . Подробнее — в <Link href="/privacy#rights" className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">Политике обработки персональных данных</Link>.
         </p>
       </section>
     </main>

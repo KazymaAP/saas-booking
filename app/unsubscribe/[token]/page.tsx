@@ -126,9 +126,9 @@ function Shell({ children }: { children: ReactNode }) {
       <p className="mt-8 text-[14px]">
         {/* Без класса цвета ссылка рисовалась браузерным синим с подчёркиванием:
             preflight отключён, и страница выглядела как необработанный HTML. */}
-        <Link href="/data-request" className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted">Форма запроса о персональных данных</Link>
+        <Link href="/data-request" className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">Форма запроса о персональных данных</Link>
         {' · '}
-        <Link href="/privacy" className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted">Политика обработки персональных данных</Link>
+        <Link href="/privacy" className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">Политика обработки персональных данных</Link>
       </p>
     </main>
   );
