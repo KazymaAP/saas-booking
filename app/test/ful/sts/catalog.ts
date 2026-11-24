@@ -1,9 +1,11 @@
 // app/test/ful/sts/catalog.ts — единый список страниц раздела копий.
 // Используется и оглавлением (page.tsx), и текстовым списком адресов (urls/route.ts),
 // чтобы они не разъезжались.
+import { demoEnabled } from '@/lib/demo-gate';
 import { adminClient } from '@/lib/supabase';
 
-export type PageLink = { readonly path: string; readonly label: string };
+// demo — страница существует только при DEMO_ENABLED=1 (см. lib/demo-gate.ts).
+export type PageLink = { readonly path: string; readonly label: string; readonly demo?: boolean };
 
 export type Service = {
   readonly slug: string;
@@ -39,22 +41,29 @@ export const CABINET_SECTIONS: readonly PageLink[] = [
 ];
 
 // Публичные страницы платформы.
-export const PUBLIC_PAGES: readonly PageLink[] = [
+// Флаг demo стоит у тех, что открываются только при DEMO_ENABLED=1: без него они отдают
+// 404, а справочник адресов нужен ровно для того, чтобы каждая ссылка открывалась.
+const PUBLIC_PAGES_ALL: readonly PageLink[] = [
   { path: '/', label: 'Главная' },
-  { path: '/demo', label: 'Демо' },
-  { path: '/demo/business', label: 'Демо бизнеса' },
+  { path: '/demo', label: 'Демо', demo: true },
+  { path: '/demo/business', label: 'Демо бизнеса', demo: true },
   { path: '/oferta', label: 'Оферта' },
   { path: '/privacy', label: 'Политика конфиденциальности' },
   { path: '/data-request', label: 'Запрос данных' },
   { path: '/dogovor-porucheniya', label: 'Договор поручения' },
   { path: '/partner', label: 'Партнёрам' },
-  { path: '/partner/demo', label: 'Партнёрам — демо' },
+  { path: '/partner/demo', label: 'Партнёрам — демо', demo: true },
   { path: '/partner/login', label: 'Партнёрам — вход' },
   { path: '/auth', label: 'Вход' },
   { path: '/magic-link', label: 'Вход по ссылке' },
   { path: '/reset-password', label: 'Сброс пароля' },
   { path: '/blocked', label: 'Блокировка' },
 ];
+
+/** Публичные страницы, которые действительно открываются в текущем окружении. */
+export function publicPages(): readonly PageLink[] {
+  return demoEnabled() ? PUBLIC_PAGES_ALL : PUBLIC_PAGES_ALL.filter((p) => !p.demo);
+}
 
 // Студия супер-админа.
 export const SUPERADMIN_PAGES: readonly PageLink[] = [
@@ -80,10 +89,14 @@ export const SUPERADMIN_PAGES: readonly PageLink[] = [
 
 // Список сервисов из базы. Сбой базы не роняет страницу: отдаём пустой список,
 // вызывающий код всё равно покажет статические разделы.
+//
+// Только status='client': публичный сайт открывается лишь у опубликованных сервисов,
+// а в базе лежат ещё архивные строки (сидовые glowdetailing и lyubava). Раньше они попадали
+// в справочник и давали восемь ссылок на 404 — в том числе в текстовом списке адресов.
 export async function loadServices(): Promise<Service[]> {
   const db = adminClient();
   const [{ data: businesses }, { data: templates }] = await Promise.all([
-    db.from('businesses').select('slug, name, status, vertical_template_id').order('name'),
+    db.from('businesses').select('slug, name, status, vertical_template_id').eq('status', 'client').order('name'),
     db.from('vertical_templates').select('id, url_prefix'),
   ]).catch(() => [{ data: [] }, { data: [] }] as const);
 
@@ -116,7 +129,7 @@ export function servicePaths(service: Service, roles: readonly string[]): string
 // Полный список путей раздела: публичные, студия и все сервисы.
 export function allPaths(services: readonly Service[], roles: readonly string[]): string[] {
   return [
-    ...PUBLIC_PAGES.map((p) => p.path),
+    ...publicPages().map((p) => p.path),
     ...SUPERADMIN_PAGES.map((p) => p.path),
     ...services.flatMap((s) => servicePaths(s, roles)),
   ];

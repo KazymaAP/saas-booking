@@ -46,7 +46,8 @@ export async function GET(req: NextRequest) {
   }
 
   for (const service of slice) {
-    lines.push(`# Сервис ${service.slug} — ${service.name} (${service.status})`);
+    // Статус в заголовке не нужен: в списке только опубликованные сервисы (status='client').
+    lines.push(`# Сервис ${service.slug} — ${service.name}`);
     lines.push(...servicePaths(service, roles).map((p) => `${base}${p}`));
     lines.push('');
   }

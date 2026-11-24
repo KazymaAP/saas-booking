@@ -98,7 +98,9 @@ export function CopyIndex({ prefix, publicPages, superadminPages, cabinetSection
                       <p className="cx-name">{s.name}</p>
                       <p className="cx-path">{base}</p>
                     </div>
-                    <span className="cx-status">{s.status}</span>
+                    {/* Бейдж только для неопубликованных: в списке сейчас лишь status='client',
+                        и «client» на каждой карточке — шум без информации. */}
+                    {s.status !== 'client' && <span className="cx-status">{s.status}</span>}
                   </div>
                   <div className="cx-row">
                     <a className="cx-btn cx-btn-p" href={`${prefix}${base}`}>Сайт</a>

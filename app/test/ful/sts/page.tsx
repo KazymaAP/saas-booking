@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 import { STAFF_ROLES, ROLE_LABELS } from '@/lib/auth-roles';
 import { COPY_PREFIX } from '@/lib/copy-mode-paths';
 import { CopyIndex } from './CopyIndex';
-import { CABINET_SECTIONS, loadServices, PUBLIC_PAGES, SUPERADMIN_PAGES } from './catalog';
+import { CABINET_SECTIONS, loadServices, publicPages, SUPERADMIN_PAGES } from './catalog';
 
 // Список сервисов меняется редко, а страница нужна как справочник. Без кэша каждый заход
 // тянул два запроса в Supabase: при сетевом сбое ответ зависал на десятки секунд и обрывался —
@@ -83,7 +83,7 @@ export default async function CopyIndexPage() {
       <style>{COPY_CSS}</style>
       <CopyIndex
         prefix={COPY_PREFIX}
-        publicPages={PUBLIC_PAGES}
+        publicPages={publicPages()}
         superadminPages={SUPERADMIN_PAGES}
         cabinetSections={CABINET_SECTIONS}
         roles={STAFF_ROLES.map((role) => ({ role, label: ROLE_LABELS[role] ?? role }))}
