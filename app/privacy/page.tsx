@@ -8,16 +8,21 @@ import {
   getLegalText, getRequisites, operatorName,
 } from '@/lib/legal';
 import { SITE_URL } from '@/lib/site';
+import { requestOrigin } from '@/lib/request-origin';
 
 // 24 часа = LEGAL_REVALIDATE_SECONDS (литерал обязателен для segment config Next 14).
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  title: `${LEGAL_DOCS.privacy.title} — редакция ${PRIVACY_VERSION}`,
-  description: 'Какие персональные данные обрабатывает сервис онлайн-записи, зачем, сколько хранит, кому передаёт и как реализовать свои права.',
-  alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.privacy.path}` },
-  robots: { index: true, follow: true },
-};
+// canonical — из запроса, а не из SITE_URL: тот указывает на apex, а сайт открывается на www
+// (apex отдаёт 308). Canonical на редиректе — нестабильный сигнал для поисковика.
+export function generateMetadata(): Metadata {
+  return {
+    title: `${LEGAL_DOCS.privacy.title} — редакция ${PRIVACY_VERSION}`,
+    description: 'Какие персональные данные обрабатывает сервис онлайн-записи, зачем, сколько хранит, кому передаёт и как реализовать свои права.',
+    alternates: { canonical: `${requestOrigin()}${LEGAL_DOCS.privacy.path}` },
+    robots: { index: true, follow: true },
+  };
+}
 
 // Таблица категорий ПД: кто субъект, какие данные, цель, основание, срок. Одна строка — одна цель (ч. 4–5 ст. 5 ФЗ-152).
 type DataRow = { subject: string; data: string; purpose: string; basis: string; term: string };

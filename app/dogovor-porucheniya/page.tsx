@@ -7,17 +7,21 @@ import { Clauses, LegalDocument, type LegalSection } from '@/app/_legal/LegalDoc
 import {
   DATA_REQUEST_ANSWER_DAYS, DPA_VERSION, LEGAL_DOCS, RETENTION_YEARS, getLegalText, getRequisites, operatorName,
 } from '@/lib/legal';
-import { SITE_URL } from '@/lib/site';
+import { requestOrigin } from '@/lib/request-origin';
 
 // 24 часа = LEGAL_REVALIDATE_SECONDS (литерал обязателен для segment config Next 14).
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  title: `${LEGAL_DOCS.dpa.title} — редакция ${DPA_VERSION}`,
-  description: 'Условия, на которых сервис онлайн-записи обрабатывает персональные данные клиентов бизнеса по его поручению (ч. 3 ст. 6 ФЗ-152).',
-  alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.dpa.path}` },
-  robots: { index: true, follow: true },
-};
+// canonical — из запроса, а не из SITE_URL: тот указывает на apex, а сайт открывается на www
+// (apex отдаёт 308). Canonical на редиректе — нестабильный сигнал для поисковика.
+export function generateMetadata(): Metadata {
+  return {
+    title: `${LEGAL_DOCS.dpa.title} — редакция ${DPA_VERSION}`,
+    description: 'Условия, на которых сервис онлайн-записи обрабатывает персональные данные клиентов бизнеса по его поручению (ч. 3 ст. 6 ФЗ-152).',
+    alternates: { canonical: `${requestOrigin()}${LEGAL_DOCS.dpa.path}` },
+    robots: { index: true, follow: true },
+  };
+}
 
 // Срок уведомления Заказчика об инциденте: меньше 24 часов, чтобы оператор успел уведомить РКН (ч. 3.1 ст. 21 ФЗ-152).
 const INCIDENT_NOTICE_HOURS = 12;

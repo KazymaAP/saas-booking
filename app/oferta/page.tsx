@@ -7,16 +7,24 @@ import {
   LEGAL_DOCS, OFERTA_VERSION, formatRub, getLegalText, getPricing, getRequisites, operatorName,
 } from '@/lib/legal';
 import { SITE_URL } from '@/lib/site';
+import { requestOrigin } from '@/lib/request-origin';
 
 // 24 часа = LEGAL_REVALIDATE_SECONDS. Next 14 требует литерал в segment config, импорт константы не анализируется.
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  title: `${LEGAL_DOCS.oferta.title} — редакция ${OFERTA_VERSION}`,
-  description: 'Условия оказания услуг по настройке и сопровождению сайта онлайн-записи: цены, оплата, возврат, акцепт.',
-  alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.oferta.path}` },
-  robots: { index: true, follow: true },
-};
+// canonical берём из запроса, а не из SITE_URL: NEXT_PUBLIC_SITE_URL указывает на apex,
+// а сайт открывается на www и с apex делает 308. Canonical, ведущий на редирект, —
+// нестабильный сигнал для поисковика (та же причина, по которой карта сайта собирается
+// через requestOrigin). Цена — страница рендерится по запросу вместо ISR: документ
+// меняется раз в сутки, так что это дешевле, чем редиректящий canonical.
+export function generateMetadata(): Metadata {
+  return {
+    title: `${LEGAL_DOCS.oferta.title} — редакция ${OFERTA_VERSION}`,
+    description: 'Условия оказания услуг по настройке и сопровождению сайта онлайн-записи: цены, оплата, возврат, акцепт.',
+    alternates: { canonical: `${requestOrigin()}${LEGAL_DOCS.oferta.path}` },
+    robots: { index: true, follow: true },
+  };
+}
 
 export default async function OfertaPage() {
   const [requisites, pricing, extra_text] = await Promise.all([getRequisites(), getPricing(), getLegalText('oferta')]);
