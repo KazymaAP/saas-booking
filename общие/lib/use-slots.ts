@@ -41,6 +41,10 @@ function keyOf(base: Omit<SlotsKey, 'date' | 'serviceId'>, serviceId: string, da
 export function useSlots(site: { prefix: string; slug: string }, serviceId: string, date: string) {
   const { prefix, slug } = site;
   const [state, setState] = useState<SlotsState>(IDLE);
+  // Дата, к которой относится текущий state. После смены date рендер ещё один кадр видит
+  // ПРЕДЫДУЩИЙ ready-список, пока эффект ниже не переведёт состояние в loading: без этой метки
+  // вызывающий код принимал чужой пустой список за ответ про новую дату и перескакивал дни.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [isPending, startTransition] = useTransition();
   const keyRef = useRef<SlotsKey | null>(null);
@@ -50,12 +54,14 @@ export function useSlots(site: { prefix: string; slug: string }, serviceId: stri
     keyRef.current = key;
     if (key === null) {
       setState(IDLE);
+      setLoadedFor(null);
       return undefined;
     }
     const client = sharedSlotsClient();
     const cached = client.peek(key);
     // Из кэша/prefetch — сразу, без состояния загрузки.
     setState(cached === null ? LOADING : { kind: 'ready', slots: cached });
+    setLoadedFor(cached === null ? null : date);
     const controller = new AbortController();
     const run = async (): Promise<void> => {
       const result = await client.load(key, controller.signal);
@@ -63,6 +69,7 @@ export function useSlots(site: { prefix: string; slug: string }, serviceId: stri
       startTransition(() => {
         if (result.ok) setState({ kind: 'ready', slots: result.slots });
         else setState({ kind: 'error', reason: result.reason, message: result.message });
+        setLoadedFor(date);
       });
     };
     void run();
@@ -84,5 +91,5 @@ export function useSlots(site: { prefix: string; slug: string }, serviceId: stri
 
   const loading = state.kind === 'loading';
   const showSkeleton = useDelayedFlag(loading, SKELETON_DELAY_MS);
-  return { state, loading, showSkeleton, isPending, reload, prefetch };
+  return { state, loadedFor, loading, showSkeleton, isPending, reload, prefetch };
 }

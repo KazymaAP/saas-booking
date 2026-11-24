@@ -137,6 +137,9 @@ export function NicheBookingFlow({
   useEffect(() => {
     if (step !== 'datetime' || userPickedDate.current) return;
     if (!date || slots.state.kind !== 'ready') return;
+    // Список должен быть ответом именно про эту дату, иначе после setDate мы бы читали
+    // пустой список предыдущего дня и перескакивали день, где время есть.
+    if (slots.loadedFor !== date) return;
     if (slots.state.slots.length > 0) return;
     if (autoChecked.current.has(date)) return;
     autoChecked.current.add(date);
@@ -144,7 +147,7 @@ export function NicheBookingFlow({
     if (idx < 0) return;
     const next = options.slice(idx + 1).find((o) => !o.closed && !autoChecked.current.has(o.date));
     if (next) setDate(next.date);
-  }, [step, date, options, slots.state]);
+  }, [step, date, options, slots.state, slots.loadedFor]);
 
   const currentStep = step as Exclude<Step, 'done'>;
   const stepIdx = STEPS.indexOf(currentStep);

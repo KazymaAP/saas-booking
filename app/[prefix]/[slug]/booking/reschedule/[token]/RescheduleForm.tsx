@@ -72,6 +72,8 @@ export function RescheduleForm({ token, serviceId, prefix, slug, schedule, curre
   useEffect(() => {
     if (userPickedDate.current) return;
     if (!date || slots.state.kind !== 'ready') return;
+    // Ответ должен быть про эту дату: иначе читаем пустой список предыдущего дня.
+    if (slots.loadedFor !== date) return;
     if (slots.state.slots.length > 0) return;
     if (autoChecked.current.has(date)) return;
     autoChecked.current.add(date);
@@ -79,7 +81,7 @@ export function RescheduleForm({ token, serviceId, prefix, slug, schedule, curre
     if (idx < 0) return;
     const next = options.slice(idx + 1).find((o) => !o.closed && !autoChecked.current.has(o.date));
     if (next) setDate(next.date);
-  }, [date, options, slots.state]);
+  }, [date, options, slots.state, slots.loadedFor]);
   const { outcome, refreshCount, sending, submit } = useRescheduleSubmit({
     token,
     minHoursBefore: resolved.minHoursBefore,
