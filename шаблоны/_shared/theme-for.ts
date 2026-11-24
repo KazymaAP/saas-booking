@@ -16,7 +16,15 @@ export function resolveSiteTheme(params: {
   if (!base) return null;
   const texts = params.texts ?? {};
   const override = appearanceByKey(texts[SITE_THEME_KEY]);
-  if (!override) return base;
+
+  // Брендовый цвет владельца важнее акцента ниши и стиля оформления — ровно так же
+  // считает buildNicheTenant для самой витрины (accentColor: brand_color || theme.accent).
+  // Раньше brandColor применялся только при наличии override, и «Моя запись» на сайте
+  // со сливовым брендом рисовала синюю кнопку.
+  const brand = params.brandColor?.trim();
+  const accent = brand && brand.length > 0 ? brand : override?.accent ?? base.accent;
+
+  if (!override) return { ...base, accent };
   return {
     ...base,
     mode: override.mode,
@@ -27,6 +35,6 @@ export function resolveSiteTheme(params: {
     text: override.ink,
     textMuted: override.muted,
     textSubtle: override.muted,
-    accent: params.brandColor || override.accent,
+    accent,
   };
 }

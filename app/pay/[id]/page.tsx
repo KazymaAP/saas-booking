@@ -121,6 +121,11 @@ function ErrorState({ title, text }: { title: string; text: string }) {
       <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-900 p-8 text-center">
         <h1 className="text-2xl font-semibold text-white">{title}</h1>
         <p className="mt-2 text-sm text-zinc-400">{text}</p>
+        {/* Раньше страница была тупиком: чёрный экран без единой ссылки.
+            Если ссылка на счёт устарела, человеку нужен хотя бы выход на сайт. */}
+        <a href="/" className="mt-6 inline-flex text-sm text-zinc-300 underline-offset-4 hover:text-white hover:underline">
+          На главную
+        </a>
       </div>
     </main>
   );

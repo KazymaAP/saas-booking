@@ -38,7 +38,9 @@ export default function Blocked() {
         <ul className="grid gap-1 text-[14px]">
           {contacts.map((c) => (
             <li key={c.href}>
-              <a className="underline" href={c.href} rel="noopener noreferrer">{c.label}</a>
+              {/* Цвет задан явно: preflight отключён, и ссылка рисовалась браузерным
+                  синим с подчёркиванием — на нейтральной странице это единственный цвет. */}
+              <a className="text-brand-text underline underline-offset-4 hover:text-brand-text-muted" href={c.href} rel="noopener noreferrer">{c.label}</a>
             </li>
           ))}
         </ul>
