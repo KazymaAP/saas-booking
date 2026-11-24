@@ -316,8 +316,11 @@ export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: Nich
           {/* Раньше колонки были жёстко 620 + 320 при контейнере 1056: свободные 92 px уходили
               в промежуток между колонками (lg:justify-between), и вместо 24 px получалось 116 —
               левая колонка выглядела оторванной от правой. Теперь остаток забирает левая колонка. */}
+          {/* min-w-0 у колонок: у grid-элемента min-width по умолчанию auto, то есть
+              min-content содержимого. Длинная строка внутри прайса распирала колонку
+              шире контейнера — на 320 px страница уезжала вбок на 26 px. */}
           <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-            <div className="order-2 lg:order-1">
+            <div className="order-2 min-w-0 lg:order-1">
               <section id="services">
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.services ?? 'Услуги'}</h2>
@@ -493,7 +496,7 @@ export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: Nich
             {/* Правая колонка короче левой (443 px против 2289 px): раньше под карточками
                 оставалось почти два экрана пустоты. Приклеиваем её под шапку — блок записи
                 остаётся на виду, пока посетитель читает прайс, работы и отзывы. */}
-            <aside className="order-1 space-y-4 lg:sticky lg:top-[108px] lg:order-2 lg:self-start">
+            <aside className="order-1 min-w-0 space-y-4 lg:sticky lg:top-[108px] lg:order-2 lg:self-start">
               <h2 className="text-[26px] font-semibold leading-none tracking-[-0.03em] md:text-[28px]">{tenant.sectionTitles?.booking ?? 'Запись'}</h2>
 
               <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-5">

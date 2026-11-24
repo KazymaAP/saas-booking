@@ -26,14 +26,16 @@ export const metadata: Metadata = {
 
 type Theme = (typeof ALL_NICHE_THEMES)[number];
 
-// Демо-услуги одинаковы по структуре, но подписаны под нишу.
-function demoServices(theme: Theme) {
-  const base = [
-    { name: `Консультация · ${theme.businessNoun}`, price: 0, duration: 30 },
-    { name: 'Базовая услуга', price: 2500, duration: 60 },
-    { name: 'Расширенный пакет', price: 6500, duration: 120 },
-    { name: 'Премиум-пакет', price: 12000, duration: 180 },
-  ];
+  // Демо-услуги одинаковы по структуре, но подписаны под нишу.
+  // Цена первой услуги не 0: в карточке сайта она превращалась в «от 0 ₽ за услугу»,
+  // и демо-шаблон выглядел сломанным.
+  function demoServices(theme: Theme) {
+    const base = [
+      { name: `Консультация · ${theme.businessNoun}`, price: 1500, duration: 30 },
+      { name: 'Базовая услуга', price: 2500, duration: 60 },
+      { name: 'Расширенный пакет', price: 6500, duration: 120 },
+      { name: 'Премиум-пакет', price: 12000, duration: 180 },
+    ];
   return base.map((s, i) => ({
     id: `demo-${theme.key}-${i}`,
     name: s.name,

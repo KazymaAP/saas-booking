@@ -51,7 +51,7 @@ const COPY_CSS = `
 .cx-search:focus{border-color:#38bdf8}
 .cx-search::placeholder{color:#6b7f96}
 .cx-cards{display:grid;gap:12px}
-.cx-card{border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);padding:16px}
+.cx-card{border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);padding:16px;min-width:0;overflow-wrap:anywhere}
 .cx-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .cx-headText{min-width:0}
 .cx-name{margin:0;font-size:15px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

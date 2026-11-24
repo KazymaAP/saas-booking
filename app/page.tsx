@@ -70,7 +70,12 @@ export default async function Home() {
             <a href="#pricing" className="transition-colors hover:text-brand-text">Тарифы</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/auth" className="btn-secondary hidden text-body-sm sm:inline-flex">Кабинет партнёра</Link>
+            {/* Обёртка, а не hidden на самой кнопке: .btn-secondary задаёт display,
+                и в порядке каскада он перебивает утилиту hidden — кнопка оставалась
+                видимой на 320 px и выталкивала шапку на 23 px вбок. */}
+            <span className="hidden sm:inline-flex">
+              <Link href="/auth" className="btn-secondary text-body-sm">Кабинет партнёра</Link>
+            </span>
             <Link href="/auth" className="btn-primary text-body-sm">Войти</Link>
           </div>
         </div>
