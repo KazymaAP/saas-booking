@@ -4,6 +4,7 @@
 // и токены бренда (bg-brand-surface, text-brand-text-muted, btn-primary, .sheet, …).
 // Данные — мок (для локального превью); компонент используется страницей /admin.
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import {
   type Icon,
   Bell,
@@ -144,6 +145,9 @@ function ToastHost({ toasts }: { toasts: { id: number; message: string; kind: To
 }
 
 function Sheet({ open, onClose, busy, title, children }: { open: boolean; onClose: () => void; busy?: boolean; title: string; children: React.ReactNode }) {
+  // Фокус держим внутри окна: иначе Tab уводит в таблицу под ним.
+  // Escape обрабатывается ниже — там есть проверка busy, чтобы не закрыть окно во время сохранения.
+  const trap = useFocusTrap<HTMLDivElement>(onClose, { enabled: open, focusContainer: true, closeOnEscape: false });
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose(); };
@@ -156,7 +160,15 @@ function Sheet({ open, onClose, busy, title, children }: { open: boolean; onClos
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center" role="presentation" style={{ zIndex: 300 }}>
       <div className="sheet-backdrop" onClick={busy ? undefined : onClose} aria-hidden="true" />
-      <div role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="sheet animate-scale-in max-h-[92vh] overflow-y-auto">
+      <div
+        ref={trap.ref}
+        onKeyDown={trap.onKeyDown}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        className="sheet animate-scale-in max-h-[92vh] overflow-y-auto"
+      >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-[#0c0c0c]/95 px-5 py-4 backdrop-blur-xl">
           <h2 className="text-heading-sm">{title}</h2>
           <button type="button" onClick={onClose} disabled={busy} aria-label="Закрыть" className="grid size-9 place-items-center rounded-full text-brand-text-muted transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50">

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { takeReadyServiceAction, setOutcomeAction, setPartnerCoverAction, listReadyPhotosAction, setReadyPhotosAction } from './ready-actions';
 import type { ReadyService, ReadyPhotoOptions } from '@/lib/ready-services';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 type Message = { id: string; body: string; from_admin: boolean; created_at: string };
 
@@ -297,6 +298,9 @@ function PhotoDialog({
   const [selected, setSelected] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Окно открывается только смонтированным, поэтому ловушка всегда включена.
+  // Escape закрывает: раньше окно закрывалось только кнопкой.
+  const trap = useFocusTrap<HTMLDivElement>(onClose, { focusContainer: true });
 
   const current = options?.current.map((p) => p.url) ?? [];
   const chosen = selected ?? current;
@@ -318,7 +322,15 @@ function PhotoDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label={`Фото сервиса ${name}`}>
+    <div
+      ref={trap.ref}
+      onKeyDown={trap.onKeyDown}
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Фото сервиса ${name}`}
+      tabIndex={-1}
+    >
       <div className="max-h-[85vh] w-full max-w-[720px] overflow-y-auto rounded-3xl border border-white/[0.10] bg-brand-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
