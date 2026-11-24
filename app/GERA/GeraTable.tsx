@@ -5,6 +5,7 @@
 // На телефоне таблица заменяется карточками: горизонтальной прокрутки нет,
 // сортировка и фильтры вынесены в отдельную панель.
 import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { PLATFORM_TZ } from '@/lib/platform-tz';
 import {
   ArrowCounterClockwise, ArrowsDownUp, CalendarCheck, CaretDown, Check, Copy, Gauge, Globe,
   ListBullets, MagnifyingGlass, MapPin, Phone, TelegramLogo, UserCircle, WhatsappLogo,
@@ -631,7 +632,7 @@ export function GeraTable() {
   };
 
   const updatedAt = data
-    ? new Date(data.generatedAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    ? new Date(data.generatedAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: PLATFORM_TZ })
     : '';
 
   return (

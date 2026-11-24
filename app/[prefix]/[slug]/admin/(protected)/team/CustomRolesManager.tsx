@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '../_components/Toast';
 import { useConfirm } from '../_components/ConfirmDialog';
 import { callAction } from '../_lib/client-action';
+import { PLATFORM_TZ } from '@/lib/platform-tz';
 import { SECTION_KEYS, SECTION_LABELS, type SectionKey } from '@/lib/sections';
 import { createCustomRole, updateCustomRole, deleteCustomRole, type CustomRoleInput } from './actions';
 import type { BusinessCustomRole } from '@/lib/database.types';
@@ -59,7 +60,7 @@ function deletionDateOf(cr: BusinessCustomRole): string | null {
   if (!base) return null;
   const deadline = new Date(Date.parse(base) + 30 * 86_400_000);
   if (Number.isNaN(deadline.getTime())) return null;
-  return deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  return deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: PLATFORM_TZ });
 }
 
 export function CustomRolesManager({ slug, customRoles, canManage }: { slug: string; customRoles: BusinessCustomRole[]; canManage: boolean }) {

@@ -289,7 +289,7 @@ function SendMailSheet({
 // (ClientsTable, LicensesTable, History, InboxThread). Без явной зоны сервер (UTC) и браузер
 // (местное время) показывали разные сутки: в 19:01 UTC в Екатеринбурге уже 20-е, и React
 // падал с hydration mismatch (#425/#418) на каждом открытии дашборда.
-const PLATFORM_TZ = 'Europe/Moscow';
+// Константа вынесена в общий модуль: тот же пояс нужен кабинету партнёра и панели сервиса.
 
 function ClockLabel() {
   const [now, setNow] = useState(() => new Date());
@@ -2206,7 +2206,7 @@ function Bookings({ push }: { push: (m: string, k?: ToastKind) => void }) {
             const st = STATUS_LABEL[r.status] ?? { label: r.status, cls: 'border-white/15 text-brand-text-muted' };
             return (
               <li key={r.id} className="grid grid-cols-2 gap-x-3 gap-y-1 px-5 py-3.5 md:grid-cols-[1.2fr_1.1fr_1.3fr_0.9fr_0.8fr] md:items-center">
-                <span className="text-body-sm">{r.scheduledAt ? new Date(r.scheduledAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                <span className="text-body-sm">{r.scheduledAt ? new Date(r.scheduledAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: PLATFORM_TZ }) : '—'}</span>
                 <span className="truncate text-body-sm text-brand-text-muted">{r.business}</span>
                 <span className="min-w-0"><span className="block truncate text-body-sm">{r.client}</span><span className="block text-caption text-brand-text-subtle">{r.phone ?? 'без телефона'}</span></span>
                 <span className="truncate text-body-sm text-brand-text-muted">{r.service}</span>
@@ -2423,7 +2423,7 @@ function chatWhen(iso: string): string {
   if (Number.isNaN(d.getTime())) return '—';
   const sameDay = d.toDateString() === new Date().toDateString();
   return sameDay
-    ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+    ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: PLATFORM_TZ })
     : d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -3551,6 +3551,7 @@ import {
 import { auditActionLabel } from '@/app/admin/audit-labels';
 import { PartnerProgramPanel } from '@/app/admin/PartnerProgramPanel';
 import type { ReadyService, ReadyCategory, PartnerAccountRow } from '@/lib/ready-services';
+import { PLATFORM_TZ } from '@/lib/platform-tz';
 
 const READY_CAT_LABEL: Record<string, string> = {
   full: 'Шаблон + данные + фото',

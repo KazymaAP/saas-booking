@@ -20,12 +20,29 @@ export default async function PlatformSettingsPage() {
   const { data, error } = await adminClient().from('settings').select('key, value').in('key', [...SETTINGS_KEYS]).returns<{ key: string; value: unknown }[]>();
   const s = readSettings(data ?? []);
 
+  // Публичная оферта подставляет эти поля как есть. Пока они пустые, документ печатает
+  // «Исполнитель (ФИО не указано)» — с такой офертой нельзя ни принимать оплату, ни
+  // отправлять её клиенту. Показываем прямо в настройках, а не после жалобы клиента.
+  const req = s.platform_requisites;
+  const missing = [
+    req.fio.trim() ? null : 'ФИО или название ИП',
+    req.inn.trim() ? null : 'ИНН',
+    req.email.trim() ? null : 'email',
+    req.phone.trim() ? null : 'телефон',
+  ].filter((v): v is string => v !== null);
+
   return (
     <div className="grid max-w-[760px] gap-10 text-[14px]">
       <h1 className="text-[24px] font-semibold">Настройки платформы</h1>
       {error && (
         <p role="alert" className="rounded-md border border-[#dc2626] p-3 text-[#dc2626]">
           Не удалось загрузить настройки — показаны значения по умолчанию. Сохранение перезапишет их.
+        </p>
+      )}
+      {missing.length > 0 && (
+        <p role="alert" className="rounded-md border border-[#d97706] bg-[#fffbeb] p-3 text-[#92400e]">
+          Реквизиты не заполнены: {missing.join(', ')}. Публичная оферта сейчас печатает
+          «Исполнитель (ФИО не указано)», а счёт и чек выставить не на кого.
         </p>
       )}
 

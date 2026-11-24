@@ -5,6 +5,7 @@
 // ошибки в role=alert. Исключение server action (сеть) → откат и сообщение, кнопки не зависают.
 'use client';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { PLATFORM_TZ } from '@/lib/platform-tz';
 import { checkTelegramStatus, createTelegramCode, disconnectTelegram } from './actions';
 import { ACTION_ERRORS, DISCONNECTED_STATE, deepLink, formatLeft, type ActionResult, type TelegramState } from './telegram-view';
 
@@ -212,7 +213,7 @@ interface ConnectedProps {
 }
 
 function Connected({ focusRef, connectedAt, confirming, busy, onAsk, onCancel, onConfirm }: ConnectedProps) {
-  const since = connectedAt ? new Date(connectedAt).toLocaleDateString('ru-RU') : null;
+  const since = connectedAt ? new Date(connectedAt).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ }) : null;
   return (
     <div className="grid gap-3 rounded-md border border-[#16a34a] bg-[#f0fdf4] p-4" data-testid="telegram-connected">
       <h3 ref={focusRef} tabIndex={-1} className="text-[15px] font-semibold">✅ Telegram подключён{since ? ` с ${since}` : ''}</h3>

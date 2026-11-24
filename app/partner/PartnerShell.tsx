@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import type { Partner, PartnerCheckout, PartnerLead, PartnerReadySite, PartnerSummary } from '@/lib/partners';
 import type { ReadyService } from '@/lib/ready-services';
+import { PLATFORM_TZ } from '@/lib/platform-tz';
 import { partnerLogoutAction } from './actions';
 import { LeadsManager, PartnerWorkspace } from './components';
 import { PartnerReadyPanel } from './ready-panel';
@@ -262,7 +263,7 @@ export function PartnerShell({
                           <span className={`shrink-0 rounded-full border px-2 py-0.5 text-caption ${c.status === 'paid' ? 'border-brand-success/30 text-brand-success' : c.status === 'awaiting_payment' ? 'border-brand-accent/30 text-brand-accent' : 'border-white/15 text-brand-text-subtle'}`}>
                             {c.status === 'paid' ? 'оплачен' : c.status === 'awaiting_payment' ? 'ждёт оплаты' : c.status}
                           </span>
-                          <span className="shrink-0 text-caption text-brand-text-subtle">{new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
+                          <span className="shrink-0 text-caption text-brand-text-subtle">{new Date(c.created_at).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ })}</span>
                         </li>
                       ))}
                     </ul>
@@ -292,7 +293,7 @@ export function PartnerShell({
                         <tbody>
                           {earnings.map((e) => (
                             <tr key={e.id} className="border-t border-white/[0.06]">
-                              <td className="py-2 pr-3 text-brand-text-muted">{new Date(e.created_at).toLocaleDateString('ru-RU')}</td>
+                              <td className="py-2 pr-3 text-brand-text-muted">{new Date(e.created_at).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ })}</td>
                               <td className="py-2 pr-3 text-brand-text-muted">{e.type === 'recurring_monthly' ? 'Подписка' : 'Разовое'}</td>
                               <td className="py-2 pr-3">
                                 <span className={e.status === 'paid_out' ? 'text-brand-success' : 'text-brand-accent'}>
@@ -382,7 +383,7 @@ export function PartnerShell({
                                 <div className="font-medium">{r.name ?? 'Без имени'}</div>
                                 <div className="text-caption text-brand-text-subtle">{r.email}</div>
                               </td>
-                              <td className="py-2 pr-3 text-brand-text-muted">{new Date(r.created_at).toLocaleDateString('ru-RU')}</td>
+                              <td className="py-2 pr-3 text-brand-text-muted">{new Date(r.created_at).toLocaleDateString('ru-RU', { timeZone: PLATFORM_TZ })}</td>
                               <td className="py-2 pr-3">{rub(r.earned)}</td>
                               <td className="py-2 text-brand-accent">{rub(r.bonus)}</td>
                             </tr>
