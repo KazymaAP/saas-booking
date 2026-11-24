@@ -154,7 +154,12 @@ body {
 .panel-shell h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
 .panel-shell h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
 .panel-shell p { margin: 0 0 8px; }
-.panel-shell a { color: var(--ink); }
+/* Цвет ссылки по умолчанию внутри кабинета. Специфичность намеренно понижена через :where():
+   с `.panel-shell a` (0,1,1) правило перебивало утилиты цвета (0,1,0), и, например,
+   `text-[#666666]` у неактивных фильтров во «Входящих» не применялся — все фильтры
+   рисовались одним цветом. :where(.panel-shell) a = (0,0,1): браузерный синий всё ещё
+   перекрыт, а любая утилита цвета на конкретной ссылке работает. */
+:where(.panel-shell) a { color: var(--ink); }
 
 .panel-shell textarea { min-height: 80px; }
 
@@ -416,7 +421,10 @@ button:disabled, [aria-disabled='true'] { cursor: not-allowed; }
 .admin-dark [class*="text-[#6b6b6b]"],
 .admin-dark [class*="text-[#8a8a8a]"],
 .admin-dark [class*="text-[#555555]"],
-.admin-dark [class*="text-[#666]"] { color: var(--muted); }
+/* Здесь был обрезанный литерал `text-[#666]`: подстрока требует закрывающей скобки сразу
+   после «666», а в классе идёт `text-[#666666]` — правило не срабатывало ни разу, и этот
+   серый оставался тёмным на тёмном стекле. Нужен полный литерал. */
+.admin-dark [class*="text-[#666666]"] { color: var(--muted); }
 /* Основной текст разделов (почти чёрный в светлой теме) — на стекле светлый. */
 .admin-dark [class*="text-[#333333]"],
 .admin-dark [class*="text-[#404040]"] { color: var(--ink); }
