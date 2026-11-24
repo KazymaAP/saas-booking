@@ -4,6 +4,7 @@ node_modules
 .vercel/output
 .next
 .next_bak_*
+.next-prod
 .next-prod_*
 .next-buildcheck
 .tmp-*
