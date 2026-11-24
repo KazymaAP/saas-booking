@@ -8,20 +8,19 @@
 //   ▸ «Настройки» — модальный диалог (aria-modal, ловушка фокуса, Escape, возврат фокуса).
 //   ▸ «Принять» / сохранение с аналитикой → localStorage + POST в cookie_consents (ошибка — тихо).
 //   ▸ «Отклонить» → только localStorage, в журнал не пишется: работают лишь технические cookie.
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import {
   COOKIE_CHANGE_EVENT, COOKIE_CONSENT_API, COOKIE_CONSENT_STORAGE_KEY, COOKIE_POLICY_VERSION, COOKIE_SETTINGS_EVENT,
   needsConsent, parseStoredConsent, type StoredCookieConsent,
 } from '@/lib/legal-versions';
 import { SITE_URL } from '@/lib/site';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 // Абсолютная ссылка: на кастомных доменах клиентов middleware переписывает пути в /domain-site, и относительная
 // /privacy туда бы не попала. Политика одна — на домене сервиса.
 const PRIVACY_COOKIES_URL = `${SITE_URL}/privacy#cookies`;
 
 type View = 'hidden' | 'banner' | 'settings';
-
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Чтение/запись localStorage: в приватном режиме Safari и при отключённом хранилище бросает исключение.
 function readStored(): StoredCookieConsent | null {
@@ -165,36 +164,7 @@ type SettingsProps = {
   onClose: () => void;
 };
 
-// Ловушка фокуса: Tab/Shift+Tab циклически внутри диалога, Escape закрывает.
-function useFocusTrap(onClose: () => void) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-  }, []);
-  return {
-    ref,
-    onKeyDown: useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key !== 'Tab' || !ref.current) return;
-      const items = Array.from(ref.current.querySelectorAll<HTMLElement>(FOCUSABLE));
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }, [onClose]),
-  };
-}
-
+// Ловушка фокуса вынесена в общий хук: тот же механизм нужен шторке записи.
 function CookieSettings({ analytics, onToggle, onSave, onAcceptAll, onClose }: SettingsProps) {
   const title_id = useId();
   const tech_id = useId();

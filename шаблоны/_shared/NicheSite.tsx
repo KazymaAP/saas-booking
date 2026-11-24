@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { NicheBookingFlow } from './NicheBookingFlow';
 import { Glyph } from './glyph';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import { buildPalette, hexToRgbTuple } from './palette';
 import {
   formatCurrency, formatDuration, formatServicePrice, getStudioStatus,
@@ -163,6 +164,11 @@ export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: Nich
     setBookingOpen(false);
     setBusy(false);
   };
+
+  // Фокус держим внутри шторки: без этого Tab уводил в страницу под ней и до формы
+  // записи нельзя было добраться с клавиатуры. Escape обрабатывается ниже — там есть
+  // проверка busy, чтобы не закрыть шторку во время отправки.
+  const sheetTrap = useFocusTrap<HTMLDivElement>(closeBooking, { enabled: bookingOpen, focusContainer: true, closeOnEscape: false });
 
   useEffect(() => {
     if (!bookingOpen) return;
@@ -605,7 +611,15 @@ export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: Nich
       {bookingOpen && (
         <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center" role="presentation">
           <div className="sheet-backdrop" onClick={busy ? undefined : closeBooking} aria-hidden="true" />
-          <div role="dialog" aria-modal="true" aria-label={`Запись — ${tenant.name}`} tabIndex={-1} className="sheet animate-scale-in">
+          <div
+            ref={sheetTrap.ref}
+            onKeyDown={sheetTrap.onKeyDown}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Запись — ${tenant.name}`}
+            tabIndex={-1}
+            className="sheet animate-scale-in"
+          >
             <button type="button" onClick={closeBooking} disabled={busy} aria-label="Закрыть" className="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-brand-text-muted transition-colors hover:bg-brand-border-hover hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg">
               <X size={20} weight="bold" />
             </button>
