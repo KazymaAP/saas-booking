@@ -11,6 +11,9 @@ import { formatSlotDateTime } from '@/lib/slots';
 import { customerLogoutAction } from './actions';
 
 export const dynamic = 'force-dynamic';
+// Своя мета: без неё страница наследовала заголовок витрины («Онлайн-запись») — во вкладке
+// и в истории браузера кабинет клиента выглядел как сайт записи.
+export const metadata = { title: 'Мои записи', robots: { index: false, follow: false } };
 
 type BookingRow = {
   id: string;

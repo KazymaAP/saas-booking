@@ -216,7 +216,10 @@ export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: Nich
   const restServices = activeServices.slice(4);
   // Полный прайс раскрывается здесь же: у студии нет отдельной страницы услуг.
   const [showAllServices, setShowAllServices] = useState(false);
-  const minPrice = activeServices.length > 0 ? Math.min(...activeServices.map((s) => s.price)) : null;
+  // Цена 0 в прайсе означает «не указана», а не «бесплатно»: с ней Math.min давал 0,
+  // и в плитке героя появлялось «от 0 ₽ за услугу» (так было на /d/begemot и /d/skorost).
+  const prices = activeServices.map((s) => s.price).filter((p) => p > 0);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
   const gallery = [...tenant.gallery].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 3);
   const resourceCount = tenant.resources.filter((r) => r.isActive).length;
   const status = getStudioStatus(tenant.workHours, tenant.timezone, now);

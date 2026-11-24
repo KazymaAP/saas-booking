@@ -130,7 +130,9 @@ export function StudioTemplate({
   const t = { ...DEFAULTS, ...Object.fromEntries(Object.entries(texts).filter(([, v]) => v)) } as typeof DEFAULTS;
   const withPhoto = photos.filter((p) => p.url);
   const hero = withPhoto[0]?.url ?? null;
-  const minPrice = services.length ? Math.min(...services.map((s) => Number(s.price))) : null;
+  // 0 в прайсе — это «цена не указана»: иначе Math.min даёт 0 и в шапке появляется «от 0 ₽».
+  const priced = services.map((s) => Number(s.price)).filter((p) => p > 0);
+  const minPrice = priced.length ? Math.min(...priced) : null;
   const phone = business.phones?.[0] ?? null;
   const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null;
   const hours = business.working_hours as WorkingHours | null;
