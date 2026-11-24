@@ -63,6 +63,23 @@ export function RescheduleForm({ token, serviceId, prefix, slug, schedule, curre
   const [picked, setPicked] = useState('');
   const [timeError, setTimeError] = useState<string | undefined>(undefined);
   const slots = useSlots({ prefix, slug }, serviceId, date);
+
+  // Та же ловушка, что и в форме записи: по умолчанию открывается сегодняшний день, а к вечеру
+  // все окна в нём уже в прошлом. Клиент видел пустую сетку и не понимал, что делать.
+  // Пока дату не выбрал человек, переходим к следующему дню со свободным временем.
+  const userPickedDate = useRef(false);
+  const autoChecked = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (userPickedDate.current) return;
+    if (!date || slots.state.kind !== 'ready') return;
+    if (slots.state.slots.length > 0) return;
+    if (autoChecked.current.has(date)) return;
+    autoChecked.current.add(date);
+    const idx = options.findIndex((o) => o.date === date);
+    if (idx < 0) return;
+    const next = options.slice(idx + 1).find((o) => !o.closed && !autoChecked.current.has(o.date));
+    if (next) setDate(next.date);
+  }, [date, options, slots.state]);
   const { outcome, refreshCount, sending, submit } = useRescheduleSubmit({
     token,
     minHoursBefore: resolved.minHoursBefore,
@@ -71,6 +88,7 @@ export function RescheduleForm({ token, serviceId, prefix, slug, schedule, curre
 
   // Смена даты сбрасывает выбранное время: оно из другого списка.
   const selectDate = useCallback((value: string) => {
+    userPickedDate.current = true;
     setDate(value);
     setPicked('');
     setTimeError(undefined);

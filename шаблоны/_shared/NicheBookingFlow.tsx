@@ -124,6 +124,28 @@ export function NicheBookingFlow({
     setStartsAt('');
   }, [serviceId, date]);
 
+  // Дату выбирал человек — авто-переход выключаем, иначе выбранный вручную пустой день
+  // «убегал» бы из-под курсора.
+  const userPickedDate = useRef(false);
+  // Дни, которые уже проверили на свободное время: защита от бесконечного перебора.
+  const autoChecked = useRef<Set<string>>(new Set());
+
+  // Вечером «сегодня» ещё есть в полосе дат, но все окна уже в прошлом: шторка открывалась
+  // на дне, где все чипы серые, а «Продолжить» выключена без объяснения — посетитель видел
+  // стену из недоступных кнопок и уходил. Если день выбран не человеком и свободного времени
+  // в нём нет, переходим к следующему дню, пока не найдём день со слотами.
+  useEffect(() => {
+    if (step !== 'datetime' || userPickedDate.current) return;
+    if (!date || slots.state.kind !== 'ready') return;
+    if (slots.state.slots.length > 0) return;
+    if (autoChecked.current.has(date)) return;
+    autoChecked.current.add(date);
+    const idx = options.findIndex((o) => o.date === date);
+    if (idx < 0) return;
+    const next = options.slice(idx + 1).find((o) => !o.closed && !autoChecked.current.has(o.date));
+    if (next) setDate(next.date);
+  }, [step, date, options, slots.state]);
+
   const currentStep = step as Exclude<Step, 'done'>;
   const stepIdx = STEPS.indexOf(currentStep);
 
@@ -139,6 +161,9 @@ export function NicheBookingFlow({
       setServiceId(id);
       setDate(firstOpenDate(options));
       setStartsAt('');
+      // Другая услуга — другая длительность и другие свободные окна: перебор начинаем заново.
+      autoChecked.current.clear();
+      userPickedDate.current = false;
       setStep('datetime');
     },
     [options],
@@ -291,7 +316,7 @@ export function NicheBookingFlow({
                   aria-pressed={active}
                   aria-label={o.label}
                   disabled={o.closed}
-                  onClick={() => setDate(o.date)}
+                  onClick={() => { userPickedDate.current = true; setDate(o.date); }}
                   className={`day-chip flex-1${active ? ' is-active' : ''}${o.closed ? ' opacity-50' : ''}`}
                 >
                   <span className="text-caption">{o.weekday}</span>
@@ -313,7 +338,7 @@ export function NicheBookingFlow({
             value={date}
             onChange={(e) => {
               const v = e.target.value;
-              if (v === '' || isDateInBounds(v, bounds)) setDate(v);
+              if (v === '' || isDateInBounds(v, bounds)) { userPickedDate.current = true; setDate(v); }
             }}
           />
 
@@ -351,7 +376,7 @@ export function NicheBookingFlow({
                           type="button"
                           disabled={!available}
                           aria-pressed={selected}
-                          aria-label={`${time} — ${available ? 'свободно' : 'занято'}`}
+                          aria-label={`${time} — ${available ? 'свободно' : 'недоступно'}`}
                           onClick={() => { if (iso) setStartsAt(iso); }}
                           className={`time-chip${selected ? ' is-active' : ''}`}
                         >
@@ -361,7 +386,13 @@ export function NicheBookingFlow({
                     })}
                   </div>
                   <p className="mt-3 text-caption text-brand-text-subtle">
-                    {grid.some((g) => !g.available) ? 'Серые окна уже заняты. Выберите любое свободное время.' : 'Выберите любое свободное время.'}
+                    {grid.every((g) => !g.available)
+                      // Все окна недоступны — это не «занято», а «на этот день уже не записаться»:
+                      // часть времени прошла, часть занята. Прежняя подпись сбивала с толку.
+                      ? 'На этот день свободного времени не осталось. Выберите другую дату.'
+                      : grid.some((g) => !g.available)
+                        ? 'Серые окна уже заняты. Выберите любое свободное время.'
+                        : 'Выберите любое свободное время.'}
                   </p>
                 </>
               )}
