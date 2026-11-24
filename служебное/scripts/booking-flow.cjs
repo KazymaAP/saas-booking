@@ -53,9 +53,38 @@ async function scanSite(page, slug) {
     );
   }
 
+  // Свободное окно должно включать «Продолжить»: иначе шаг пройти нельзя.
+  const freeChip = page.locator('.time-chip:not([disabled])').first();
+  let nextAfterPick = null;
+  if ((await freeChip.count()) > 0) {
+    await freeChip.click();
+    await page.waitForTimeout(300);
+    nextAfterPick = await page.evaluate(() => {
+      const next = [...document.querySelectorAll('button')].find((b) => /Продолжить/.test(b.textContent || ''));
+      return next ? !next.disabled : null;
+    });
+  }
+
+  // Ручной выбор пустого дня: авто-переход не должен утаскивать дату из-под курсора.
+  let manualStays = null;
+  const emptyIdx = days.findIndex((d) => d.free === 0);
+  if (emptyIdx >= 0) {
+    await page.locator('.day-chip').nth(emptyIdx).click();
+    await page.waitForTimeout(1600);
+    const after = await page.evaluate(() => ({
+      day: document.querySelector('.day-chip.is-active')?.textContent?.replace(/\s+/g, ' ') ?? null,
+      hint: [...document.querySelectorAll('p, span')].map((e) => (e.textContent || '').trim()).find((t) => /свободного времени не осталось/.test(t)) ?? null,
+    }));
+    manualStays = { clicked: days[emptyIdx].day, nowActive: after.day, stayed: after.day === days[emptyIdx].day, hint: after.hint };
+  }
+
   const bestFree = days.reduce((max, d) => Math.max(max, d.free), 0);
-  const verdict = auto.free > 0 ? 'ok' : bestFree > 0 ? 'BAD: открылись на пустом дне, хотя есть день со слотами' : 'empty: слотов нет нигде';
-  return { slug, auto, days, bestFree, verdict };
+  const problems = [];
+  if (auto.free === 0 && bestFree > 0) problems.push('открылись на пустом дне, хотя есть день со слотами');
+  if (nextAfterPick === false) problems.push('«Продолжить» не включилась после выбора свободного окна');
+  if (manualStays && manualStays.stayed === false) problems.push('ручной выбор пустого дня утащило на другую дату');
+  const verdict = problems.length > 0 ? `BAD: ${problems.join('; ')}` : 'ok';
+  return { slug, auto, days, bestFree, nextAfterPick, manualStays, verdict };
 }
 
 (async () => {
@@ -88,8 +117,12 @@ async function scanSite(page, slug) {
       console.log(`\n[${r.slug}] ОШИБКА: ${r.error}`);
       continue;
     }
-    console.log(`\n[${r.slug}] авто-день: ${r.auto.day} | свободно ${r.auto.free}/${r.auto.total} | «Продолжить» ${r.auto.nextEnabled ? 'активна' : 'ВЫКЛЮЧЕНА'}`);
+    console.log(`\n[${r.slug}] авто-день: ${r.auto.day} | свободно ${r.auto.free}/${r.auto.total}`);
     console.log(`  лучший день в полосе: ${r.bestFree} свободных`);
+    console.log(`  «Продолжить» после выбора окна: ${r.nextAfterPick === null ? 'нет свободных окон' : r.nextAfterPick ? 'активна' : 'ВЫКЛЮЧЕНА'}`);
+    if (r.manualStays) {
+      console.log(`  ручной выбор пустого дня ${r.manualStays.clicked}: ${r.manualStays.stayed ? 'остался на нём' : `утащило на ${r.manualStays.nowActive}`}${r.manualStays.hint ? ' + подсказка' : ''}`);
+    }
     console.log(`  ${r.verdict}`);
     if (r.verdict.startsWith('BAD')) {
       console.log('  дни: ' + r.days.map((d) => `${d.day}=${d.free}/${d.total}`).join(', '));
