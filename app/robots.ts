@@ -7,7 +7,12 @@
 // Поэтому список запретов один и общий, без /test/.
 import type { MetadataRoute } from 'next';
 
-import { SITE_URL as BASE } from '@/lib/site';
+import { requestOrigin } from '@/lib/request-origin';
+
+// Строка Sitemap: должна вести на тот же хост, на котором открыт сайт, иначе поисковик
+// получает редирект на самой карте. Ради этого маршрут динамический: robots.txt крошечный,
+// а headers() в статическом маршруте недоступны.
+export const dynamic = 'force-dynamic';
 
 // Служебные пути: в индексе им делать нечего.
 const SERVICE_PATHS = [
@@ -33,6 +38,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: SERVICE_PATHS,
       },
     ],
-    sitemap: `${BASE}/sitemap.xml`,
+    sitemap: `${requestOrigin()}/sitemap.xml`,
   };
 }

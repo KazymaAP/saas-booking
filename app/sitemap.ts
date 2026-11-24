@@ -4,10 +4,15 @@ import { adminClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-import { SITE_URL as BASE } from '@/lib/site';
 import { LEGAL_DOCS } from '@/lib/legal';
+import { requestOrigin } from '@/lib/request-origin';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Хост берём из запроса, а не из NEXT_PUBLIC_SITE_URL: env указывает на apex, который
+  // 308-редиректит на www, и все 100 адресов карты оказывались редиректами — поисковик
+  // тратил краулинговый бюджет впустую (подробности в lib/request-origin.ts).
+  const BASE = requestOrigin();
+
   const { data } = await adminClient()
     .from('businesses')
     .select('slug, created_at, vertical_templates(url_prefix)')
