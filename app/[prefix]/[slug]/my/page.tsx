@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/my/page.tsx — кабинет клиента «Мои записи» (NEW-5, 2026-11-12).
 // Работает всегда: без сессии показывает приглашение войти, с сессией — записи клиента по customer_id.
 // Проверка сессии — здесь, в server component; middleware /my не блокирует (публичный маршрут).
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import { resolveBusiness } from '@/lib/business';
 import { businessTimeZone } from '@/lib/availability';
@@ -33,7 +33,11 @@ const ACTIVE_STATUSES = new Set(['new', 'confirmed']);
 
 export default async function MyBookingsPage({ params }: { params: { prefix: string; slug: string } }) {
   const r = await resolveBusiness(params.prefix, params.slug);
-  if (r.kind !== 'found') notFound();
+  // Бизнес живёт под префиксом своей ниши: /b/2bro/my → /d/2bro/my. Раньше эта страница
+  // отдавала 404 на неверном префиксе, хотя /{prefix}/{slug} уже редиректил — клиент,
+  // открывший старую ссылку на «Мои записи», видел «страницы нет».
+  if (r.kind === 'redirect') permanentRedirect(`${r.to}/my`);
+  if (r.kind === 'notfound') notFound();
   const businessId = r.business.id;
 
   const session = await readCustomerSession(businessId);

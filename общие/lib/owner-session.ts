@@ -258,18 +258,24 @@ export async function requireOwnerAction(slug: string, roles: readonly OwnerRole
   return access && access.role !== null && roles.includes(access.role) ? access : null;
 }
 
-export type OwnerPanelInfo = { readonly name: string };
+export type OwnerPanelInfo = { readonly name: string; readonly canonicalPrefix: string };
 
 // Существует ли кабинет по адресу /{prefix}/{slug}/admin: бизнес со slug и шаблоном с этим url_prefix.
 // Статус не раскрывается: форма входа одинакова для активных и неактивных бизнесов.
-async function ownerPanelInfoUncached(prefix: string, slug: string): Promise<OwnerPanelInfo | null> {
+//
+// Префикс возвращается канонический, а не проверяется на равенство: при переезде бизнеса в другую
+// нишу старый адрес кабинета отдавал 404, хотя публичный сайт уже редиректил. Страница входа сама
+// сделает 308, если префикс в адресе не тот.
+async function ownerPanelInfoUncached(slug: string): Promise<OwnerPanelInfo | null> {
   const db = adminClient();
   const { data: business } = await db.from('businesses').select('name, vertical_template_id').eq('slug', slug)
     .maybeSingle<{ name: string; vertical_template_id: string | null }>();
   if (!business?.vertical_template_id) return null;
   const { data: template } = await db.from('vertical_templates').select('url_prefix').eq('id', business.vertical_template_id)
     .maybeSingle<{ url_prefix: string }>();
-  return template?.url_prefix === prefix ? { name: business.name } : null;
+  const canonicalPrefix = (template?.url_prefix ?? '').trim();
+  if (!canonicalPrefix) return null;
+  return { name: business.name, canonicalPrefix };
 }
 
 export const ownerPanelInfo = cache(ownerPanelInfoUncached);

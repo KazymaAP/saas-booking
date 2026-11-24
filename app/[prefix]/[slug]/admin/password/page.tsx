@@ -3,7 +3,7 @@
 // Кабинеты, заведённые платформой, получают пароль от нас. Пока владелец не задал свой,
 // layout кабинета сюда и переводит: страница лежит вне группы (protected), поэтому
 // редирект не зацикливается.
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 
 import { ownerAccess, ownerPanelInfo } from '@/lib/owner-session';
 import { ownerBasePath, requestContext } from '@/lib/auth-request';
@@ -18,8 +18,12 @@ export const dynamic = 'force-dynamic';
 type Params = { readonly prefix: string; readonly slug: string };
 
 export default async function SetPasswordPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
-  const info = await ownerPanelInfo(params.prefix, params.slug);
+  const info = await ownerPanelInfo(params.slug);
   if (!info) notFound();
+  // Неверный префикс — на канонический адрес той же страницы, иначе владелец видел 404.
+  if (info.canonicalPrefix !== params.prefix) {
+    permanentRedirect(`/${info.canonicalPrefix}/${params.slug}/admin/password`);
+  }
 
   const ctx = requestContext();
   const base = ownerBasePath(params.prefix, params.slug, ctx);

@@ -14,7 +14,9 @@ type Params = { prefix: string; slug: string; token: string };
 
 export default async function MyBookingPage({ params }: { params: Params }) {
   const r = await resolveBusiness(params.prefix, params.slug);
-  if (r.kind === 'redirect') permanentRedirect(r.to);
+  // Редирект на канонический префикс должен сохранить путь: r.to — это только /{prefix}/{slug},
+  // и без хвоста клиент по ссылке из письма попадал на главную сайта, теряя свою запись.
+  if (r.kind === 'redirect') permanentRedirect(`${r.to}/booking/my/${params.token}`);
   if (r.kind === 'notfound') notFound();
 
   const view = await loadMyBooking(params.token, params.slug);

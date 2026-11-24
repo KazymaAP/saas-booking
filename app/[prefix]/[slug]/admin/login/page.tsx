@@ -1,7 +1,7 @@
 // app/[prefix]/[slug]/admin/login/page.tsx — вход владельца/менеджера (ТЗ §5.3: /{prefix}/{slug}/admin/login).
 // На кастомном домене middleware переписывает /admin/login сюда: ссылки и редиректы строятся от ownerBasePath,
 // а страницы /magic-link и /admin/forgot-password живут на основном домене (SITE_URL) — сессия там своя (§5.8).
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import { ownerAccess, ownerPanelInfo, signInOwner } from '@/lib/owner-session';
 import { sanitizeNext } from '@/lib/auth-core';
 import { requestContext, ownerBasePath } from '@/lib/auth-request';
@@ -15,8 +15,12 @@ export const dynamic = 'force-dynamic';
 type Params = { readonly prefix: string; readonly slug: string };
 
 export default async function OwnerLogin({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
-  const info = await ownerPanelInfo(params.prefix, params.slug);
+  const info = await ownerPanelInfo(params.slug);
   if (!info) notFound();
+  // Кабинет живёт под префиксом своей ниши: /b/2bro/admin/login → /d/2bro/admin/login.
+  if (info.canonicalPrefix !== params.prefix) {
+    permanentRedirect(`/${info.canonicalPrefix}/${params.slug}/admin/login`);
+  }
   const ctx = requestContext();
   const base = ownerBasePath(params.prefix, params.slug, ctx);
   const next = sanitizeNext(param(searchParams, 'next'), base);
