@@ -11,9 +11,15 @@ const NOTICE_ID = 'auth-form-notice';
 
 export function AuthShell({ title, children }: { readonly title: string; readonly children: ReactNode }) {
   return (
-    <main id="auth-main" className="mx-auto mt-16 max-w-[380px] px-4 panel-shell">
-      <h1 className="text-[24px] font-semibold">{title}</h1>
-      {children}
+    // Вертикальное центрирование: раньше форма висела на mt-16, и под ней оставалось
+    // пол-экрана пустоты — на входе в панель и на сбросе пароля это выглядело как
+    // обрезанная страница. Ширину ограничиваем внутренним блоком, а не самим <main>:
+    // .panel-shell красит фон, и при max-w на main он превращался в узкую белую полосу.
+    <main id="auth-main" className="panel-shell flex min-h-screen w-full flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[380px]">
+        <h1 className="text-[24px] font-semibold">{title}</h1>
+        {children}
+      </div>
     </main>
   );
 }
@@ -91,7 +97,13 @@ export function HiddenField({ name, value }: { readonly name: 'next' | 'token'; 
 export function AuthLinks({ links }: { readonly links: ReadonlyArray<{ readonly href: string; readonly label: string }> }) {
   return (
     <nav aria-label="Другие способы входа" className="mt-6 grid gap-2 text-[14px]">
-      {links.map((l) => <a key={l.href} href={l.href} className="underline">{l.label}</a>)}
+      {/* Цвет задаём явно: глобальный `a { color: inherit }` делает ссылку неотличимой
+          от подписи, а без hover-состояния она вообще не читается как ссылка. */}
+      {links.map((l) => (
+        <a key={l.href} href={l.href} className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">
+          {l.label}
+        </a>
+      ))}
     </nav>
   );
 }
