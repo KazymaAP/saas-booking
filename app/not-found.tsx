@@ -4,7 +4,6 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 import { TitleSync } from '@/components/TitleSync';
-import { redirectHref } from '@/lib/copy-mode';
 
 const TITLE = 'Страница не найдена';
 
@@ -45,16 +44,17 @@ export default function NotFound() {
           он указан в письме или визитке.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          {/* В режиме копии (/test/ful/sts/…) ссылки должны остаться внутри префикса. */}
+          {/* Ссылки намеренно без redirectHref: headers() сделал бы глобальную 404 динамической.
+              В режиме копии переходы внутри префикса удерживает CopyLinks (перехват клика в layout). */}
           <Link
-            href={redirectHref('/')}
+            href="/"
             className="rounded-full px-5 py-2.5 text-[14px] font-medium transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
             На главную
           </Link>
           <Link
-            href={redirectHref('/auth')}
+            href="/auth"
             className="rounded-full px-5 py-2.5 text-[14px] font-medium transition-colors"
             style={{ border: '1px solid var(--border)', color: 'var(--text)' }}
           >
