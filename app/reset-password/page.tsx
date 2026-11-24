@@ -2,6 +2,7 @@
 // GET ссылку не гасит (почтовые сканеры), смена пароля — только POST-ом формы (actions.ts).
 // Без токена страница отправляет на форму запроса /admin/forgot-password. В Referer уходит только origin: политика strict-origin (lib/auth-forms.ts).
 import { redirect } from 'next/navigation';
+import { redirectHref } from '@/lib/copy-mode';
 import { peekPasswordReset } from '@/lib/auth-reset';
 import { AUTH_REFERRER_POLICY, errorText, LINK_STATE_ERROR, param, type SearchParams } from '@/lib/auth-forms';
 import { PASSWORD_MIN_LENGTH } from '@/lib/auth-core';
@@ -13,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ResetPasswordPage({ searchParams }: { searchParams: SearchParams }) {
   const token = param(searchParams, 'token');
-  if (!token) redirect('/admin/forgot-password');
+  if (!token) redirect(redirectHref('/admin/forgot-password'));
   const state = await peekPasswordReset(token);
   if (state !== 'valid') {
     return (

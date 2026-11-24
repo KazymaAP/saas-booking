@@ -2,6 +2,7 @@
 // Проверки (Origin, rate limit, SUPERADMIN_EMAILS, журнал) — в lib/admin-session.ts.
 // В URL после ошибки — только код (?error=invalid) и безопасный путь возврата (?next=/admin/...).
 import { redirect } from 'next/navigation';
+import { redirectHref } from '@/lib/copy-mode';
 import { isSuperAdmin, signInSuperAdmin } from '@/lib/admin-session';
 import { sanitizeNext } from '@/lib/auth-core';
 import { AUTH_REFERRER_POLICY, errorText, formString, noticeText, param, withQuery, type SearchParams } from '@/lib/auth-forms';
@@ -23,8 +24,9 @@ async function login(form: FormData): Promise<void> {
 
 export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
   const next = sanitizeNext(param(searchParams, 'next'), '/admin');
-  // Уже вошёл — сразу в панель (или туда, откуда пришёл).
-  if (await isSuperAdmin()) redirect(next ?? ADMIN_HOME);
+  // Уже вошёл — сразу в панель (или туда, откуда пришёл). В разделе копий доступ считается
+  // открытым, поэтому эта ветка срабатывает всегда — и должна остаться внутри префикса.
+  if (await isSuperAdmin()) redirect(redirectHref(next ?? ADMIN_HOME));
   const error = errorText(param(searchParams, 'error'));
   const notice = error ? null : noticeText(param(searchParams, 'reason') ?? param(searchParams, 'notice'));
   const nextQuery = next ? `?next=${encodeURIComponent(next)}` : '';

@@ -39,3 +39,12 @@ export function copyHref(path: string): string {
   if (path === COPY_PREFIX || path.startsWith(`${COPY_PREFIX}/`)) return path;
   return `${COPY_PREFIX}${path}`;
 }
+
+// Адрес для redirect(): в режиме копии редирект должен остаться внутри префикса.
+//
+// Зачем: rewrite сохраняет адрес с префиксом, но Location, который выставляет сама страница,
+// всегда абсолютный ('/auth', '/admin'). Без этой обёртки читатель копии уезжал на настоящий
+// сайт — и попадал там на форму входа, которую раздел копий как раз обходит.
+export function redirectHref(path: string): string {
+  return inCopyMode() ? copyHref(path) : path;
+}

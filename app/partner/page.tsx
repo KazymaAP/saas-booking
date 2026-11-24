@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { redirectHref } from '@/lib/copy-mode';
 import { readPartnerSession } from '@/lib/partners-auth';
 import { getPartnerById, listLeads, partnerSummary, listCheckouts, listReadySites, listEarnings, yookassaConfigured } from '@/lib/partners';
 import { listPartnerReadyServices, listPartnerMessages, outreachForRows } from '@/lib/ready-services';
@@ -11,9 +12,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function PartnerDashboard() {
   const session = readPartnerSession();
-  if (!session) redirect('/partner/login');
+  if (!session) redirect(redirectHref('/partner/login'));
   const partner = await getPartnerById(session.partnerId);
-  if (!partner) redirect('/partner/login');
+  if (!partner) redirect(redirectHref('/partner/login'));
 
   const [leads, summary, checkouts, readySites, ready, messages, referrals, earnings] = await Promise.all([
     listLeads(partner.id),

@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import { FIELD_MAX } from '@/lib/auth-forms';
 import { PASSWORD_MIN_LENGTH } from '@/lib/auth-core';
+import { redirectHref } from '@/lib/copy-mode';
 import { SubmitButton } from './SubmitButton';
 
 const ERROR_ID = 'auth-form-error';
@@ -98,9 +99,10 @@ export function AuthLinks({ links }: { readonly links: ReadonlyArray<{ readonly 
   return (
     <nav aria-label="Другие способы входа" className="mt-6 grid gap-2 text-[14px]">
       {/* Цвет задаём явно: глобальный `a { color: inherit }` делает ссылку неотличимой
-          от подписи, а без hover-состояния она вообще не читается как ссылка. */}
+          от подписи, а без hover-состояния она вообще не читается как ссылка.
+          redirectHref оставляет переход внутри /test/ful/sts, когда страница открыта как копия. */}
       {links.map((l) => (
-        <a key={l.href} href={l.href} className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">
+        <a key={l.href} href={redirectHref(l.href)} className="text-[#111111] underline underline-offset-4 hover:text-[#666666]">
           {l.label}
         </a>
       ))}
