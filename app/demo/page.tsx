@@ -1,6 +1,10 @@
 // app/demo/page.tsx — лаунчер демо-кабинетов в оболочке настоящей панели:
 // тёмный сайдбар, липкая шапка, карточки разделов. Никакой маркетинговой вёрстки.
+// Оба пункта ведут на /partner/demo и /demo/business, которые при выключенном демо отдают 404.
+// Поэтому лаунчер закрывается тем же гейтом: иначе он показывает две кнопки в пустоту.
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { demoEnabled } from '@/lib/demo-gate';
 
 export const metadata = { title: 'Демо-кабинеты — Запишись', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
@@ -33,6 +37,7 @@ const CARDS = [
 ] as const;
 
 export default function DemoIndexPage() {
+  if (!demoEnabled()) notFound();
   return (
     <div className="detailing-root min-h-screen">
       {/* eslint-disable-next-line @next/next/no-css-tags */}

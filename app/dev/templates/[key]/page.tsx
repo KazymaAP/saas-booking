@@ -1,13 +1,16 @@
 // app/dev/templates/[key]/page.tsx — предпросмотр шаблона ниши на демо-данных.
 // Нужен разделу «Шаблоны» в супер-админке: открывает любой из 10 дизайнов целиком.
-// Доступ только супер-админу, индексация запрещена. Данные — демонстрационные.
+// Страница открыта всем: на неё ведут чипы раздела «Шаблоны под 10 ниш» на лендинге,
+// и раньше посетитель попадал на форму входа супер-админа. Данные демонстрационные,
+// персональных сведений здесь нет. Переключатель режимов видит только супер-админ.
+// Индексация запрещена.
 //
 // ВАЖНО: по умолчанию показываем NicheSite — ровно тот компонент, который видит клиент на
 // /{prefix}/{slug}. Раньше здесь рендерился универсальный StudioTemplate, и оператор видел
 // не тот дизайн, что у арендатора (?variant=universal — тот самый универсальный вариант).
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { isSuperAdmin } from '@/lib/admin-session';
 import { ALL_NICHE_THEMES, getNicheThemeBySlug } from '@/шаблоны/_shared/themes';
 import { NicheSite } from '@/шаблоны/_shared/NicheSite';
@@ -58,7 +61,9 @@ export default async function TemplatePreviewPage({
   params: { key: string };
   searchParams?: { variant?: string };
 }) {
-  if (!(await isSuperAdmin())) redirect('/admin/login');
+  // Переключатель «Как у клиента / Универсальный / ← Админка» нужен только оператору.
+  // Посетителю с лендинга он мешает: там «← Админка» ведёт на форму входа.
+  const admin = await isSuperAdmin();
 
   const theme = getNicheThemeBySlug(params.key);
   if (!theme) notFound();
@@ -87,7 +92,7 @@ export default async function TemplatePreviewPage({
     websites: [],
   };
 
-  const switcher = (
+  const switcher = admin ? (
     <div className="fixed left-3 top-3 z-[100] flex flex-wrap items-center gap-1.5 rounded-full border border-white/15 bg-black/80 px-2 py-1.5 text-[12px] text-white shadow-lg backdrop-blur">
       <Link
         href={`/dev/templates/${theme.key}`}
@@ -105,7 +110,7 @@ export default async function TemplatePreviewPage({
         ← Админка
       </Link>
     </div>
-  );
+  ) : null;
 
   if (universal) {
     return (
@@ -137,7 +142,7 @@ export default async function TemplatePreviewPage({
   return (
     <>
       {switcher}
-      <NicheSite tenant={tenant} prefix={theme.prefix} slug={business.slug} />
+      <NicheSite tenant={tenant} prefix={theme.prefix} slug={business.slug} demo />
     </>
   );
 }

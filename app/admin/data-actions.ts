@@ -176,7 +176,12 @@ export async function setBusinessStatusAction(id: string, status: string): Promi
 
 // ---------- модерация: очередь заявок ----------
 
-export type ModerationRow = { id: string; name: string; slug: string; city: string | null; status: string; createdAt: string; hasSite: boolean };
+export type ModerationRow = {
+  id: string; name: string; slug: string; city: string | null; status: string; createdAt: string;
+  hasSite: boolean;
+  /** Полный адрес прототипа с токеном. Без него /preview/{slug} отдаёт 404 — ссылку строить нельзя. */
+  previewUrl: string | null;
+};
 
 export async function getModerationQueueAction(): Promise<ModerationRow[]> {
   if (!(await requireSuperAdminAction())) return [];
@@ -197,6 +202,7 @@ export async function getModerationQueueAction(): Promise<ModerationRow[]> {
         status: String(row.status ?? 'new'),
         createdAt: String(row.created_at ?? ''),
         hasSite: Boolean(row.preview_url),
+        previewUrl: row.preview_url ? String(row.preview_url) : null,
       };
     });
   } catch {

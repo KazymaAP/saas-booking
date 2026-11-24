@@ -824,7 +824,7 @@ function Bot({ push }: { push: (m: string, k?: ToastKind) => void }) {
     { label: 'Токен бота', value: botOn === null ? 'не проверено' : botOn ? 'задан' : 'не задан', ok: Boolean(botOn) },
     { label: 'Бизнесов с ботом', value: `${num(stats.subscribers)} из ${num(stats.businesses)}`, ok: stats.subscribers > 0 },
     { label: 'Рассылок отправлено', value: num(stats.sentBroadcasts), ok: stats.sentBroadcasts > 0 },
-    { label: 'Последняя рассылка', value: stats.lastBroadcast ? new Date(stats.lastBroadcast).toLocaleString('ru-RU') : '—', ok: Boolean(stats.lastBroadcast) },
+    { label: 'Последняя рассылка', value: stats.lastBroadcast ? new Date(stats.lastBroadcast).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—', ok: Boolean(stats.lastBroadcast) },
   ];
 
   return (
@@ -1486,7 +1486,7 @@ function Finance({ push }: { push: (m: string, k?: ToastKind) => void }) {
 
 // ---------- Модерация ----------
 function Moderation({ push }: { push: (m: string, k?: ToastKind) => void }) {
-  const [items, setItems] = useState<{ id: string; name: string; slug: string; city: string | null; status: string; createdAt: string; hasSite: boolean }[]>([]);
+  const [items, setItems] = useState<{ id: string; name: string; slug: string; city: string | null; status: string; createdAt: string; hasSite: boolean; previewUrl: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -1550,11 +1550,15 @@ function Moderation({ push }: { push: (m: string, k?: ToastKind) => void }) {
               <button type="button" className="btn-ghost press text-body-sm text-brand-error" disabled={busy === m.id} onClick={() => { void decide(m.id, 'refused'); }}>
                 <Prohibit size={16} weight="bold" aria-hidden="true" /> Отклонить
               </button>
-              <a className="btn-ghost press text-body-sm" href={`/preview/${m.slug}`} target="_blank" rel="noopener noreferrer">
-                <Eye size={16} weight="bold" aria-hidden="true" /> Посмотреть сайт
-              </a>
+              {/* Прототип открывается только с токеном: /preview/{slug} без него — 404.
+                  Пока сайта нет, кнопку не показываем вовсе, чтобы не вести в пустоту. */}
+              {m.previewUrl && (
+                <a className="btn-ghost press text-body-sm" href={m.previewUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye size={16} weight="bold" aria-hidden="true" /> Посмотреть сайт
+                </a>
+              )}
               <span className="ml-auto self-center text-caption text-brand-text-subtle">
-                подано {m.createdAt ? new Date(m.createdAt).toLocaleString('ru-RU') : '—'}
+                подано {m.createdAt ? new Date(m.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}
               </span>
             </div>
           </li>
@@ -1633,7 +1637,7 @@ function Audit({ push }: { push: (m: string, k?: ToastKind) => void }) {
                 </span>
                 <span className="truncate text-body-sm text-brand-text-muted">{a.entity || '—'}</span>
                 <span className="truncate font-mono text-caption text-brand-text-subtle" title={a.entityId ?? ''}>{a.entityId ? `${a.entityId.slice(0, 8)}…` : '—'}</span>
-                <span className="text-caption text-brand-text-subtle">{a.createdAt ? new Date(a.createdAt).toLocaleString('ru-RU') : '—'}</span>
+                <span className="text-caption text-brand-text-subtle">{a.createdAt ? new Date(a.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
               </li>
             );
           })}
@@ -1845,7 +1849,7 @@ function Broadcasts({ push }: { push: (m: string, k?: ToastKind) => void }) {
           <ul className="mt-3 space-y-3">
             {history.map((b) => (
               <li key={b.id} className="rounded-2xl border border-white/[0.06] p-3">
-                <div className="text-body-sm">Рассылка от {b.createdAt ? new Date(b.createdAt).toLocaleString('ru-RU') : '—'}</div>
+                <div className="text-body-sm">Рассылка от {b.createdAt ? new Date(b.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</div>
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-caption text-brand-text-muted">
                   <span>получателей {num(b.total)}</span>
                   <span>отправлено {num(b.sent)}</span>
@@ -2369,7 +2373,7 @@ function Support({ push }: { push: (m: string, k?: ToastKind) => void }) {
               <li key={t.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
                 <button type="button" onClick={() => { setOpenId(t.id); setReplyOpen(false); }} className="min-w-0 flex-1 text-left">
                   <span className="block truncate text-body-sm font-medium">{t.subject}</span>
-                  <span className="block truncate text-caption text-brand-text-subtle">{t.email ?? 'без email'} · {t.createdAt ? new Date(t.createdAt).toLocaleString('ru-RU') : '—'}</span>
+                  <span className="block truncate text-caption text-brand-text-subtle">{t.email ?? 'без email'} · {t.createdAt ? new Date(t.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
                 </button>
                 <span className={`shrink-0 rounded-full border px-2 py-0.5 text-caption ${st.cls}`}>{st.label}</span>
                 <button type="button" className="btn-ghost shrink-0 px-2 py-1 text-caption" onClick={() => { setOpenId(t.id); setReplyOpen(false); }}>Открыть</button>
@@ -2384,7 +2388,7 @@ function Support({ push }: { push: (m: string, k?: ToastKind) => void }) {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full border px-2 py-0.5 text-caption ${(STATUS_LABEL[open.status] ?? { cls: 'border-white/15 text-brand-text-muted' }).cls}`}>{(STATUS_LABEL[open.status] ?? { label: open.status }).label}</span>
-              <span className="text-caption text-brand-text-subtle">{open.email ?? 'без email'} · {open.createdAt ? new Date(open.createdAt).toLocaleString('ru-RU') : '—'}</span>
+              <span className="text-caption text-brand-text-subtle">{open.email ?? 'без email'} · {open.createdAt ? new Date(open.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
             </div>
             <p className="rounded-2xl border border-brand-border bg-white/[0.02] p-3 text-body-sm text-brand-text-muted">{open.message || 'Текст обращения не заполнен.'}</p>
             {replyOpen && (
@@ -2685,7 +2689,7 @@ function WebhooksLive({ push }: { push: (m: string, k?: ToastKind) => void }) {
               <span className="rounded-full border border-white/10 px-2 py-0.5 font-mono text-caption text-brand-text-muted">{r.source}</span>
               <span className="min-w-0 flex-1 truncate font-mono text-caption text-brand-text-subtle">{r.eventId ?? '—'}</span>
               <span className={`shrink-0 rounded-full border px-2 py-0.5 text-caption ${r.processedAt ? 'border-brand-success/30 text-brand-success' : 'border-brand-accent/30 text-brand-accent'}`}>{r.processedAt ? 'обработано' : 'в очереди'}</span>
-              <span className="shrink-0 text-caption text-brand-text-subtle">{r.createdAt ? new Date(r.createdAt).toLocaleString('ru-RU') : '—'}</span>
+              <span className="shrink-0 text-caption text-brand-text-subtle">{r.createdAt ? new Date(r.createdAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
             </li>
           ))}
         </ul>
@@ -2733,7 +2737,7 @@ function TransactionsLive({ push }: { push: (m: string, k?: ToastKind) => void }
               <span className="min-w-0 flex-1 truncate text-body-sm">{r.business}</span>
               <span className="text-caption text-brand-text-muted">{r.type}</span>
               <span className="text-body-sm font-medium">{rub(r.amount)}</span>
-              <span className="text-caption text-brand-text-subtle">{r.paidAt ? new Date(r.paidAt).toLocaleString('ru-RU') : 'не оплачено'}</span>
+              <span className="text-caption text-brand-text-subtle">{r.paidAt ? new Date(r.paidAt).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : 'не оплачено'}</span>
             </li>
           ))}
         </ul>
@@ -3339,7 +3343,7 @@ function Backups({ push }: { push: (m: string, k?: ToastKind) => void }) {
             <li key={b.name} className="flex items-center justify-between gap-3 py-3">
               <span className="min-w-0 flex-1 truncate font-mono text-body-sm">{b.name}</span>
               <span className="text-caption text-brand-text-muted">{sizeLabel(b.size)}</span>
-              <span className="text-caption text-brand-text-subtle">{b.updated ? new Date(b.updated).toLocaleString('ru-RU') : '—'}</span>
+              <span className="text-caption text-brand-text-subtle">{b.updated ? new Date(b.updated).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ }) : '—'}</span>
             </li>
           ))}
         </ul>
@@ -4312,7 +4316,7 @@ function Partners({ push }: { push: (m: string, k?: ToastKind) => void }) {
                 {messages.length === 0 && <li className="text-caption text-brand-text-subtle">Сообщений нет</li>}
                 {messages.map((m) => (
                   <li key={m.id} className="rounded-lg border border-brand-border px-3 py-2 text-caption text-brand-text-muted">
-                    <span className="text-brand-text-subtle">{new Date(m.created_at).toLocaleString('ru-RU')}: </span>{m.body}
+                    <span className="text-brand-text-subtle">{new Date(m.created_at).toLocaleString('ru-RU', { timeZone: PLATFORM_TZ })}: </span>{m.body}
                   </li>
                 ))}
               </ul>

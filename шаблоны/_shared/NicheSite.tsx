@@ -112,7 +112,7 @@ function ServiceRowButton({ service, tenant, onPick }: { service: NicheService; 
   );
 }
 
-export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefix: string; slug: string }) {
+export function NicheSite({ tenant, prefix, slug, demo = false }: { tenant: NicheTenant; prefix: string; slug: string; demo?: boolean }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -125,8 +125,9 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
 
   // Переход с UtilityShell: «Услуги» открывает ту же шторку записи.
   useEffect(() => {
+    if (demo) return;
     if (new URLSearchParams(window.location.search).get('book') === '1') setBookingOpen(true);
-  }, []);
+  }, [demo]);
 
   // Уходим сразу на нужную страницу, минуя светлый промежуточный /booking/last —
   // иначе при переходе на мгновение мелькает белый экран.
@@ -143,7 +144,18 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
     window.location.assign(target);
   };
 
+  // Демо-шаблон (/dev/templates/*, ссылки с лендинга) рисуется на выдуманных данных:
+  // такого бизнеса в базе нет, поэтому слоты и создание записи вернут 404.
+  // Шторку не открываем вовсе — иначе посетитель видел бы пустой выбор времени.
+  const [demoNotice, setDemoNotice] = useState(false);
+  useEffect(() => {
+    if (!demoNotice) return;
+    const t = window.setTimeout(() => setDemoNotice(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [demoNotice]);
+
   const openBooking = (serviceId?: string) => {
+    if (demo) { setDemoNotice(true); return; }
     setInitialServiceId(serviceId);
     setBookingOpen(true);
   };
@@ -574,6 +586,15 @@ export function NicheSite({ tenant, prefix, slug }: { tenant: NicheTenant; prefi
           </a>
         </div>
       </nav>
+
+      {demoNotice && (
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-modal -translate-x-1/2 rounded-full border border-brand-border bg-brand-surface px-4 py-2 text-[13px] text-brand-text shadow-lg md:bottom-8"
+        >
+          Это демонстрация шаблона — запись здесь не создаётся.
+        </div>
+      )}
 
       {bookingOpen && (
         <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center" role="presentation">
