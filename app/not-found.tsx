@@ -3,8 +3,13 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
+import { TitleSync } from '@/components/TitleSync';
+import { redirectHref } from '@/lib/copy-mode';
+
+const TITLE = 'Страница не найдена';
+
 export const metadata = {
-  title: 'Страница не найдена',
+  title: TITLE,
   robots: { index: false, follow: false },
 };
 
@@ -24,6 +29,8 @@ export default function NotFound() {
       className="grid min-h-screen place-items-center px-5 py-16"
       // Фон задаём инлайном: страница должна выглядеть нормально, даже если CSS не загрузился.
     >
+      {/* Гидрация возвращает заголовок layout — поправляем обратно (см. TitleSync). */}
+      <TitleSync title={TITLE} />
       <div className="w-full max-w-[520px] text-center" style={{ color: 'var(--text)' }}>
         <div
           className="mx-auto grid size-16 place-items-center rounded-2xl text-[22px] font-semibold"
@@ -38,15 +45,16 @@ export default function NotFound() {
           он указан в письме или визитке.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          {/* В режиме копии (/test/ful/sts/…) ссылки должны остаться внутри префикса. */}
           <Link
-            href="/"
+            href={redirectHref('/')}
             className="rounded-full px-5 py-2.5 text-[14px] font-medium transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
             На главную
           </Link>
           <Link
-            href="/auth"
+            href={redirectHref('/auth')}
             className="rounded-full px-5 py-2.5 text-[14px] font-medium transition-colors"
             style={{ border: '1px solid var(--border)', color: 'var(--text)' }}
           >
