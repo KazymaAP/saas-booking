@@ -144,6 +144,9 @@ async function customDomain(req: NextRequest, host: string): Promise<NextRespons
   // Данные — в заголовках запроса (см. RESOLVE_HOST_HEADER): значения клиента перезаписываются.
   url.searchParams.delete(DOMAIN_MAP_MARKER);
   const forward = new Headers(req.headers);
+  // Режим копий ставится только rewrite'ом на основном домене — на домене клиента это подделка.
+  forward.delete(COPY_MODE_HEADER);
+  forward.delete(COPY_PATH_HEADER);
   forward.set(RESOLVE_HOST_HEADER, host);
   forward.set(RESOLVE_NEXT_HEADER, `${path}${url.search}`);
   if (has_marker) forward.set(RESOLVE_RETRY_HEADER, '1');
@@ -156,6 +159,13 @@ async function customDomain(req: NextRequest, host: string): Promise<NextRespons
 export async function middleware(req: NextRequest, event: NextFetchEvent): Promise<NextResponse> {
   const host = normalizeHost(req.headers.get('host'));
   const path = req.nextUrl.pathname;
+
+  // Заголовки режима копий ставит ТОЛЬКО middleware при rewrite. Клиентские копии вырезаем:
+  // иначе запрос с самодельным x-copy-mode отключал проверку супер-админа — /api/export/businesses
+  // отдавал все данные без входа (проверено запросом с одним заголовком).
+  const clean = new Headers(req.headers);
+  clean.delete(COPY_MODE_HEADER);
+  clean.delete(COPY_PATH_HEADER);
 
   if (isForeignOrigin(req, host)) {
     return NextResponse.json({ ok: false, reason: 'bad_origin' }, { status: 403 });
@@ -170,17 +180,20 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   // robots.txt раздел НЕ закрывает и X-Robots-Tag здесь не ставится: ИИ-агенты (Claude и подобные)
   // отказываются читать страницу при любом из этих сигналов — проверено на живом Claude.
   if (path === COPY_PREFIX || path === `${COPY_PREFIX}/`) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: clean } });
   }
 
   // Текстовый список адресов живёт по своему пути и префикс не срезает.
-  if (path === `${COPY_PREFIX}/urls`) return NextResponse.next();
+  if (path === `${COPY_PREFIX}/urls`) return NextResponse.next({ request: { headers: clean } });
 
   if (path.startsWith(`${COPY_PREFIX}/`)) {
     const inner = path.slice(COPY_PREFIX.length) || '/';
+    // API под префиксом копий не открываем: режим копий отключает проверку супер-админа,
+    // и /test/ful/sts/api/backup/restore дошёл бы до настоящего обработчика без входа.
+    if (inner === '/api' || inner.startsWith('/api/')) return new NextResponse(null, { status: 404 });
     const url = req.nextUrl.clone();
     url.pathname = inner;
-    const forward = new Headers(req.headers);
+    const forward = new Headers(clean);
     forward.set(COPY_MODE_HEADER, '1');
     forward.set(COPY_PATH_HEADER, inner);
     return NextResponse.rewrite(url, { request: { headers: forward } });
@@ -202,7 +215,7 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
   // Внутренний маршрут кастомных доменов не открывается напрямую на основном домене.
   if (path.startsWith('/domain-site')) return new NextResponse(null, { status: 404 });
 
-  return withNoindex(NextResponse.next(), isNoindexPath(path) || path.startsWith('/api/'));
+  return withNoindex(NextResponse.next({ request: { headers: clean } }), isNoindexPath(path) || path.startsWith('/api/'));
 }
 
 export const config = {

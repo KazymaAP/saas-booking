@@ -4,6 +4,8 @@
 import { notFound, redirect } from 'next/navigation';
 import { adminClient } from '@/lib/supabase';
 import { currentOwner } from '@/lib/owner-session';
+import { inCopyMode } from '@/lib/copy-mode';
+import { maskContacts } from '@/lib/copy-mask';
 import { isRole, ROLE_LABELS, STAFF_ROLES } from '@/lib/auth-roles';
 import { canWrite } from '@/lib/sections';
 import { GlassBackground } from '@/главная/components/GlassBackground';
@@ -70,7 +72,9 @@ export default async function StaffRolePage({ params }: { params: Params }) {
     : [null, null];
   if (shiftVisible && !dbRows) throw new Error('shift: load failed');
 
-  const rows = (dbRows ?? []).map(toShiftRow);
+  const shiftRows = (dbRows ?? []).map(toShiftRow);
+  // Копия страницы открыта без входа: сотрудник в зале видит контакты клиентов, посетитель копии — нет.
+  const rows = inCopyMode() ? maskContacts(shiftRows) : shiftRows;
   const stats = shiftStats(rows, now);
 
   const b = access.business;

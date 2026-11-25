@@ -7,11 +7,15 @@ import { SLUG, makeBusiness, makeMember } from './panel-fixtures';
 type Access = { business: Business; member: AdminUser } | null;
 const session = vi.hoisted(() => ({ current: null as Access }));
 const audit = vi.hoisted(() => vi.fn());
+// Режим копий (/test/ful/sts) переключается в тесте: там кабинет открыт без входа,
+// и выгрузка ПД клиентов не должна быть доступна.
+const copy = vi.hoisted(() => ({ mode: false }));
 
 vi.mock('@/lib/supabase', async () => {
   const { db } = await import('./supabase-mock');
   return { adminClient: () => db };
 });
+vi.mock('@/lib/copy-mode', () => ({ inCopyMode: () => copy.mode }));
 vi.mock('@/lib/owner-session', () => ({ currentOwner: async () => session.current }));
 vi.mock('@/lib/audit', () => ({ audit }));
 
@@ -27,10 +31,22 @@ const booking = (i: number) => ({
 beforeEach(() => {
   resetDb();
   audit.mockReset().mockResolvedValue(undefined);
+  copy.mode = false;
   session.current = { business: makeBusiness(), member: makeMember('owner') };
 });
 
 describe('export/route', () => {
+  it('в копии страницы (/test/ful/sts) — 403 и ни одного запроса в БД', async () => {
+    // Копия открыта без входа: там currentOwner выдаёт владельца кому угодно,
+    // поэтому файл с именами и телефонами клиентов скачивался по публичной ссылке.
+    copy.mode = true;
+    const res = await GET(req, params);
+    expect(res.status).toBe(403);
+    expect(await res.text()).not.toContain('Телефон');
+    expect(calls).toHaveLength(0);
+    expect(audit).not.toHaveBeenCalled();
+  });
+
   it('без сессии — 401, в БД не ходим', async () => {
     session.current = null;
     const res = await GET(req, params);

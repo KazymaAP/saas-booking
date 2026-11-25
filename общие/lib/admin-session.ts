@@ -76,7 +76,10 @@ export const isSuperAdmin = cache(isSuperAdminUncached);
 // Для Server Actions: при истёкшем access-токене обновляет сессию (здесь писать cookie можно).
 // Server Action — отдельный POST-эндпоинт, защиты layout для него недостаточно.
 export async function requireSuperAdminAction(): Promise<boolean> {
-  if (inCopyMode()) return true;
+  // Режим копий — только просмотр. Страницы студии рисуем без входа (по требованию заказчика),
+  // но действия запрещаем: иначе любой посетитель /test/ful/sts/admin менял бы настоящие данные
+  // (отметить оплату, удалить клиента, восстановить бэкап).
+  if (inCopyMode()) return false;
   if (!requestContext().sameOrigin) return false;
   if (await isSuperAdmin()) return true;
   const refreshed = await refreshSession('admin');

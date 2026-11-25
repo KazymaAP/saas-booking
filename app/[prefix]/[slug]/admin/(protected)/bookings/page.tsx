@@ -2,6 +2,8 @@
 // Серверный: один запрос списка, строки форматируются здесь (часовой пояс бизнеса), кнопки — в клиентском BookingList.
 import Link from 'next/link';
 import { adminClient } from '@/lib/supabase';
+import { inCopyMode } from '@/lib/copy-mode';
+import { maskContacts } from '@/lib/copy-mask';
 import { requireSectionAccess } from '../_lib/access';
 import { panelBase } from '../_lib/sections';
 import { businessDayStart, DAY_MS } from '../_lib/time';
@@ -44,9 +46,11 @@ export default async function BookingsPage({ params, searchParams }: { params: {
   const filter = parseFilter(searchParams.filter);
   // «Сейчас» — одно на сервере: и для выборки, и для кнопок (без расхождения сервер/клиент при гидрации).
   const now = Date.now();
-  const rows = await loadBookings(access.business.id, filter, now);
+  const loaded = await loadBookings(access.business.id, filter, now);
   // Ошибка БД — в error boundary раздела (кнопка «Попробовать ещё раз»), а не пустой список «броней нет».
-  if (!rows) throw new Error('bookings: load failed');
+  if (!loaded) throw new Error('bookings: load failed');
+  // Раздел копий открыт без входа: настоящие имена и телефоны клиентов там показывать нельзя.
+  const rows = inCopyMode() ? maskContacts(loaded) : loaded;
   const base = `${panelBase(params)}/bookings`;
 
   return (

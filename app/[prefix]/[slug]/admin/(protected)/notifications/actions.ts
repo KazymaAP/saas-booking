@@ -4,6 +4,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { currentOwner } from '@/lib/owner-session';
+import { inCopyMode } from '@/lib/copy-mode';
 import { adminClient } from '@/lib/supabase';
 import { hitRateLimit } from '@/lib/rate-limit';
 import { audit } from '@/lib/audit';
@@ -22,6 +23,8 @@ function panelPath(prefix: string, slug: string): string {
 
 /** Новый одноразовый код BIZ-xxxxxx (TTL 15 мин). Прежние неиспользованные коды гасятся. */
 export async function createTelegramCode(prefix: string, slug: string): Promise<ActionResult> {
+  // Копия страницы открыта без входа, а код привязывает чат к настоящему бизнесу — в копии только просмотр.
+  if (inCopyMode()) return { ok: false, error: 'unauthorized', state: null };
   const access = await currentOwner(slug);
   if (!access) return { ok: false, error: 'unauthorized', state: null };
   const businessId = access.business.id;
@@ -40,6 +43,8 @@ export async function createTelegramCode(prefix: string, slug: string): Promise<
 
 /** Отвязка чата. Неиспользованные коды тоже удаляются — старым кодом не переподключиться. */
 export async function disconnectTelegram(prefix: string, slug: string): Promise<ActionResult> {
+  // Отвязка чата — запись в businesses: в копии страницы её быть не может.
+  if (inCopyMode()) return { ok: false, error: 'unauthorized', state: null };
   const access = await currentOwner(slug);
   if (!access) return { ok: false, error: 'unauthorized', state: null };
   const businessId = access.business.id;

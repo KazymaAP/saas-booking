@@ -7,6 +7,7 @@ import { BUILTIN_ROLES, isRole, type Role } from '@/lib/auth-roles';
 import { canReadMatrix, canWriteMatrix, type RoleMatrix, type SectionKey } from '@/lib/sections';
 import { resolveMatrix } from '@/lib/custom-roles';
 import type { AdminUser, Business } from '@/lib/database.types';
+import { inCopyMode } from '@/lib/copy-mode';
 import type { PanelParams } from './sections';
 import { panelBase } from './sections';
 
@@ -49,6 +50,8 @@ export async function requireSectionAccess(params: PanelParams, section: Section
 // Для actions: без редиректов, чтобы клиент получил понятную ошибку и откатил optimistic-состояние.
 // По умолчанию — любой участник с разрешённой матрицей; точная проверка прав делается через writeAccess.
 export async function actionAccess(slug: string, roles: readonly Role[] = BUILTIN_ROLES): Promise<OwnerAccess | null> {
+  // Раздел копий /test/ful/sts открывает кабинеты без входа — но только на просмотр.
+  if (inCopyMode()) return null;
   const access = await currentOwner(slug);
   if (!access) return null;
   const matrix = await matrixOf(access);
@@ -60,6 +63,9 @@ export async function actionAccess(slug: string, roles: readonly Role[] = BUILTI
 
 // Меняющее action раздела: пропускает только роли с правом write на этот раздел.
 export async function writeAccess(slug: string, section: SectionKey): Promise<OwnerAccess | null> {
+  // Раздел копий — витрина для просмотра. Без этой проверки кнопки в копии кабинета
+  // (удалить услугу, скрыть фото, сменить цены) писали в настоящую базу без авторизации.
+  if (inCopyMode()) return null;
   const access = await currentOwner(slug);
   if (!access) return null;
   const matrix = await matrixOf(access);

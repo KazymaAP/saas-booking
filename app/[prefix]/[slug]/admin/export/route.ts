@@ -2,6 +2,7 @@
 // Только владелец этого бизнеса: в файле ПД клиентов (имя, телефон, email). Manager получает 403.
 // Supabase отдаёт не больше 1000 строк за запрос — читаем страницами, иначе CSV молча обрезался бы.
 import { currentOwner } from '@/lib/owner-session';
+import { inCopyMode } from '@/lib/copy-mode';
 import { adminClient } from '@/lib/supabase';
 import { audit } from '@/lib/audit';
 import { STATUS_LABEL } from '../(protected)/bookings/status';
@@ -48,6 +49,9 @@ function plain(status: number, text: string): Response {
 }
 
 export async function GET(_req: Request, { params }: { params: { prefix: string; slug: string } }) {
+  // Копия страницы /test/ful/sts: кабинет там открыт без входа, а здесь отдаётся файл с ПД клиентов.
+  // Обезличивать CSV бессмысленно — выгрузка нужна только владельцу, поэтому в копии её нет вовсе.
+  if (inCopyMode()) return plain(403, 'В копии страницы выгрузка недоступна');
   const access = await currentOwner(params.slug);
   if (!access) return plain(401, 'Войдите в кабинет');
   if (access.member.role !== 'owner') return plain(403, 'Выгрузка доступна только владельцу');

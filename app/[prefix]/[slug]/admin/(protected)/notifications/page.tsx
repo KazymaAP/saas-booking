@@ -1,6 +1,7 @@
 // app/[prefix]/[slug]/admin/(protected)/notifications/page.tsx — подключение Telegram (ТЗ §18.3, §36).
 // Сервер отдаёт начальное состояние (подключён / действующий код), дальше — клиентский TelegramConnect.
 import { currentOwner } from '@/lib/owner-session';
+import { inCopyMode } from '@/lib/copy-mode';
 import { botUsername } from '@/телеграмм-бот/telegram';
 import { loadTelegramState } from './telegram-state';
 import { DISCONNECTED_STATE } from './telegram-view';
@@ -12,7 +13,13 @@ export default async function NotificationsPage({ params }: { params: { prefix: 
   // Layout уже редиректит без доступа; повторная проверка — защита, если страницу отрендерят отдельно.
   const access = await currentOwner(params.slug);
   if (!access) return <p role="alert">Сессия истекла. Войдите в кабинет заново.</p>;
-  const [state, botName] = await Promise.all([loadTelegramState(access.business.id), botUsername('business')]);
+  // Копия страницы /test/ful/sts открыта без входа: действующий код привязки чата и статус
+  // подключения — не то, что можно показывать посетителю. В копии карточка только для вида.
+  const copy = inCopyMode();
+  const [state, botName] = await Promise.all([
+    copy ? Promise.resolve(null) : loadTelegramState(access.business.id),
+    botUsername('business'),
+  ]);
 
   return (
     <div className="grid max-w-[560px] gap-6">
@@ -21,10 +28,16 @@ export default async function NotificationsPage({ params }: { params: { prefix: 
         <h2 id="tg-title" className="text-[18px] font-semibold">Telegram</h2>
         <p className="text-[14px] text-[#6b6b6b]">Мгновенные уведомления о новых записях, отменах и переносах.</p>
         <p className="text-[14px] text-[#6b6b6b]">В этот же чат можно написать команде платформы — сообщение попадёт в поддержку, ответ придёт сюда.</p>
-        {state === null && (
+        {state === null && !copy && (
           <p role="alert" className="text-[14px] text-[#dc2626]">Не удалось загрузить статус. Обновите страницу.</p>
         )}
-        <TelegramConnect prefix={params.prefix} slug={params.slug} botName={botName} initial={state ?? DISCONNECTED_STATE} />
+        {copy ? (
+          <p className="!mb-0 text-[14px] text-[#6b6b6b]">
+            В копии страницы подключение Telegram недоступно — оно меняет настройки настоящего бизнеса.
+          </p>
+        ) : (
+          <TelegramConnect prefix={params.prefix} slug={params.slug} botName={botName} initial={state ?? DISCONNECTED_STATE} />
+        )}
       </section>
       <p className="text-[14px] text-[#6b6b6b]">Email-уведомления приходят на адреса из настроек.</p>
     </div>

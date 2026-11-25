@@ -241,10 +241,10 @@ export const currentOwner = cache(currentOwnerUncached);
 // Для Server Actions кабинета: Origin, при необходимости обновление сессии, проверка роли.
 // Server Action — отдельный POST-эндпоинт: проверка в layout его не защищает.
 export async function requireOwnerAction(slug: string, roles: readonly OwnerRole[] = ['owner', 'manager']): Promise<OwnerAccessData | null> {
-  if (inCopyMode()) {
-    const copy = await copyAccess(slug);
-    return copy && copy.role !== null && roles.includes(copy.role as OwnerRole) ? copy : null;
-  }
+  // Копия страницы (/test/ful/sts) — витрина: кабинет там открыт без входа, а этот страж стоит
+  // на меняющих действиях. Пропускать его в копии нельзя: кнопка в открытом кабинете писала бы
+  // в настоящую базу от имени владельца. Чтение копии обеспечивает currentOwner, не этот метод.
+  if (inCopyMode()) return null;
   if (!requestContext().sameOrigin) return null;
   let access = await currentOwner(slug);
   if (!access) {

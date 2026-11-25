@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
 import { businessTimeZone } from '@/lib/availability';
+import { inCopyMode } from '@/lib/copy-mode';
+import { maskContacts } from '@/lib/copy-mask';
 import { addDays, dayBoundsUtc, localDateOf } from '@/lib/slots';
 import { isOwner, requireSectionAccess } from './_lib/access';
 import { buildChecklist, progressPercent, type ChecklistItem } from './_lib/onboarding';
@@ -159,7 +161,14 @@ export default async function OwnerHome({ params }: { params: { prefix: string; 
   const base = panelBase(params);
   const now = Date.now();
   const timeZone = businessTimeZone(b);
-  const { counts, pendingRows, todayRows, weekRows, payments, serviceOptions } = await loadDashboard(b.id, now, timeZone);
+  const data = await loadDashboard(b.id, now, timeZone);
+  const { counts, payments, serviceOptions } = data;
+  // Копия страницы (/test/ful/sts) открыта без входа — контакты клиентов в списках обезличиваем.
+  // Счётчики и выручка остаются настоящими: их считает loadDashboard по исходным строкам.
+  const demo = inCopyMode();
+  const pendingRows = demo ? maskContacts(data.pendingRows) : data.pendingRows;
+  const todayRows = demo ? maskContacts(data.todayRows) : data.todayRows;
+  const weekRows = demo ? maskContacts(data.weekRows) : data.weekRows;
 
   const checklist = buildChecklist({ activeServices: counts.services, photos: counts.photos, business: b });
   const percent = progressPercent(checklist);
