@@ -2,7 +2,7 @@
 // Проверяем то, ради чего модуль появился: настоящие имя и телефон клиента не попадают в HTML копии,
 // при этом витрина остаётся правдоподобной, а данные — стабильными между рендерами.
 import { describe, expect, it } from 'vitest';
-import { maskContacts } from './copy-mask';
+import { maskContacts, maskEmail } from './copy-mask';
 
 type Row = { id: string; client_name: string | null; client_phone: string | null; comment?: string | null };
 
@@ -64,5 +64,25 @@ describe('maskContacts', () => {
   it('поле comment не появляется там, где его не было (строка смены)', () => {
     const [masked] = maskContacts([{ id: 'x', client_name: 'Игорь', client_phone: '+7 913 111-22-33' }]);
     expect('comment' in masked).toBe(false);
+  });
+});
+
+describe('maskEmail', () => {
+  it('не оставляет настоящий логин сотрудника', () => {
+    const masked = maskEmail('admin@vippro.panel.zapishisya.ru');
+    expect(masked).not.toContain('vippro');
+    expect(masked).toMatch(/^member\d{1,2}@example\.ru$/);
+  });
+
+  it('детерминирован: один и тот же логин — один и тот же результат', () => {
+    expect(maskEmail('a@b.ru')).toBe(maskEmail('a@b.ru'));
+  });
+
+  it('разные логины получают разные адреса', () => {
+    expect(maskEmail('admin@vippro.panel.zapishisya.ru')).not.toBe(maskEmail('master@vippro.panel.zapishisya.ru'));
+  });
+
+  it('пустое значение остаётся пустым', () => {
+    expect(maskEmail(null)).toBeNull();
   });
 });

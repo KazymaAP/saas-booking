@@ -67,3 +67,12 @@ export function maskContacts<T extends ContactFields>(rows: readonly T[]): T[] {
     };
   });
 }
+
+/**
+ * Логин сотрудника (email — это и есть логин для входа в кабинет) в копии не показываем:
+ * список команды открыт всем, а логин — половина учётных данных.
+ */
+export function maskEmail(email: string | null): string | null {
+  if (!email) return email;
+  return `member${1 + (hash(email) % 89)}@example.ru`;
+}

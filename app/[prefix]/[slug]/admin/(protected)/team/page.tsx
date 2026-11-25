@@ -3,6 +3,8 @@
 // правом записи в раздел team) видит страницу; у остальных — 404 через requireSectionAccess.
 import { adminClient } from '@/lib/supabase';
 import { requireSectionAccess } from '../_lib/access';
+import { inCopyMode } from '@/lib/copy-mode';
+import { maskEmail } from '@/lib/copy-mask';
 import { resolveMatrix } from '@/lib/custom-roles';
 import { canWriteMatrix } from '@/lib/sections';
 import { BUILTIN_ROLES, ROLE_LABELS } from '@/lib/auth-roles';
@@ -38,6 +40,10 @@ export default async function TeamPage({ params }: { params: { prefix: string; s
   const matrix = await resolveMatrix(access.member.role, access.business.id);
   const canManageRoles = matrix ? canWriteMatrix(matrix, 'team') : access.member.role === 'owner';
 
+  // Копия страницы открыта без входа: email участника — это его логин, показывать его нельзя.
+  const copy = inCopyMode();
+  const members = (membersRes.data ?? []).map((m) => (copy ? { ...m, email: maskEmail(m.email) } : m));
+
   return (
     <div className="grid max-w-[640px] gap-5">
       <header>
@@ -48,7 +54,7 @@ export default async function TeamPage({ params }: { params: { prefix: string; s
       </header>
       <TeamManager
         slug={params.slug}
-        members={membersRes.data ?? []}
+        members={members}
         currentMemberId={access.member.id}
         roleOptions={roleOptions}
         roleLabels={roleLabels}
