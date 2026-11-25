@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getCheckoutForPay, yookassaConfigured } from '@/lib/partners';
+import { isTestPaymentAllowed } from '@/lib/yookassa';
 import { getBusinessSitePath } from '@/lib/vertical-templates';
 import { SITE_URL } from '@/lib/site';
 import { simulatePaymentAction, updateCheckoutEntrepreneurAction } from '../actions';
@@ -104,7 +105,7 @@ export default async function PayPage({
             <p className="rounded-xl border border-amber-500/40 px-4 py-3 text-center text-sm text-amber-200">
               Платёжная ссылка не создана. Запросите новый счёт у партнёра.
             </p>
-          ) : (
+          ) : isTestPaymentAllowed() ? (
             <>
               <form action={simulatePaymentAction}>
                 <input type="hidden" name="id" value={checkout.id} />
@@ -116,6 +117,11 @@ export default async function PayPage({
                 Платёжный шлюз не настроен — кнопка имитирует оплату. Для боя задайте ключи ЮKassa.
               </p>
             </>
+          ) : (
+            // Прод без ключей: раньше здесь была та же кнопка, и счёт закрывался без денег.
+            <p className="rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm text-zinc-300">
+              Онлайн-оплата временно недоступна. Напишите партнёру, который выставил счёт, — он пришлёт реквизиты для перевода.
+            </p>
           )}
         </div>
       </div>

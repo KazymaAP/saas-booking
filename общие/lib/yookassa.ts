@@ -25,6 +25,17 @@ function isTestMode(): boolean {
 export function isYookassaConfigured(): boolean {
   return Boolean(shopId() && secretKey()) && !isTestMode();
 }
+
+/**
+ * Разрешена ли имитация оплаты (кнопка «Оплатить (тестовый режим)»).
+ *
+ * Без ключей страница счёта раньше предлагала нажать кнопку, которая помечала счёт оплаченным
+ * без денег — на проде это означало «отдай сайт бесплатно» любому, у кого есть ссылка.
+ * Теперь имитация работает только вне production либо при явном ALLOW_TEST_PAYMENTS=1.
+ */
+export function isTestPaymentAllowed(): boolean {
+  return process.env.NODE_ENV !== 'production' || (process.env.ALLOW_TEST_PAYMENTS ?? '').trim() === '1';
+}
 function authHeader(): string {
   const raw = `${shopId()}:${secretKey()}`;
   return `Basic ${Buffer.from(raw).toString('base64')}`;

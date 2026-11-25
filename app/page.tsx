@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { CookieSettingsButton } from '@/components/CookieSettingsButton';
-import { LEGAL_DOCS, getRequisites, operatorName, type Requisites } from '@/lib/legal';
+import { LEGAL_DOCS, formatRub, getPricing, getRequisites, operatorName, type Requisites } from '@/lib/legal';
+import { supportContacts } from '@/lib/support-contacts';
 import { ALL_NICHE_THEMES } from '@/шаблоны/_shared/themes';
+import { LeadForm } from './_lead/LeadForm';
 
 const TITLE = 'Запишись — готовый сайт с онлайн-записью для вашего бизнеса';
 const DESCRIPTION =
@@ -57,14 +59,19 @@ const STEPS = [
   'Вы одобряете — клиенты записываются',
 ];
 
+// Вознаграждение партнёра — по computeDeal (lib/partners.ts): 1 000 ₽ с подписки и 1 000 ₽ за код.
+// Раньше здесь стояло «Клиент платит 5 000 ₽/мес» рядом с тарифом «1 000 ₽/мес» — два разных
+// ответа на вопрос «сколько стоит» в одном экране. Цену клиента называет партнёр, наша — вознаграждение.
 const PARTNER_MODELS = [
-  { title: 'Подписка', text: 'Клиент платит 5 000 ₽/мес — вы получаете 1 000 ₽ каждый месяц.', tag: 'рекуррент' },
-  { title: 'Продажа кода', text: 'Клиент покупает сайт за 5 000 ₽ — вы получаете 1 000 ₽ разово.', tag: 'разово' },
+  { title: 'Подписка', text: 'Клиент платит за сайт ежемесячно — вы получаете 1 000 ₽ каждый месяц, пока он с нами.', tag: 'рекуррент' },
+  { title: 'Продажа кода', text: 'Клиент забирает сайт-визитку целиком — вы получаете 1 000 ₽ разово.', tag: 'разово' },
   { title: 'Своя цена', text: 'Назначаете любую сумму — вы получаете 25%, платформа 75%.', tag: '25%' },
 ];
 
 export default async function Home() {
-  const requisites = await getRequisites();
+  // Цены — из тех же настроек, что и оферта (settings.tariffs/default_price): лендинг больше
+  // не дублирует числа в разметке, поэтому «1 000 ₽» и «5 000 ₽» не разъедутся при смене прайса.
+  const [requisites, pricing] = await Promise.all([getRequisites(), getPricing()]);
   return (
     <div className="detailing-root min-h-screen bg-brand-bg text-brand-text" style={palette}>
       {/* eslint-disable-next-line @next/next/no-css-tags */}
@@ -113,7 +120,7 @@ export default async function Home() {
                 Делаем сайты-визитки для детейлинга, салонов, клиник, фитнеса и других ниш. Клиенты записываются с телефона за пару касаний.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <a href="#pricing" className="btn-primary">Хочу сайт</a>
+                <a href="#lead" className="btn-primary">Хочу сайт</a>
                 <Link href="/auth?mode=register&role=partner" className="btn-secondary">Стать партнёром</Link>
               </div>
               <div className="mt-9 grid max-w-[520px] grid-cols-3 gap-3">
@@ -258,41 +265,41 @@ export default async function Home() {
           <h2 className="!text-[28px] !font-semibold tracking-[-0.03em]">Тарифы</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-3xl border border-brand-border bg-brand-surface p-6">
-              <div className="text-caption text-brand-text-muted">Подписка</div>
-              <div className="mt-2 text-[34px] font-semibold leading-none">1 000 ₽<span className="text-[15px] font-normal text-brand-text-muted">/мес</span></div>
-              <p className="mt-2 text-[13px] text-brand-text-muted">Сайт на нашем домене. Разовый запуск — 5 000 ₽.</p>
+              <div className="text-caption text-brand-text-muted">{pricing.basic_name}</div>
+              <div className="mt-2 text-[34px] font-semibold leading-none">{formatRub(pricing.basic)}<span className="text-[15px] font-normal text-brand-text-muted">/мес</span></div>
+              <p className="mt-2 text-[13px] text-brand-text-muted">Сайт на нашем домене. Разовый запуск — {formatRub(pricing.setup)}.</p>
               <ul className="mt-4 space-y-1.5 text-[13px] text-brand-text-muted">
                 <li>• Онлайн-запись и заявки</li>
                 <li>• Обновления и хостинг</li>
-                <li>• Свой домен — 2 500 ₽/мес</li>
+                <li>• Свой домен — {formatRub(pricing.pro)}/мес</li>
               </ul>
-              <a href="#partners" className="btn-primary mt-5 w-full text-body-sm">Оставить заявку</a>
+              <a href="#lead" className="btn-primary mt-5 w-full text-body-sm">Оставить заявку</a>
             </div>
             <div className="rounded-3xl border border-brand-border bg-brand-surface p-6">
               <div className="text-caption text-brand-text-muted">Выкуп кода</div>
-              <div className="mt-2 text-[34px] font-semibold leading-none">5 000 ₽<span className="text-[15px] font-normal text-brand-text-muted"> разово</span></div>
+              <div className="mt-2 text-[34px] font-semibold leading-none">{formatRub(pricing.buyout)}<span className="text-[15px] font-normal text-brand-text-muted"> разово</span></div>
               <p className="mt-2 text-[13px] text-brand-text-muted">Забираете сайт-визитку и размещаете где удобно.</p>
               <ul className="mt-4 space-y-1.5 text-[13px] text-brand-text-muted">
                 <li>• Код сайта-визитки</li>
                 <li>• Данные услуг и контактов</li>
                 <li>• Помощь с размещением</li>
               </ul>
-              <a href="#partners" className="btn-secondary mt-5 w-full text-body-sm">Обсудить</a>
+              <a href="#lead" className="btn-secondary mt-5 w-full text-body-sm">Обсудить</a>
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="mx-auto max-w-[69rem] px-4 py-12 md:px-6">
-          <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-8 text-center">
+        {/* CTA + заявка. Раньше здесь было «Напишите нам» без единого контакта, а кнопки
+            «Оставить заявку» вели на якорь #partners, где формы не было. */}
+        <section id="lead" className="mx-auto max-w-[69rem] scroll-mt-24 px-4 py-12 md:px-6">
+          <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-surface p-6 md:p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_50%_0%,rgb(var(--color-accent)/0.18),transparent_70%)]" aria-hidden="true" />
-            <div className="relative">
-              <h2 className="!text-[28px] !font-semibold tracking-[-0.03em]">Готовы запустить сайт?</h2>
-              <p className="mx-auto mt-2 max-w-[520px] text-[15px] leading-6 text-brand-text-muted">Напишите нам — подберём шаблон под вашу нишу и покажем демо.</p>
-              <div className="mt-5 flex flex-wrap justify-center gap-3">
-                <a href="#pricing" className="btn-primary text-body-sm">Хочу сайт</a>
-                <Link href="/auth" className="btn-secondary text-body-sm">Я партнёр</Link>
-              </div>
+            <div className="relative mx-auto max-w-[520px]">
+              <h2 className="!text-[28px] !font-semibold tracking-[-0.03em] text-center">Оставьте заявку</h2>
+              <p className="mx-auto mt-2 max-w-[520px] text-center text-[15px] leading-6 text-brand-text-muted">
+                Подберём шаблон под вашу нишу, покажем демо и назовём точную цену. Ответим в течение рабочего дня.
+              </p>
+              <LeadForm />
             </div>
           </div>
         </section>
@@ -304,14 +311,31 @@ export default async function Home() {
 }
 
 function SiteFooter({ requisites }: { requisites: Requisites }) {
-  const contacts = [requisites.city, requisites.email].filter((v): v is string => Boolean(v));
+  // Контакты берём из NEXT_PUBLIC_SUPPORT_EMAIL / _TELEGRAM: до этого подвал собирался только
+  // из реквизитов, а они пустые — блок выглядел сломанным, и написать было некуда.
+  const contacts = supportContacts('Заявка на сайт');
+  const city_line = requisites.city ? requisites.city : null;
   return (
     <footer className="border-t border-brand-border">
       <div className="mx-auto grid max-w-[69rem] gap-6 px-4 py-8 text-[13px] text-brand-text-muted md:grid-cols-2 md:px-6">
         <address className="not-italic leading-relaxed">
-          <p className="text-brand-text">{operatorName(requisites)}</p>
+          {/* Полное имя и ИНН показываем только когда они заполнены: «Исполнитель (ФИО не указано)»
+              в подвале читается как ошибка вёрстки. Пока данных нет — нейтральное имя сервиса
+              и ссылка на оферту, где статус исполнителя указан честно. */}
+          <p className="text-brand-text">{requisites.fio ? operatorName(requisites) : 'Сервис «Запишись»'}</p>
           <p className="mt-1">{requisites.tax_status}</p>
-          {contacts.length > 0 && <p className="mt-1">{contacts.join(' · ')}</p>}
+          {city_line && <p className="mt-1">{city_line}</p>}
+          {contacts.length > 0 ? (
+            <ul className="mt-2 grid gap-1">
+              {contacts.map((c) => (
+                <li key={c.href}>
+                  <a href={c.href} className="underline transition-colors hover:text-brand-text" rel="noopener noreferrer">{c.label}</a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2">Напишите через форму заявки — ответим в течение рабочего дня.</p>
+          )}
         </address>
         <nav aria-label="Юридические документы">
           <ul className="grid gap-2 sm:grid-cols-2">

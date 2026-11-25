@@ -3,16 +3,17 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getCheckoutForPay, markCheckoutPaid, updateCheckoutEntrepreneur, yookassaConfigured } from '@/lib/partners';
+import { isTestPaymentAllowed } from '@/lib/yookassa';
 
 // Публичный тестовый «переход к оплате».
-// Безопасность: действие доступно ТОЛЬКО когда ЮKassa не настроена (тестовый режим).
+// Безопасность: действие доступно ТОЛЬКО когда ЮKassa не настроена и мы не на проде.
 // Иначе любой, кто знает id счёта, мог бы пометить его оплаченным без денег.
 export async function simulatePaymentAction(formData: FormData): Promise<void> {
   const id = String(formData.get('id') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(id)) return;
 
-  if (yookassaConfigured()) {
-    // Боевой режим: тестовая оплата запрещена, отправляем на реальную страницу счёта.
+  if (yookassaConfigured() || !isTestPaymentAllowed()) {
+    // Боевой режим или прод без ключей: тестовая оплата запрещена, отправляем на реальную страницу счёта.
     redirect(`/pay/${id}`);
   }
 
