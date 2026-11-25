@@ -22,12 +22,16 @@ const CABINET = [
   '/notifications', '/settings', '/appearance', '/subscription', '/team', '/data',
 ];
 
+// Префикс берётся из ниши бизнеса, а не на глаз: 2bro — детейлинг, значит 'd'.
+// С «b» каждый адрес отдавал 308 и проверка ругалась на прерванные prefetch.
 const BIZ = [
   ['d', 'vippro'],
-  ['b', '2bro'],
+  ['d', '2bro'],
 ];
 
-const ROLES = ['/receptionist', '/manager', '/master', '/owner'];
+// Только роли, которые действительно есть в BUILTIN_ROLES без owner: /master и /owner
+// отдают 404 законно — это не персонал, и страницы смены для них нет.
+const ROLES = ['/receptionist', '/manager'];
 
 const VIEWPORTS = {
   desktop: { width: 1280, height: 900 },
@@ -64,7 +68,15 @@ function targets() {
     const errors = [];
     const failed = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 160)); });
-    page.on('requestfailed', (r) => failed.push(`${r.url().slice(0, 110)} ${r.failure()?.errorText ?? ''}`));
+    // Прерванный prefetch (_rsc) — норма: Next отменяет его при уходе со страницы.
+    // Без фильтра такие отмены забивали отчёт и прятали настоящие ошибки сети.
+    page.on('requestfailed', (r) => {
+      const url = r.url();
+      if (url.includes('_rsc=')) return;
+      // Сам документ, отменённый серверным редиректом (308/307 на логин), — не ошибка сети.
+      if (url === BASE + target) return;
+      failed.push(`${url.slice(0, 110)} ${r.failure()?.errorText ?? ''}`);
+    });
     let status = 0;
     let navErr = '';
     try {
