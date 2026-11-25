@@ -1,4 +1,4 @@
-// общие/lib/photo-rules.ts — ограничения фото (ТЗ §4.8, §45: bucket photos, jpg/png/webp, до 5 МБ, сжатие до 2 МБ).
+// общие/lib/photo-rules.ts — ограничения фото (ТЗ §4.8, §45: bucket photos, jpg/png/webp, до 5 МБ, сжатие в браузере).
 // Чистый модуль: те же правила у загрузчика в браузере и у server actions. Покрыт тестами.
 import { z } from 'zod';
 
@@ -6,10 +6,14 @@ const MB = 1024 * 1024;
 
 // Файл, который уходит в Storage, — не больше 5 МБ (лимит bucket в 0003_seed.sql).
 export const MAX_UPLOAD_BYTES = 5 * MB;
-// Больше 2 МБ — сжимаем в браузере (ТЗ §45).
-export const COMPRESS_FROM_BYTES = 2 * MB;
-export const COMPRESS_TARGET_MB = 2;
-export const COMPRESS_MAX_SIDE_PX = 2000;
+// Сжимаем в браузере всё, что больше 400 КБ. Раньше порог был 2 МБ при цели 2 МБ, и в
+// галереях лежали файлы по 0,4–2,2 МБ: на телефоне витрина с шестью фото тянула больше
+// 5 МБ. Трансформации Supabase на проекте выключены (render/image отдаёт 403), поэтому
+// единственное место, где можно уменьшить вес, — загрузка.
+export const COMPRESS_FROM_BYTES = 400 * 1024;
+export const COMPRESS_TARGET_MB = 0.35;
+// 1600 px по длинной стороне: hero-блок на десктопе — максимум ~1400 px, запас на retina.
+export const COMPRESS_MAX_SIDE_PX = 1600;
 // Исходник с телефона бывает 8–15 МБ: принимаем до 25 МБ, чтобы сжать, а не отказать. Больше — риск нехватки памяти в браузере.
 export const MAX_SOURCE_BYTES = 25 * MB;
 export const MAX_PHOTOS = 50;

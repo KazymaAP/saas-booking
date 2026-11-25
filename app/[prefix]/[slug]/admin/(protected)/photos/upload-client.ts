@@ -8,7 +8,7 @@ export type ProgressFn = (percent: number) => void;
 const RETRY_DELAY_MS = 800;
 const CACHE_SECONDS = '31536000'; // имя объекта уникально (uuid) — кэшируем на год
 
-// Сжимает только файлы > 2 МБ. Возвращает исходный файл, если сжатие не уменьшило размер.
+// Сжимает всё, что больше COMPRESS_FROM_BYTES. Возвращает исходный файл, если сжатие не уменьшило размер.
 export async function compressIfNeeded(file: File, onProgress: ProgressFn): Promise<File> {
   if (file.size <= COMPRESS_FROM_BYTES) {
     onProgress(100);
