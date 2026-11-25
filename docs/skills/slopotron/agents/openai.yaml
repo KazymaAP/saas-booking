@@ -1,0 +1,6 @@
+interface:
+  display_name: "Слопотрон"
+  short_description: "Очищает тексты от нейрослопа и AI-клише"
+  icon_small: "./assets/brand/icon-slopotron.svg"
+  icon_large: "./assets/brand/icon-slopotron.png"
+  brand_color: "#EE402C"
