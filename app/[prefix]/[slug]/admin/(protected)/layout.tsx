@@ -4,11 +4,13 @@
 // боковое меню AdminSidebar и стеклянная шапка. Фирменный цвет бизнеса остаётся акцентом кнопок.
 import { redirect } from 'next/navigation';
 import { currentOwner, signOutOwner } from '@/lib/owner-session';
+import { inCopyMode } from '@/lib/copy-mode';
 import { AdminSidebar, type NavItem } from '@/главная/components/AdminSidebar';
 import { GlassBackground } from '@/главная/components/GlassBackground';
 import { PanelHeader } from './_components/PanelHeader';
 import { ToastProvider } from './_components/Toast';
-import { panelBase, sectionHref, SECTIONS, shiftHref } from './_lib/sections';
+import { sectionHref, SECTIONS } from './_lib/sections';
+import { panelHref, shiftHrefFor } from './_lib/hrefs';
 import { canReadMatrix, type SectionKey } from '@/lib/sections';
 import { resolveMatrix } from '@/lib/custom-roles';
 import { ROLE_LABELS } from '@/lib/auth-roles';
@@ -30,7 +32,9 @@ const GROUPS: Readonly<Record<SectionKey, string>> = {
 };
 
 export default async function OwnerLayout({ children, params }: { children: React.ReactNode; params: { prefix: string; slug: string } }) {
-  const base = panelBase(params);
+  // panelHref, а не panelBase: в разделе копий (/test/ful/sts) меню должно остаться внутри копии,
+  // иначе первый клик уводит на настоящий кабинет и его форму входа.
+  const base = panelHref(params);
   const access = await currentOwner(params.slug);
   if (!access) redirect(`${base}/login`);
 
@@ -59,7 +63,10 @@ export default async function OwnerLayout({ children, params }: { children: Reac
       badge: s.key === 'subscription' ? subscriptionBadge : null,
     }));
 
-  const shift = shiftHref(access.role, params);
+  const shift = shiftHrefFor(access.role, params);
+  // Раздел копий: кабинет открыт без входа и только на просмотр. Выходить не из чего,
+  // а кнопки правки там всё равно откажут — предупреждаем об этом в шапке.
+  const copyMode = inCopyMode();
   // Акцент — фирменный цвет бизнеса, если он задан (accentColor гарантирует контраст с белым);
   // иначе акцент стеклянной темы (#38bdf8) и тёмный текст на нём, как в супер-админке.
   const brand = accentColor(b.brand_color);
@@ -87,7 +94,7 @@ export default async function OwnerLayout({ children, params }: { children: Reac
                 {shift && (
                   <a href={shift} className="glass-btn w-full !min-h-[40px] !no-underline">Моя смена</a>
                 )}
-                <form action={logout}>
+                <form action={logout} hidden={copyMode}>
                   <button type="submit" className="glass-btn w-full !min-h-[40px]">Выйти</button>
                 </form>
               </div>
@@ -95,7 +102,7 @@ export default async function OwnerLayout({ children, params }: { children: Reac
           />
           <main id="panel-main" tabIndex={-1} className="min-w-0 flex-1 px-4 py-4 outline-none md:px-8 md:py-8">
             <div className="mx-auto max-w-[1180px]">
-              <PanelHeader businessName={b.name} roleLabel={roleLabel} shiftHref={shift} logout={logout} />
+              <PanelHeader businessName={b.name} roleLabel={roleLabel} shiftHref={shift} logout={copyMode ? null : logout} copyMode={copyMode} />
               {children}
             </div>
           </main>

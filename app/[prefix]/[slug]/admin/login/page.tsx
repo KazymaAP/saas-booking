@@ -3,6 +3,7 @@
 // а страницы /magic-link и /admin/forgot-password живут на основном домене (SITE_URL) — сессия там своя (§5.8).
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import { ownerAccess, ownerPanelInfo, signInOwner } from '@/lib/owner-session';
+import { redirectHref } from '@/lib/copy-mode';
 import { sanitizeNext } from '@/lib/auth-core';
 import { requestContext, ownerBasePath } from '@/lib/auth-request';
 import { AUTH_REFERRER_POLICY, errorText, formString, noticeText, param, withQuery, type SearchParams } from '@/lib/auth-forms';
@@ -22,7 +23,8 @@ export default async function OwnerLogin({ params, searchParams }: { params: Par
     permanentRedirect(`/${info.canonicalPrefix}/${params.slug}/admin/login`);
   }
   const ctx = requestContext();
-  const base = ownerBasePath(params.prefix, params.slug, ctx);
+  // В разделе копий вход не нужен, и уводить читателя на настоящий кабинет нельзя — остаёмся в копии.
+  const base = redirectHref(ownerBasePath(params.prefix, params.slug, ctx));
   const next = sanitizeNext(param(searchParams, 'next'), base);
   // Уже вошёл в этот кабинет — сразу внутрь.
   if ((await ownerAccess(params.slug)).kind === 'ok') redirect(next ?? base);

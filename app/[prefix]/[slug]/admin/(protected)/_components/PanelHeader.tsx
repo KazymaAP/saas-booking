@@ -3,11 +3,13 @@
 // Слева — кто и в каком кабинете, справа — быстрые переходы: «Моя смена» (сотрудникам) и «Выйти».
 import Link from 'next/link';
 
-export function PanelHeader({ businessName, roleLabel, shiftHref, logout }: {
+export function PanelHeader({ businessName, roleLabel, shiftHref, logout, copyMode = false }: {
   businessName: string;
   roleLabel: string;
   shiftHref: string | null;
-  logout: () => Promise<void>;
+  // В разделе копий сессии нет — кнопку выхода не показываем вовсе.
+  logout?: (() => Promise<void>) | null;
+  copyMode?: boolean;
 }) {
   const letter = businessName.trim().charAt(0).toUpperCase() || '•';
   return (
@@ -35,9 +37,17 @@ export function PanelHeader({ businessName, roleLabel, shiftHref, logout }: {
             Моя смена
           </Link>
         )}
-        <form action={logout}>
-          <button type="submit" className="glass-btn !min-h-[36px] !px-3 !text-[13px]">Выйти</button>
-        </form>
+        {copyMode ? (
+          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] text-white/70">
+            Копия · только просмотр
+          </span>
+        ) : (
+          logout && (
+            <form action={logout}>
+              <button type="submit" className="glass-btn !min-h-[36px] !px-3 !text-[13px]">Выйти</button>
+            </form>
+          )
+        )}
       </div>
     </header>
   );

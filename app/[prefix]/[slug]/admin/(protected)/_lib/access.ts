@@ -9,7 +9,7 @@ import { resolveMatrix } from '@/lib/custom-roles';
 import type { AdminUser, Business } from '@/lib/database.types';
 import { inCopyMode } from '@/lib/copy-mode';
 import type { PanelParams } from './sections';
-import { panelBase } from './sections';
+import { panelHref } from './hrefs';
 
 export type OwnerAccess = { business: Business; member: AdminUser };
 export type { Role };
@@ -30,7 +30,7 @@ async function matrixOf(access: OwnerAccess): Promise<RoleMatrix | null> {
 // (точная проверка по разделам — в requireSectionAccess).
 export async function requirePageAccess(params: PanelParams, roles: readonly Role[] = BUILTIN_ROLES): Promise<OwnerAccess> {
   const access = await currentOwner(params.slug);
-  if (!access) redirect(`${panelBase(params)}/login`);
+  if (!access) redirect(`${panelHref(params)}/login`);
   const matrix = await matrixOf(access);
   if (!matrix) notFound();
   const role = access.member.role;
@@ -41,7 +41,7 @@ export async function requirePageAccess(params: PanelParams, roles: readonly Rol
 // Страница раздела: доступ по матрице read.
 export async function requireSectionAccess(params: PanelParams, section: SectionKey): Promise<OwnerAccess> {
   const access = await currentOwner(params.slug);
-  if (!access) redirect(`${panelBase(params)}/login`);
+  if (!access) redirect(`${panelHref(params)}/login`);
   const matrix = await matrixOf(access);
   if (!matrix || !canReadMatrix(matrix, section)) notFound();
   return access;

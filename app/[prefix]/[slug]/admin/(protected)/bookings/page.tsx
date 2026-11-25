@@ -5,7 +5,7 @@ import { adminClient } from '@/lib/supabase';
 import { inCopyMode } from '@/lib/copy-mode';
 import { maskContacts } from '@/lib/copy-mask';
 import { requireSectionAccess } from '../_lib/access';
-import { panelBase } from '../_lib/sections';
+import { panelHref } from '../_lib/hrefs';
 import { businessDayStart, DAY_MS } from '../_lib/time';
 import { OnboardingTip } from '../_components/OnboardingTip';
 import { BookingList, type BookingRow } from './BookingList';
@@ -51,7 +51,7 @@ export default async function BookingsPage({ params, searchParams }: { params: {
   if (!loaded) throw new Error('bookings: load failed');
   // Раздел копий открыт без входа: настоящие имена и телефоны клиентов там показывать нельзя.
   const rows = inCopyMode() ? maskContacts(loaded) : loaded;
-  const base = `${panelBase(params)}/bookings`;
+  const base = `${panelHref(params)}/bookings`;
 
   return (
     <div className="grid gap-4">

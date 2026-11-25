@@ -9,7 +9,7 @@ import { maskContacts } from '@/lib/copy-mask';
 import { addDays, dayBoundsUtc, localDateOf } from '@/lib/slots';
 import { isOwner, requireSectionAccess } from './_lib/access';
 import { buildChecklist, progressPercent, type ChecklistItem } from './_lib/onboarding';
-import { panelBase } from './_lib/sections';
+import { panelHref, siteHref } from './_lib/hrefs';
 import { DAY_MS } from './_lib/time';
 import { BookingList, type BookingRow } from './bookings/BookingList';
 import { OnboardingTip } from './_components/OnboardingTip';
@@ -158,7 +158,7 @@ async function loadDashboard(businessId: string, now: number, timeZone: string):
 export default async function OwnerHome({ params }: { params: { prefix: string; slug: string } }) {
   const access = await requireSectionAccess(params, 'home');
   const b = access.business;
-  const base = panelBase(params);
+  const base = panelHref(params);
   const now = Date.now();
   const timeZone = businessTimeZone(b);
   const data = await loadDashboard(b.id, now, timeZone);
@@ -204,7 +204,7 @@ export default async function OwnerHome({ params }: { params: { prefix: string; 
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/${params.prefix}/${params.slug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 !no-underline">Открыть сайт ↗</Link>
+          <Link href={siteHref(params)} target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 !no-underline">Открыть сайт ↗</Link>
           {owner && <Link href={`${base}/settings`} className="inline-flex min-h-[40px] items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 !no-underline">Настройки</Link>}
         </div>
       </header>

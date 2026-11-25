@@ -3,7 +3,7 @@
 // Раньше этот блок был внизу «Настроек», теперь у него свой пункт меню.
 import Link from 'next/link';
 import { requireSectionAccess } from '../_lib/access';
-import { panelBase } from '../_lib/sections';
+import { panelHref, siteHref } from '../_lib/hrefs';
 import { AppearancePicker } from './AppearancePicker';
 import { AUTO_KEY, PANEL_THEME_KEY, SITE_THEME_KEY } from '@/lib/appearance';
 
@@ -14,7 +14,7 @@ export const metadata = { title: 'Оформление', robots: { index: false,
 export default async function AppearancePage({ params }: { params: { prefix: string; slug: string } }) {
   const { business } = await requireSectionAccess(params, 'appearance');
   const texts = (business.custom_texts ?? {}) as Record<string, string>;
-  const base = panelBase(params);
+  const base = panelHref(params);
 
   return (
     <div className="grid gap-4">
@@ -27,7 +27,7 @@ export default async function AppearancePage({ params }: { params: { prefix: str
           </p>
         </div>
         <Link
-          href={`/${params.prefix}/${params.slug}`}
+          href={siteHref(params)}
           target="_blank"
           rel="noreferrer"
           className="inline-flex min-h-[40px] items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 !no-underline"

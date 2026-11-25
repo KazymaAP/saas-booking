@@ -2,7 +2,7 @@
 // Только владелец: менеджер получает 404 (requirePageAccess), а action проверяет роль ещё раз.
 import Link from 'next/link';
 import { requireSectionAccess } from '../_lib/access';
-import { panelBase } from '../_lib/sections';
+import { panelHref } from '../_lib/hrefs';
 import { toSettingsForm } from './schema';
 import { SettingsForm } from './SettingsForm';
 
@@ -20,7 +20,7 @@ export default async function SettingsPage({ params }: { params: { prefix: strin
       <SettingsForm slug={params.slug} defaults={toSettingsForm(business)} />
       <p className="!mb-0 text-[13px] text-[var(--muted)]">
         Цвета и шрифты кабинета и сайта настраиваются в отдельном разделе{' '}
-        <Link href={`${panelBase(params)}/appearance`} className="underline">Оформление →</Link>
+        <Link href={`${panelHref(params)}/appearance`} className="underline">Оформление →</Link>
       </p>
     </div>
   );

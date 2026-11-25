@@ -11,7 +11,8 @@ import { canWrite } from '@/lib/sections';
 import { GlassBackground } from '@/главная/components/GlassBackground';
 import { accentColor } from '../admin/(protected)/_lib/color';
 import type { ThemeStyle } from '../admin/(protected)/_lib/panel-theme';
-import { panelBase, sectionHref, visibleSections } from '../admin/(protected)/_lib/sections';
+import { sectionHref, visibleSections } from '../admin/(protected)/_lib/sections';
+import { panelHref } from '../admin/(protected)/_lib/hrefs';
 import { businessDayStart, DAY_MS, formatDay, formatDateTime } from '../admin/(protected)/_lib/time';
 import { ShiftList } from './ShiftList';
 import { SHIFT_SELECT, shiftStats, toShiftRow, type ShiftDbRow } from './shift';
@@ -55,12 +56,12 @@ async function loadNext(businessId: string, now: number): Promise<string | null>
 export default async function StaffRolePage({ params }: { params: Params }) {
   if (!isRole(params.role) || !STAFF_ROLES.includes(params.role)) notFound();
   const access = await currentOwner(params.slug);
-  if (!access) redirect(`${panelBase(params)}/login`);
+  if (!access) redirect(`${panelHref(params)}/login`);
   // Роль в URL должна совпадать с ролью в БД: /d/slug/manager не откроется администратором.
   if (access.role !== params.role) notFound();
 
   const role = params.role;
-  const base = panelBase(params);
+  const base = panelHref(params);
   const sections = visibleSections(role);
   const now = Date.now();
   // Смена имеет смысл только тем, кто работает с записями. Остальным — их разделы.
