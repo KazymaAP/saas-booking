@@ -14,11 +14,21 @@ export const revalidate = 86400;
 
 // canonical из SITE_URL: NEXT_PUBLIC_SITE_URL указывает на конечный хост (www), поэтому
 // страница остаётся статической. requestOrigin() здесь стоил бы кэша CDN ради того же адреса.
+const DPA_DESCRIPTION =
+  'Условия, на которых сервис онлайн-записи обрабатывает персональные данные клиентов бизнеса по его поручению (ч. 3 ст. 6 ФЗ-152).';
+
 export const metadata: Metadata = {
   title: `${LEGAL_DOCS.dpa.title} — редакция ${DPA_VERSION}`,
-  description: 'Условия, на которых сервис онлайн-записи обрабатывает персональные данные клиентов бизнеса по его поручению (ч. 3 ст. 6 ФЗ-152).',
+  description: DPA_DESCRIPTION,
   alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.dpa.path}` },
   robots: { index: true, follow: true },
+  openGraph: {
+    type: 'article',
+    url: `${SITE_URL}${LEGAL_DOCS.dpa.path}`,
+    title: `${LEGAL_DOCS.dpa.title} — редакция ${DPA_VERSION}`,
+    description: DPA_DESCRIPTION,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Запишись — сайт с онлайн-записью' }],
+  },
 };
 
 // Срок уведомления Заказчика об инциденте: меньше 24 часов, чтобы оператор успел уведомить РКН (ч. 3.1 ст. 21 ФЗ-152).

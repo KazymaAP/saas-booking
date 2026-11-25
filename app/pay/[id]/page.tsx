@@ -1,9 +1,17 @@
+import type { Metadata } from 'next';
 import { getCheckoutForPay, yookassaConfigured } from '@/lib/partners';
 import { getBusinessSitePath } from '@/lib/vertical-templates';
 import { SITE_URL } from '@/lib/site';
 import { simulatePaymentAction, updateCheckoutEntrepreneurAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
+
+// Персональная ссылка на счёт: в поиске ей делать нечего, а без своего заголовка
+// страница представлялась в браузере как «Онлайн-запись» — то есть чужим именем.
+export const metadata: Metadata = {
+  title: 'Счёт на оплату — Запишись',
+  robots: { index: false, follow: false, nocache: true },
+};
 
 const VARIANT_LABEL: Record<string, string> = {
   subscription_5000: 'Подписка на сайт-визитку — 5000 ₽/мес',

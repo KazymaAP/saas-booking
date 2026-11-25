@@ -6,9 +6,24 @@ import { CookieSettingsButton } from '@/components/CookieSettingsButton';
 import { LEGAL_DOCS, getRequisites, operatorName, type Requisites } from '@/lib/legal';
 import { ALL_NICHE_THEMES } from '@/шаблоны/_shared/themes';
 
+const TITLE = 'Запишись — готовый сайт с онлайн-записью для вашего бизнеса';
+const DESCRIPTION =
+  'Готовый сайт-визитка с онлайн-записью за 1 день. Для предпринимателей — быстрый запуск, для партнёров — вознаграждение за клиентов.';
+
+// canonical и og:url считаются от metadataBase в корневом макете (основной домен).
+// og:image — public/og.png: без него ссылка в мессенджере и соцсети раскрывалась пустой карточкой.
 export const metadata = {
-  title: 'Запишись — готовый сайт с онлайн-записью для вашего бизнеса',
-  description: 'Готовый сайт-визитка с онлайн-записью за 1 день. Для предпринимателей — быстрый запуск, для партнёров — вознаграждение за клиентов.',
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Запишись — сайт с онлайн-записью' }],
+  },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: ['/og.png'] },
 };
 
 export const revalidate = 86_400;

@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   description: 'Условия оказания услуг по настройке и сопровождению сайта онлайн-записи: цены, оплата, возврат, акцепт.',
   alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.oferta.path}` },
   robots: { index: true, follow: true },
+  openGraph: {
+    type: 'article',
+    url: `${SITE_URL}${LEGAL_DOCS.oferta.path}`,
+    title: `${LEGAL_DOCS.oferta.title} — редакция ${OFERTA_VERSION}`,
+    description: 'Условия оказания услуг по настройке и сопровождению сайта онлайн-записи: цены, оплата, возврат, акцепт.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Запишись — сайт с онлайн-записью' }],
+  },
 };
 
 export default async function OfertaPage() {

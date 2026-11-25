@@ -61,12 +61,22 @@ export async function generateMetadata({ params }: { params: { prefix: string; s
   // отдельный маршрут (app/domain-site) и ставит canonical на себя, поэтому здесь
   // всегда основной хост: страница и так отдаётся только с него.
   const url = `${SITE_URL}/${params.prefix}/${params.slug}`;
+  // Превью ссылки: логотип бизнеса, а если его нет — общая карточка платформы.
+  // Без images og:image не отдавался вовсе, и ссылка на витрину в мессенджере была пустой.
+  const image = b.logo_url ?? `${SITE_URL}/og.png`;
   return {
     title: `${b.name} — запись онлайн`,
     description: b.description ?? undefined,
     manifest: `/${params.prefix}/${params.slug}/manifest.webmanifest`,
     alternates: { canonical: url },
-    openGraph: { title: b.name, description: b.description ?? undefined, type: 'website', url },
+    openGraph: {
+      title: b.name,
+      description: b.description ?? undefined,
+      type: 'website',
+      url,
+      images: [{ url: image, alt: b.name }],
+    },
+    twitter: { card: 'summary_large_image', title: b.name, description: b.description ?? undefined, images: [image] },
   };
 }
 

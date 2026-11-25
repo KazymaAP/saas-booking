@@ -14,11 +14,21 @@ export const revalidate = 86400;
 
 // canonical из SITE_URL: NEXT_PUBLIC_SITE_URL указывает на конечный хост (www), поэтому
 // страница остаётся статической. requestOrigin() здесь стоил бы кэша CDN ради того же адреса.
+const PRIVACY_DESCRIPTION =
+  'Какие персональные данные обрабатывает сервис онлайн-записи, зачем, сколько хранит, кому передаёт и как реализовать свои права.';
+
 export const metadata: Metadata = {
   title: `${LEGAL_DOCS.privacy.title} — редакция ${PRIVACY_VERSION}`,
-  description: 'Какие персональные данные обрабатывает сервис онлайн-записи, зачем, сколько хранит, кому передаёт и как реализовать свои права.',
+  description: PRIVACY_DESCRIPTION,
   alternates: { canonical: `${SITE_URL}${LEGAL_DOCS.privacy.path}` },
   robots: { index: true, follow: true },
+  openGraph: {
+    type: 'article',
+    url: `${SITE_URL}${LEGAL_DOCS.privacy.path}`,
+    title: `${LEGAL_DOCS.privacy.title} — редакция ${PRIVACY_VERSION}`,
+    description: PRIVACY_DESCRIPTION,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Запишись — сайт с онлайн-записью' }],
+  },
 };
 
 // Таблица категорий ПД: кто субъект, какие данные, цель, основание, срок. Одна строка — одна цель (ч. 4–5 ст. 5 ФЗ-152).
