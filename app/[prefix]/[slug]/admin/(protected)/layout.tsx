@@ -94,9 +94,11 @@ export default async function OwnerLayout({ children, params }: { children: Reac
                 {shift && (
                   <a href={shift} className="glass-btn w-full !min-h-[40px] !no-underline">Моя смена</a>
                 )}
-                <form action={logout} hidden={copyMode}>
-                  <button type="submit" className="glass-btn w-full !min-h-[40px]">Выйти</button>
-                </form>
+                {!copyMode && (
+                  <form action={logout}>
+                    <button type="submit" className="glass-btn w-full !min-h-[40px]">Выйти</button>
+                  </form>
+                )}
               </div>
             }
           />
