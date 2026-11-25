@@ -16,6 +16,41 @@ export const revalidate = 3600; // кэш сайта клиента на 1 ча�
 // а HTML/услуги/фото меняются редко — реже запросы в базу и быстрее ответ на cache-hit.
 // Подогрев БД (cron /api/cron/warmup) держит Supabase в тепле, поэтому cache-miss тоже быстрый.
 
+// Без generateStaticParams динамический сегмент рендерится на КАЖДЫЙ запрос: Next отдаёт
+// Cache-Control: no-store, и revalidate=3600 не применяется вообще. Замер на проде до этой
+// правки: TTFB 520–1005 мс на каждой витрине, X-Vercel-Cache: MISS всегда.
+// Список адресов на сборке включает маршрут в полноценный ISR: страницы готовятся заранее,
+// а новый бизнес (dynamicParams) дорисовывается по первому заходу и дальше тоже кэшируется.
+// Ошибка базы на сборке не должна ронять деплой — тогда просто отдаём пустой список.
+export const dynamicParams = true;
+
+export async function generateStaticParams(): Promise<Array<{ prefix: string; slug: string }>> {
+  try {
+    const db = adminClient();
+    const [{ data: rows }, { data: templates }] = await Promise.all([
+      db
+        .from('businesses')
+        .select('slug, vertical_template_id')
+        .eq('status', 'client')
+        .eq('subscription_active', true)
+        .limit(500),
+      db.from('vertical_templates').select('id, url_prefix').limit(100),
+    ]);
+    const prefixById = new Map<string, string>(
+      ((templates ?? []) as Array<{ id: string; url_prefix: string | null }>).map((t) => [t.id, (t.url_prefix ?? '').trim()]),
+    );
+    const params: Array<{ prefix: string; slug: string }> = [];
+    for (const b of (rows ?? []) as Array<{ slug: string; vertical_template_id: string | null }>) {
+      const prefix = b.vertical_template_id ? prefixById.get(b.vertical_template_id) : '';
+      // Бизнес без ниши живёт на универсальном шаблоне — у него нет префикса в адресе.
+      if (prefix) params.push({ prefix, slug: b.slug });
+    }
+    return params;
+  } catch {
+    return [];
+  }
+}
+
 // PWA: манифест и заголовок страницы (ТЗ §5.1, §5.1 SEO).
 export async function generateMetadata({ params }: { params: { prefix: string; slug: string } }): Promise<Metadata> {
   const r = await resolveBusiness(params.prefix, params.slug);
