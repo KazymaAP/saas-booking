@@ -26,6 +26,10 @@
 Продажи идут через личный кабинет партнёра: партнёр создаёт счёт (`createCheckout`),
 клиент открывает `/pay/[id]` и платит через ЮKassa. Публичной самостоятельной покупки нет.
 
+Нюанс, который стоит знать сразу: вариантов счёта в коде три — `subscription_5000`,
+`code_5000`, `custom`. Первый выставляет клиенту **5 000 ₽/мес**, хотя лендинг и оферта
+говорят про 1 000 ₽/мес (наш домен) и 2 500 ₽/мес (свой домен). Разбор — раздел 7.2.
+
 Прод: **https://www.zapishisya.ru** (основной домен). Репозиторий:
 **https://github.com/KazymaAP/saas-booking**.
 
@@ -35,7 +39,7 @@
 
 | Путь | Что это | Статус |
 |---|---|---|
-| `D:\Clode\POLsaas-booking\project` | **Рабочая копия. Только с ней работать.** | ветка `master`, HEAD `fe8653d` |
+| `D:\Clode\POLsaas-booking\project` | **Рабочая копия. Только с ней работать.** | ветка `master` — сюда идут все коммиты; `origin/main` застрял на `d0640c1` и не двигается |
 | `D:\Clode\POLsaas-booking` | Родительская папка: старые .docx/.pdf оферты, `DOCUMENTATION/`, логи, `merge.ps1` | не git-репозиторий |
 | `D:\Clode\saas-booking` | **Старый клон, другая версия кода** (там кабинеты в `panel/`, а не `admin/`, HEAD `253331a`) | не использовать, можно игнорировать |
 
@@ -60,7 +64,14 @@ public/               статика, в т.ч. assets/detailing-scoped.css и o
 
 ## 3. Запуск и проверки
 
-Node 22.x (`package.json → engines`), пакетный менеджер **pnpm** (на Vercel ставится pnpm 10.x).
+Node 22.x (`package.json → engines`). Важно: в настройках проекта на Vercel стоит
+**Node 24.x** (`.vercel/project.json → settings.nodeVersion`), то есть локально и на проде
+разные версии Node. Сборка на обеих проходит, но если поведение разойдётся — смотреть сюда.
+
+Пакетный менеджер — **pnpm**: `vercel.json` задаёт `installCommand: pnpm install` и
+`buildCommand: pnpm build`, в репозитории лежит `pnpm-lock.yaml` (`lockfileVersion: '9.0'`).
+Поля `packageManager` в `package.json` нет, поэтому конкретную версию pnpm выбирает Vercel
+по lockfile — цифру «pnpm 10.x» из ранних заметок ничто в репозитории не подтверждает.
 
 ```powershell
 cd D:\Clode\POLsaas-booking\project
@@ -84,7 +95,8 @@ pnpm migrate        # применить миграции к БД
 | `pnpm test` | **1694 прошли, 7 пропущены** (120 файлов прошли, 1 пропущен — всего 121) |
 | `pnpm build` | успешно, главная — статическая с `revalidate = 86_400` |
 
-Отдельные скрипты аудита в `служебное/scripts/` (запускаются `node`, требуют Playwright):
+Отдельные скрипты аудита в `служебное/scripts/` (запускаются `node`; `link-audit` работает
+на обычном `fetch`, остальным нужен Playwright и установленный chromium):
 
 - `page-audit.cjs` — все маршруты на 390 и 1280 px: статус, title/description/canonical/
   og:image/lang/h1/alt, горизонтальный скролл, JS-ошибки, дубли заголовков.
@@ -128,13 +140,34 @@ pnpm migrate        # применить миграции к БД
 `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SUPPORT_TELEGRAM`, `LEGAL_EMAIL`, `LEGAL_ADDRESS`,
 `YOOKASSA_*` (в `.env` их нет вовсе), `VERCEL_*`, `LICENSE_*`.
 
-`.env.local` дополнительно содержит `SUPABASE_MANAGEMENT_TOKEN`, `PARTNER_SESSION_SECRET`,
-`ANALYTICS_SALT`, `HASH_SALT`, `UNSUBSCRIBE_SECRET` и **плейсхолдеры**:
-`NEXT_PUBLIC_SUPPORT_EMAIL=support@example.com`, `NEXT_PUBLIC_SUPPORT_TELEGRAM=@support`,
-`LEGAL_EMAIL=legal@example.com`, `LEGAL_ADDRESS=г. Москва, ул. …`.
+`.env.local` (42 ключа) дополнительно содержит `SUPABASE_MANAGEMENT_TOKEN`,
+`PARTNER_SESSION_SECRET`, `ANALYTICS_SALT`, `HASH_SALT`, `UNSUBSCRIBE_SECRET` и
+**плейсхолдеры** (проверено чтением файла 25.11):
+
+| Переменная | Значение |
+|---|---|
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | `support@example.com` |
+| `NEXT_PUBLIC_SUPPORT_TELEGRAM` | `@support` |
+| `LEGAL_EMAIL` | `legal@example.com` |
+| `LEGAL_ADDRESS` | `г. Москва, ул. Примерная, д. 1` |
+
 `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` пустые, `YOOKASSA_TEST_MODE=true`.
 
-### Что реально стоит на Vercel (проверено `npx vercel env ls production`)
+Ещё две вещи, которые легко упустить:
+
+- `.env.local` **перекрывает** `NEXT_PUBLIC_SITE_URL` на `http://localhost:3000`. Локальная
+  сборка из-за этого получит canonical и og:url на localhost — для проверки SEO это нормально,
+  но не пугайтесь и не «исправляйте» код.
+- В `.env` `NEXT_PUBLIC_SITE_URL=https://zapishisya.ru/` (apex, со слэшем), а на проде
+  canonical отдаётся на `https://www.zapishisya.ru`. Значит, на Vercel лежит своё значение —
+  при правках сверяйтесь с `npx vercel env ls` (сейчас для этого нужно заново войти, см. раздел 8).
+
+Всего в `.env` 62 ключа, из них заполнены 11 — перечислены выше.
+
+### Что реально стоит на Vercel
+
+Срез на 25.11, снят через `npx vercel env ls production`, пока токен CLI ещё работал
+(к концу сессии он истёк — раздел 8). Перепроверить сейчас нельзя: сначала `npx vercel login`.
 
 Есть: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 `SUPABASE_SERVICE_ROLE_KEY`, `ENCRYPTION_KEY`, `CRON_SECRET`, `RATE_LIMIT_SALT`,
@@ -305,6 +338,19 @@ pnpm migrate        # применить миграции к БД
 `copy-audit` 52/52 проверки на трёх ширинах, `link-audit` 313 ссылок без битых,
 `runtime-audit` 101 страница без проблем.
 
+Перепроверено 25.11 около 23:00 на живом домене, цифры сошлись:
+
+| Скрипт | Результат |
+|---|---|
+| `link-audit.cjs` | 101 страница в карте, 313 уникальных внутренних ссылок, битых 0, редиректов 0 |
+| `copy-audit.cjs desktop` | проверок 52, проблемных 0 |
+| `copy-audit.cjs mobile` (390 px) | проверок 52, проблемных 0 |
+| `copy-audit.cjs narrow` (320 px) | проверок 52, проблемных 0 |
+
+`runtime-audit` отдельно не перезапускался — он требует Playwright и обходит все страницы,
+это самый долгий из скриптов. Его прошлый результат (101 страница) совпадает с числом
+страниц в `sitemap.xml`, которое `link-audit` подтвердил.
+
 ### 5.7. Раздел копий `/test/ful/sts` — большая история
 
 Раздел нужен, чтобы показывать клиентам и партнёрам живые копии витрин и кабинета.
@@ -338,6 +384,11 @@ pnpm migrate        # применить миграции к БД
 Сделано: `git push --force-with-lease` ничего не менял («Everything up-to-date»), поэтому
 создан пустой коммит `d0640c1` и запушен в `master` и `main`. Проверено, что в удалённом
 дереве есть `public/og.png`, маршруты копий и тесты.
+
+После этого `origin/main` остался на `d0640c1` и больше не двигался: вся работа идёт в
+`master`. На 25.11 `master` опережает `main` ровно на 4 коммита — `60866b6`, `37a9767`,
+`fe8653d` и коммит с этим документом. Если будете подключать GitHub-интеграцию Vercel,
+production branch — `master`, иначе прод застрянет на старом коде.
 
 Выяснилось важное: **все деплои Vercel были запущены вручную через CLI**, поэтому в
 дашборде они выглядят как «master», но GitHub-интеграция не подключена. Пуш в GitHub
@@ -448,10 +499,26 @@ Supabase (Postgres). 33 миграции в `supabase/migrations/`. Ключев
 
 ### 7.2. Цены из одного источника
 
-`app/page.tsx` больше не содержит чисел: берёт `getPricing()` и печатает через `formatRub()`.
-Блок «Партнёрам» переписан: раньше «Клиент платит 5 000 ₽/мес» противоречило тарифу
-1 000 ₽/мес; теперь показано вознаграждение партнёра (1 000 ₽/мес, 1 000 ₽ разово, 25 %),
-что соответствует `computeDeal()`.
+Тарифы лендинга (`setup`, `basic`, `pro`, `buyout`) больше не вписаны в разметку: `app/page.tsx`
+берёт `getPricing()` и печатает через `formatRub()`, то есть числа приходят из `settings`
+и совпадают с офертой.
+
+Но числа в `app/page.tsx` **остались**, и это не недоделка:
+
+- блок «Партнёрам» — вознаграждение партнёра вписано текстом: `1 000 ₽` с подписки,
+  `1 000 ₽` за код, `25 %` от своей цены (строки 62–69). Значения совпадают с `computeDeal()`,
+  но живут отдельно: если поменять экономику в `partners.ts`, тексты надо править руками.
+- мок-превью витрины клиента (`GlowDetailing`, строка 153) — «Комплексная мойка — 1 500 ₽,
+  химчистка — 6 500 ₽, керамика — от 28 000 ₽». Это картинка-пример, а не прайс платформы.
+
+Блок «Партнёрам» переписан по существу: раньше там стояло «Клиент платит 5 000 ₽/мес» рядом
+с тарифом 1 000 ₽/мес — два разных ответа на вопрос «сколько стоит» в одном экране.
+
+Отдельно про несостыковку, которая осталась **в коде, а не в текстах**: вариант счёта
+`subscription_5000` в `общие/lib/partners.ts` выставляет клиенту 5 000 ₽/мес, тогда как
+лендинг и оферта говорят про 1 000 ₽/мес (наш домен) и 2 500 ₽/мес (свой домен).
+Партнёр в обоих случаях получает 1 000 ₽/мес. Это надо решить владельцу: либо вариант
+счёта называется/считается иначе, либо тарифы на лендинге другие.
 
 ### 7.3. Подвал и контакты
 
@@ -481,6 +548,11 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
 ### 7.5. Как проверялось
 
 - `tsc` — 0, `next lint` — 0, `vitest` — 1694 прошли, 7 пропущены, `next build` — успешно.
+- Перепроверено 25.11 около 23:00: `tsc --noEmit` exit 0; `next lint` — «No ESLint warnings
+  or errors»; `vitest run` — 1694 passed / 7 skipped (120 файлов прошли, 1 пропущен);
+  `next build` — успешно, в таблице маршрутов `/` помечена `○` (static), `revalidate = 86_400`
+  в `app/page.tsx`. Сборка запускалась с `NEXT_DIST_DIR`, иначе песочница блокирует
+  очистку `.next` — см. раздел 12, п. 9.
 - Форма проверена в браузере (Playwright) на 390 и 1280 px: поля с рамками и отступами,
   ничего не растянуто; пустая форма показывает ошибки по полям; заполненная — сохраняет
   заявку и показывает подтверждение.
@@ -494,7 +566,7 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
 
 | Что | Состояние |
 |---|---|
-| Деплой | последний — `ogqh5shrj` (коммит `37a9767`), алиас на `https://www.zapishisya.ru`; до него был `AfqrwBrTPftYgjmoZZfYqkzpo9RU` (коммит `60866b6`) |
+| Деплой | последний — `ogqh5shrj` (коммит `37a9767`), алиас на `https://www.zapishisya.ru`; до него был `AfqrwBrTPftYgjmoZZfYqkzpo9RU` (коммит `60866b6`). Это по выводу CLI в момент деплоя — сейчас перепроверить нечем, токен истёк (ниже) |
 | `https://www.zapishisya.ru/` | 200; сразу после деплоя — `X-Vercel-Cache: PRERENDER`, `Age: 0` (свежий билд). Через полчаса — `HIT` с растущим `Age`: это норма для ISR с `revalidate = 86 400`, а не признак старого билда |
 | `/og.png` | 200, `image/png`, 166 262 байта |
 | `canonical` / `og:url` / `og:image` | есть, указывают на `https://www.zapishisya.ru` |
@@ -503,8 +575,15 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
 | `/test/ful/sts/api/export/businesses` | 404 (защита копий работает) |
 | `/oferta` | Реквизиты «не указано» — данных по-прежнему нет |
 
-**Vercel CLI авторизован** (`npx vercel whoami` → `kazymaap`), доступ к проекту
-`kazymaaps-projects/servis` есть. Ранее в этой сессии авторизация не работала — сейчас работает.
+**Vercel CLI: токен истёк.** В момент деплоя `npx vercel whoami` отвечал `kazymaap`,
+и деплои проходили. При перепроверке 25.11 около 23:00 CLI вернул
+`Error: The specified token is not valid` — `vercel env ls` и повторный деплой без
+`npx vercel login` не работают. Первое, что нужно сделать перед следующим деплоем, — войти заново.
+
+Привязка проекта на месте, её переустанавливать не надо: `.vercel/project.json` →
+projectId `prj_AI6P0rxNOLy3pQ1jm0IZjdD01ffa`, orgId `team_2j43PpcevB3n7qtEl0zt9kTG`,
+имя `servis`, в настройках проекта `nodeVersion: 24.x` и `outputDirectory: dist`
+(последнее перекрывается `vercel.json`, где стоит `.next`).
 
 Что **не** проверено вживую: страница счёта `/pay/[id]` с настоящим счётом — в таблице
 `partner_checkouts` нет ни одной записи, проверять не на чем. Логика закрытия тестовой
@@ -539,7 +618,10 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
    и email сотрудников в разметке.
 3. **Не выдумывать данные.** Реквизиты, цены, юридические формулировки — только реальные
    или из БД. Если данных нет — так и сказать, а не подставлять правдоподобное.
-4. **Одна цена — один источник.** Числа берутся из `getPricing()`, не хардкодятся в разметке.
+4. **Одна цена — один источник.** Тарифы (`setup`, `basic`, `pro`, `buyout`) берутся из
+   `getPricing()`, не вписываются в разметку. Исключения, которые пока живут текстом:
+   вознаграждение партнёра в блоке «Партнёрам» и мок-превью витрины (см. 7.2) — при смене
+   экономики в `partners.ts` их надо править руками.
 5. **Правовые тексты** — не переписывать по своему усмотрению: они согласованы с
    пользователем (оферта, политика, договор поручения).
 6. **Перед тестом, который пишет в БД,** проверить `NEXT_PUBLIC_SUPABASE_URL`
@@ -592,7 +674,8 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
 - `ToolSearch` + `DeferExecuteTool` → `skill_management` — проверка, что навык виден.
 - Playwright (`@playwright/test`, chromium из `C:/Users/rrrme/AppData/Local/ms-playwright/`)
   — скриншоты и проверка отправки формы.
-- Vercel CLI 66.6.0 — `env ls`, `--prod`.
+- Vercel CLI 66.6.0 — `env ls`, `--prod`. На момент деплоя работал, к концу сессии токен
+  истёк (раздел 8).
 
 Навык `slopotron` в этой сессии **не вызывался**: он установлен в конце, а тексты,
 написанные до установки, через него не прогонялись. Следующему агенту — прогонять.
@@ -624,6 +707,17 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
    конкретного пути (`revalidatePath`), иначе владелец не видит своих изменений.
 8. **Прод обновляется только деплоем.** Пуш в GitHub ничего не деплоит: GitHub-интеграция
    не подключена, деплой идёт через CLI.
+9. **Локальная сборка падает на очистке `.next`.** В песочнице агента `npx next build`
+   завершается ошибкой `[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED]` — это не баг
+   проекта, а защита от массового удаления, которая не даёт Next убрать старые чанки.
+   Обход уже встроен в `next.config.mjs`: соберите с отдельной папкой
+   `$env:NEXT_DIST_DIR='.next-check'; npx next build`. На Vercel значение игнорируется
+   (там принудительно `.next`, потому что выставлен `VERCEL=1`).
+   После такой сборки Next дописывает `.next-check/types/**/*.ts` в `tsconfig.json` —
+   верните файл (`git checkout -- tsconfig.json`) и удалите `.next-check`, иначе попадёт в коммит.
+10. **Токен Vercel живёт недолго.** `npx vercel whoami` может внезапно ответить
+   `The specified token is not valid`. Деплой и `env ls` после этого не работают до
+   `npx vercel login`. Проверяйте до того, как обещать деплой.
 
 ---
 
@@ -648,16 +742,21 @@ production или при явном `ALLOW_TEST_PAYMENTS=1`. До этого п�
 
 ```powershell
 cd D:\Clode\POLsaas-booking\project
+npx vercel login           # ОБЯЗАТЕЛЬНО: на 25.11 токен истёк, без входа команды ниже падают
 npx vercel whoami          # должно быть kazymaap
 npx vercel --prod --yes    # деплой текущей папки в production
 ```
 
-- Проект: `kazymaaps-projects/servis`, регион `lhr1` (`vercel.json`).
-- Сборка на Vercel: `pnpm install` → `pnpm build`, framework `nextjs`.
+- Проект: `kazymaaps-projects/servis`, регион `lhr1` (`vercel.json`), привязка лежит
+  в `.vercel/project.json` — заново `vercel link` делать не нужно.
+- Сборка на Vercel: `pnpm install` → `pnpm build`, framework `nextjs`, `outputDirectory: .next`.
+- Локально перед деплоем: `tsc --noEmit`, `next lint`, `vitest run`. Если `next build`
+  падает на `SAFE_DELETE_BULK_CONFIRM_REQUIRED` — см. раздел 12, п. 9 (это песочница, не проект).
 - Откат: в дашборде Vercel → Deployments → предыдущий деплой → Promote to Production.
   Либо `npx vercel rollback`.
 - После деплоя проверить: `/og.png` отдаёт 200, в `/` есть `canonical` и `og:image`,
-  на лендинге работает форма заявки, `/pay/<любой-id>` не показывает тестовую кнопку.
+  на лендинге работает форма заявки, `/pay/<любой-id>` не показывает тестовую кнопку,
+  `/test/ful/sts/api/export/businesses` отвечает 404.
 
 ---
 
@@ -667,9 +766,10 @@ npx vercel --prod --yes    # деплой текущей папки в productio
 (деплой `AfqrwBrTPftYgjmoZZfYqkzpo9RU`). Затем коммит `37a9767` — документация,
 копия навыка и проверка плейсхолдеров в контактах — тоже задеплоен
 (деплой `ogqh5shrj`, алиас `https://www.zapishisya.ru`).
-После деплоя проверено: главная отдаёт свежий билд (`PRERENDER`, `Age: 0`), `/og.png` → 200,
-canonical и og:image на месте, форма заявки в разметке, защита копий отвечает 404,
-плейсхолдера `support@example.com` в подвале нет.
+После деплоя проверено: главная отдавала свежий билд (`PRERENDER`, `Age: 0`; сейчас там
+`HIT` с растущим `Age` — это ISR, раздел 8), `/og.png` → 200, canonical и og:image на месте,
+форма заявки в разметке, защита копий отвечает 404, плейсхолдера `support@example.com`
+в подвале нет.
 
 Если после этого в репозитории появились только правки документов — прод от них не отличается
 по поведению, передеплой не нужен.
