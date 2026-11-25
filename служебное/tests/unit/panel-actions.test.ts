@@ -10,13 +10,19 @@ const session = vi.hoisted(() => ({ current: null as Access }));
 const sendMail = vi.hoisted(() => vi.fn());
 const notifyAdmin = vi.hoisted(() => vi.fn());
 const rateLimit = vi.hoisted(() => vi.fn());
+const revalidatePath = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase', async () => {
   const { db } = await import('./supabase-mock');
   return { adminClient: () => db };
 });
-vi.mock('@/lib/owner-session', () => ({ currentOwner: async () => session.current }));
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/owner-session', () => ({
+  currentOwner: async () => session.current,
+  // Публичная витрина сбрасывается по конкретному пути /{префикс}/{slug}: префикс
+  // берётся из ниши бизнеса, поэтому мок отдаёт его как в реальном резолве.
+  ownerPanelInfo: async () => ({ name: 'Тест', canonicalPrefix: 'd' }),
+}));
+vi.mock('next/cache', () => ({ revalidatePath }));
 vi.mock('next/navigation', () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 vi.mock('@/lib/notify', () => ({ sendMail }));
 vi.mock('@/lib/admin-notify', () => ({ notifyAdmin }));
@@ -43,6 +49,7 @@ beforeEach(() => {
   sendMail.mockReset().mockResolvedValue(true);
   notifyAdmin.mockReset().mockResolvedValue(true);
   rateLimit.mockReset().mockResolvedValue(true);
+  revalidatePath.mockClear();
   loginAs('owner');
 });
 
@@ -119,6 +126,15 @@ describe('services', () => {
     const r = await services.addService(SLUG, values);
     expect(r).toMatchObject({ ok: true, data: row });
     expect(argOf('services', 'insert')).toEqual({ name: 'Маникюр', price: 1500, duration_minutes: 60, description: null, badge: null, old_price: null, business_id: BUSINESS_ID, sort_order: 999, is_active: true });
+  });
+
+  it('правка услуги сбрасывает кэш конкретной витрины, а не шаблон маршрута', async () => {
+    queueResult('services', { data: [row] });
+    await services.addService(SLUG, values);
+    expect(revalidatePath).toHaveBeenCalledWith(`/d/${SLUG}`, 'page');
+    // Шаблонный путь бесполезен: revalidatePath превращает его в тег, который ни с одной
+    // готовой страницей не совпадает — витрина осталась бы со старыми ценами на час.
+    expect(revalidatePath).not.toHaveBeenCalledWith('/[prefix]/[slug]', 'page');
   });
 
   it('updateService: чужая услуга → notFound', async () => {

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, type ActionResult } from '../_lib/result';
 import { AUTO_KEY, PANEL_THEME_KEY, SITE_THEME_KEY, APPEARANCES } from '@/lib/appearance';
 
@@ -63,6 +64,6 @@ export async function saveAppearance(
   }
 
   revalidatePath('/[prefix]/[slug]/admin', 'layout');
-  revalidatePath('/[prefix]/[slug]', 'page');
+  await revalidatePublicSite(slug);
   return ok('Стиль сохранён');
 }

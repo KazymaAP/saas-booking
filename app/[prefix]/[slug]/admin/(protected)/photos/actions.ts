@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, UUID_RE, type ActionResult } from '../_lib/result';
 import {
   AltSchema, BUCKET, MAX_PHOTOS, MAX_UPLOAD_BYTES, PHOTO_TYPES,
@@ -27,9 +28,9 @@ const TicketInput = z.object({
 const ConfirmInput = z.object({ path: z.string().max(200), alt: AltSchema });
 const Id = z.string().regex(UUID_RE);
 
-function revalidate(): void {
+async function revalidate(slug: string): Promise<void> {
   revalidatePath('/[prefix]/[slug]/admin', 'layout'); // сетка фото и чек-лист дашборда
-  revalidatePath('/[prefix]/[slug]', 'page'); // галерея публичного сайта
+  await revalidatePublicSite(slug); // галерея публичного сайта
 }
 
 async function photoCount(businessId: string): Promise<number | null> {
@@ -104,7 +105,7 @@ export async function confirmPhotoUpload(slug: string, input: { path: string; al
     await storage.remove([path]);
     return fail(ERR.server);
   }
-  revalidate();
+  await revalidate(slug);
   return ok('Фото добавлено', row);
 }
 
@@ -120,7 +121,7 @@ export async function updatePhotoAlt(slug: string, id: string, alt: string): Pro
     .select('id').returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Подпись сохранена');
 }
 
@@ -141,6 +142,6 @@ export async function deletePhoto(slug: string, id: string): Promise<ActionResul
     const { error: rmError } = await adminClient().storage.from(BUCKET).remove([photo.path]);
     if (rmError) await logError('import', 'panel: photo object not removed', { business_id: access.business.id, photo_id: id });
   }
-  revalidate();
+  await revalidate(slug);
   return ok('Фото удалено');
 }

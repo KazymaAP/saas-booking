@@ -13,6 +13,7 @@ import { notifyAdmin } from '@/lib/admin-notify';
 import { sendMail } from '@/lib/notify';
 import { errorMessage, logError } from '@/lib/log';
 import { SITE_URL } from '@/lib/site';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { fail, formObject, guarded, ok, zodFail, type ActionResult } from '@/главная/lib/action';
 import {
   DEFAULT_INITIAL, DEFAULT_MONTHLY, NOT_PAYABLE, clientOpSchema, extendFrom, predictPatch,
@@ -26,9 +27,13 @@ type Result = ActionResult<ClientPatch>;
 type Prices = { initial: number; monthly: number };
 type Patch = Record<string, unknown>;
 
-function revalidate(id: string): void {
+async function revalidate(id: string): Promise<void> {
   revalidatePath(CLIENTS_PATH);
   revalidatePath(`/admin/businesses/${id}`);
+  // Публичная витрина кэшируется на час. Без этого отключённый сайт ещё час работал бы,
+  // а оплаченный — час показывал заглушку: статус меняется здесь, а кэш страницы — там.
+  const { data } = await adminClient().from('businesses').select('slug').eq('id', id).maybeSingle<{ slug: string }>();
+  if (data?.slug) await revalidatePublicSite(data.slug);
 }
 
 // Цены из /admin/settings (default_price). Нет записи — значения из ТЗ §14.2 (5000 ₽ + 1000 ₽/мес).
@@ -171,7 +176,7 @@ export async function clientAction(id: string, op: string, plan?: string): Promi
     const pop = clientOpSchema.safeParse(op);
     if (!pid.success || !pop.success) return fail('Неизвестное действие');
     const res = pop.data === 'paid' ? await markPaid(pid.data, plan) : await HANDLERS[pop.data](pid.data);
-    if (res.ok) revalidate(pid.data);
+    if (res.ok) await revalidate(pid.data);
     return res;
   });
 }
@@ -226,7 +231,7 @@ export async function createOwnerAccess(_prev: ActionResult<AccessCreated> | nul
     const mailed = await sendMail({ to: email, ...mail, transactional: true }).catch(() => false);
     if (!mailed) await logError('email', 'access_created: письмо не отправлено', { business: id });
     await audit('create_access', 'business', id, { role: 'owner', mailed });
-    revalidate(id);
+    await revalidate(id);
     return ok(mailed ? 'Доступ создан, пароль отправлен владельцу' : 'Доступ создан. Письмо не ушло — передайте пароль вручную', { email, password, mailed });
   });
 }

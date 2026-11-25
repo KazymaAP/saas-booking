@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { logError } from '@/lib/log';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { TextsSchema, mergeTexts, type TextsValues } from './schema';
 
@@ -39,6 +40,6 @@ export async function saveTexts(slug: string, input: TextsValues): Promise<Actio
   }
 
   revalidatePath('/[prefix]/[slug]/admin/texts', 'page');
-  revalidatePath('/[prefix]/[slug]', 'page');
+  await revalidatePublicSite(slug);
   return ok('Тексты сохранены — уже на сайте');
 }

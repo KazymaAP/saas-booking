@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { adminClient } from '@/lib/supabase';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { SettingsSchema, type SettingsFormValues } from './schema';
 
@@ -36,6 +37,6 @@ export async function saveSettings(slug: string, input: SettingsFormValues): Pro
   if (error) return fail(ERR.server);
 
   revalidatePath('/[prefix]/[slug]/admin', 'layout'); // шапка (название, цвет) и чек-лист
-  revalidatePath('/[prefix]/[slug]', 'page'); // публичный сайт: контакты, часы, цвет
+  await revalidatePublicSite(slug); // публичный сайт: контакты, часы, цвет
   return ok('Настройки сохранены');
 }

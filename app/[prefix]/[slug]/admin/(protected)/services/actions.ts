@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 import { ServiceSchema, type ServiceFormValues, type ServiceRow } from './schema';
 
@@ -13,9 +14,9 @@ const SELECT = 'id, name, description, price, duration_minutes, is_active, badge
 // Новые услуги — в конец списка: sort_order больше любого реального (порядок меняется в супер-админке).
 const SORT_LAST = 999;
 
-function revalidate(): void {
+async function revalidate(slug: string): Promise<void> {
   revalidatePath('/[prefix]/[slug]/admin', 'layout'); // список услуг + чек-лист дашборда
-  revalidatePath('/[prefix]/[slug]', 'page'); // публичный сайт показывает услуги
+  await revalidatePublicSite(slug); // публичный сайт показывает услуги
 }
 
 function toDb(values: z.output<typeof ServiceSchema>) {
@@ -42,7 +43,7 @@ export async function addService(slug: string, input: ServiceFormValues): Promis
     .returns<ServiceRow[]>();
   const row = data?.[0];
   if (error || !row) return fail(ERR.server);
-  revalidate();
+  await revalidate(slug);
   return ok('Услуга добавлена', row);
 }
 
@@ -64,7 +65,7 @@ export async function updateService(slug: string, id: string, input: ServiceForm
   if (error) return fail(ERR.server);
   const row = data?.[0];
   if (!row) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Сохранено', row);
 }
 
@@ -83,6 +84,6 @@ export async function setServiceActive(slug: string, id: string, active: boolean
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok(active ? 'Услуга снова на сайте' : 'Услуга скрыта с сайта');
 }

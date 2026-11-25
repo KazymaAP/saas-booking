@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 
 export const FAQ_LIMITS = { questionMax: 200, answerMax: 1500 } as const;
@@ -27,9 +28,9 @@ const SELECT = 'id, question, answer, is_published, sort_order';
 const Id = z.string().regex(UUID_RE);
 const SORT_LAST = 999;
 
-function revalidate(): void {
+async function revalidate(slug: string): Promise<void> {
   revalidatePath('/[prefix]/[slug]/admin', 'layout');
-  revalidatePath('/[prefix]/[slug]', 'page');
+  await revalidatePublicSite(slug);
 }
 
 export async function addFaq(slug: string, input: FaqFormValues): Promise<ActionResult<FaqRow>> {
@@ -45,7 +46,7 @@ export async function addFaq(slug: string, input: FaqFormValues): Promise<Action
     .returns<FaqRow[]>();
   const row = data?.[0];
   if (error || !row) return fail(ERR.server);
-  revalidate();
+  await revalidate(slug);
   return ok('Вопрос добавлен', row);
 }
 
@@ -66,7 +67,7 @@ export async function updateFaq(slug: string, id: string, input: FaqFormValues):
   if (error) return fail(ERR.server);
   const row = data?.[0];
   if (!row) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Сохранено', row);
 }
 
@@ -84,7 +85,7 @@ export async function setFaqPublished(slug: string, id: string, published: boole
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok(published ? 'Вопрос снова на сайте' : 'Вопрос скрыт с сайта');
 }
 
@@ -102,6 +103,6 @@ export async function deleteFaq(slug: string, id: string): Promise<ActionResult>
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Вопрос удалён');
 }

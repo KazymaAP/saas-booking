@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 
 export const STAFF_LIMITS = { nameMax: 80, positionMax: 80, descriptionMax: 400, experienceMax: 70 } as const;
@@ -40,9 +41,9 @@ const SELECT = 'id, name, position, photo_url, experience_years, description, is
 const Id = z.string().regex(UUID_RE);
 const SORT_LAST = 999;
 
-function revalidate(): void {
+async function revalidate(slug: string): Promise<void> {
   revalidatePath('/[prefix]/[slug]/admin', 'layout');
-  revalidatePath('/[prefix]/[slug]', 'page');
+  await revalidatePublicSite(slug);
 }
 
 function toDb(values: z.output<typeof StaffSchema>) {
@@ -68,7 +69,7 @@ export async function addStaff(slug: string, input: StaffFormValues): Promise<Ac
     .returns<StaffRow[]>();
   const row = data?.[0];
   if (error || !row) return fail(ERR.server);
-  revalidate();
+  await revalidate(slug);
   return ok('Сотрудник добавлен', row);
 }
 
@@ -89,7 +90,7 @@ export async function updateStaff(slug: string, id: string, input: StaffFormValu
   if (error) return fail(ERR.server);
   const row = data?.[0];
   if (!row) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Сохранено', row);
 }
 
@@ -107,7 +108,7 @@ export async function setStaffActive(slug: string, id: string, active: boolean):
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok(active ? 'Сотрудник снова на сайте' : 'Сотрудник скрыт с сайта');
 }
 
@@ -125,6 +126,6 @@ export async function deleteStaff(slug: string, id: string): Promise<ActionResul
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Сотрудник удалён');
 }

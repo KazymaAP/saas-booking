@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminClient } from '@/lib/supabase';
 import { writeAccess } from '../_lib/access';
+import { revalidatePublicSite } from '@/lib/public-revalidate';
 import { ERR, fail, ok, UUID_RE, zodFieldErrors, type ActionResult } from '../_lib/result';
 
 export const REVIEW_LIMITS = { authorMax: 80, bodyMax: 1000, serviceMax: 80, sourceMax: 40 } as const;
@@ -34,9 +35,9 @@ const SELECT = 'id, author_name, rating, body, service_name, source, is_publishe
 const Id = z.string().regex(UUID_RE);
 const SORT_LAST = 999;
 
-function revalidate(): void {
+async function revalidate(slug: string): Promise<void> {
   revalidatePath('/[prefix]/[slug]/admin', 'layout');
-  revalidatePath('/[prefix]/[slug]', 'page');
+  await revalidatePublicSite(slug);
 }
 
 function toDb(values: z.output<typeof ReviewSchema>) {
@@ -62,7 +63,7 @@ export async function addReview(slug: string, input: ReviewFormValues): Promise<
     .returns<ReviewRow[]>();
   const row = data?.[0];
   if (error || !row) return fail(ERR.server);
-  revalidate();
+  await revalidate(slug);
   return ok('Отзыв добавлен', row);
 }
 
@@ -84,7 +85,7 @@ export async function updateReview(slug: string, id: string, input: ReviewFormVa
   if (error) return fail(ERR.server);
   const row = data?.[0];
   if (!row) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Сохранено', row);
 }
 
@@ -102,7 +103,7 @@ export async function setReviewPublished(slug: string, id: string, published: bo
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok(published ? 'Отзыв снова на сайте' : 'Отзыв скрыт с сайта');
 }
 
@@ -120,6 +121,6 @@ export async function deleteReview(slug: string, id: string): Promise<ActionResu
     .returns<{ id: string }[]>();
   if (error) return fail(ERR.server);
   if (!data?.length) return fail(ERR.notFound);
-  revalidate();
+  await revalidate(slug);
   return ok('Отзыв удалён');
 }
