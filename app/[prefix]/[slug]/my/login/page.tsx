@@ -64,71 +64,100 @@ export default function CustomerLoginPage({ params }: { params: { prefix: string
     if (ok) router.push(base);
   }
 
+  // Оболочка .panel-shell, как у остальных входов: без неё у <button> остаётся
+  // браузерная рамка (preflight отключён), и переключатель способа входа выглядел
+  // как две кнопки из 1998 года. Утилиты цвета помечены ! — правило
+  // `.panel-shell button:not([type=submit])` специфичнее обычного класса.
+  const tab = (active: boolean) =>
+    `min-h-[36px] rounded-full border px-3 text-[13px] font-medium transition-colors ${
+      active
+        ? '!border-[#111] !bg-[#111] !text-white'
+        : '!border-[#e5e5e5] !bg-transparent !text-[#525252] hover:!border-[#bdbdbd]'
+    }`;
+  const input = 'input w-full';
+  const submit = 'btn-primary min-h-[44px] w-full !border-[#111] !bg-[#111] !text-white';
+
   return (
-    <main className="mx-auto max-w-[420px] px-4 py-12">
-      <h1 className="text-[24px] font-semibold">Вход в кабинет</h1>
-      <p className="mt-1 text-[13px] text-[#737373]">Войдите по коду из письма или по паролю, если задали его при записи.</p>
+    <main className="panel-shell flex min-h-screen w-full flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[380px]">
+        <h1 className="text-[24px] font-semibold">Вход в кабинет</h1>
+        <p className="mt-1 text-[13px] text-[#737373]">Войдите по коду из письма или по паролю, если задали его при записи.</p>
 
-      <div className="mt-5 flex gap-2 text-[14px]">
-        <button type="button" onClick={() => setMode('otp')} className={mode === 'otp' ? 'font-semibold underline' : 'text-[#737373]'}>
-          По коду из email
-        </button>
-        <button type="button" onClick={() => setMode('password')} className={mode === 'password' ? 'font-semibold underline' : 'text-[#737373]'}>
-          По паролю
-        </button>
-      </div>
+        <div className="mt-5 flex gap-2" role="tablist" aria-label="Способ входа">
+          <button type="button" role="tab" aria-selected={mode === 'otp'} onClick={() => setMode('otp')} className={tab(mode === 'otp')}>
+            По коду из email
+          </button>
+          <button type="button" role="tab" aria-selected={mode === 'password'} onClick={() => setMode('password')} className={tab(mode === 'password')}>
+            По паролю
+          </button>
+        </div>
 
-      {mode === 'otp' ? (
-        <form onSubmit={onSubmitOtp} className="mt-5 grid gap-3">
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="min-h-[44px] rounded-md border border-[#e5e5e5] px-3"
-            disabled={codeSent}
-          />
-          {codeSent && (
+        {mode === 'otp' ? (
+          <form onSubmit={onSubmitOtp} className="mt-5 grid gap-3">
+            <label htmlFor="my-login-email" className="text-[14px] font-medium">Email, указанный при записи</label>
             <input
-              inputMode="numeric"
+              id="my-login-email"
+              type="email"
               required
-              placeholder="Код из письма (6 цифр)"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="min-h-[44px] rounded-md border border-[#e5e5e5] px-3"
+              autoComplete="email"
+              placeholder="you@example.ru"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={input}
+              disabled={codeSent}
             />
-          )}
-          <button type="submit" disabled={busy} className="min-h-[44px] rounded-md bg-[var(--accent,#111)] px-5 text-white">
-            {busy ? '…' : codeSent ? 'Войти' : 'Получить код'}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={onSubmitPassword} className="mt-5 grid gap-3">
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="min-h-[44px] rounded-md border border-[#e5e5e5] px-3"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="min-h-[44px] rounded-md border border-[#e5e5e5] px-3"
-          />
-          <button type="submit" disabled={busy} className="min-h-[44px] rounded-md bg-[var(--accent,#111)] px-5 text-white">
-            {busy ? '…' : 'Войти'}
-          </button>
-        </form>
-      )}
+            {codeSent && (
+              <>
+                <label htmlFor="my-login-code" className="text-[14px] font-medium">Код из письма</label>
+                <input
+                  id="my-login-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  placeholder="6 цифр"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className={input}
+                />
+              </>
+            )}
+            <button type="submit" disabled={busy} className={submit}>
+              {busy ? '…' : codeSent ? 'Войти' : 'Получить код'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={onSubmitPassword} className="mt-5 grid gap-3">
+            <label htmlFor="my-login-email-pw" className="text-[14px] font-medium">Email</label>
+            <input
+              id="my-login-email-pw"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.ru"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={input}
+            />
+            <label htmlFor="my-login-password" className="text-[14px] font-medium">Пароль</label>
+            <input
+              id="my-login-password"
+              type="password"
+              required
+              autoComplete="current-password"
+              placeholder="Пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={input}
+            />
+            <button type="submit" disabled={busy} className={submit}>
+              {busy ? '…' : 'Войти'}
+            </button>
+          </form>
+        )}
 
-      {error && <p className="mt-4 text-[14px] text-[#b91c1c]" role="alert">{error}</p>}
-      {message && <p className="mt-4 text-[14px] text-[#15803d]">{message}</p>}
+        {error && <p className="mt-4 text-[14px] text-[#b91c1c]" role="alert">{error}</p>}
+        {message && <p className="mt-4 text-[14px] text-[#15803d]" role="status">{message}</p>}
+      </div>
     </main>
   );
 }

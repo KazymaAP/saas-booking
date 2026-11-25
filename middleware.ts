@@ -7,7 +7,7 @@ import {
   DOMAIN_MAP_COOKIE, DOMAIN_MAP_MARKER, RESOLVE_HOST_HEADER, RESOLVE_NEXT_HEADER, RESOLVE_RETRY_HEADER, verifyDomainMap,
 } from './общие/lib/domain-map';
 import { LICENSE_COOKIE, pingLicense, type LicenseStatus } from './общие/lib/license-client';
-import { COPY_MODE_HEADER, COPY_PATH_HEADER, COPY_PREFIX } from './общие/lib/copy-mode-paths';
+import { COPY_MODE_HEADER, COPY_PATH_HEADER, COPY_PREFIX, hasOwnCopyRoute } from './общие/lib/copy-mode-paths';
 
 const NOINDEX = 'noindex, nofollow';
 const LICENSE_TTL_MS = 86_400_000;
@@ -191,6 +191,16 @@ export async function middleware(req: NextRequest, event: NextFetchEvent): Promi
     // API под префиксом копий не открываем: режим копий отключает проверку супер-админа,
     // и /test/ful/sts/api/backup/restore дошёл бы до настоящего обработчика без входа.
     if (inner === '/api' || inner.startsWith('/api/')) return new NextResponse(null, { status: 404 });
+
+    // Витрина бизнеса и GERA — пререндеренные страницы с клиентскими компонентами.
+    // Rewrite на них отдавал HTML из кэша и RSC-поток из нового рендера: React не мог
+    // сопоставить деревья и падал в гидрации (по 4 исключения на каждой копии).
+    // У этих адресов есть собственные динамические маршруты-копии, поэтому пропускаем
+    // запрос как есть — без срезания префикса.
+    if (hasOwnCopyRoute(inner)) {
+      return NextResponse.next({ request: { headers: clean } });
+    }
+
     const url = req.nextUrl.clone();
     url.pathname = inner;
     const forward = new Headers(clean);
