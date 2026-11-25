@@ -11,6 +11,7 @@ import { NicheSite } from '@/шаблоны/_shared/NicheSite';
 import { buildNicheTenant } from '@/шаблоны/_shared/niche-tenant';
 import { resolveSiteTheme } from '@/шаблоны/_shared/theme-for';
 import { SITE_THEME_KEY, appearanceByKey } from '@/lib/appearance';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600; // кэш сайта клиента на 1 час: слоты брони всё равно живые (клиентский API),
 // а HTML/услуги/фото меняются редко — реже запросы в базу и быстрее ответ на cache-hit.
@@ -56,11 +57,16 @@ export async function generateMetadata({ params }: { params: { prefix: string; s
   const r = await resolveBusiness(params.prefix, params.slug);
   if (r.kind !== 'found') return { robots: { index: false, follow: false } };
   const b = r.business;
+  // canonical и og:url — адрес на основном домене. Свой домен клиента обслуживает
+  // отдельный маршрут (app/domain-site) и ставит canonical на себя, поэтому здесь
+  // всегда основной хост: страница и так отдаётся только с него.
+  const url = `${SITE_URL}/${params.prefix}/${params.slug}`;
   return {
     title: `${b.name} — запись онлайн`,
     description: b.description ?? undefined,
     manifest: `/${params.prefix}/${params.slug}/manifest.webmanifest`,
-    openGraph: { title: b.name, description: b.description ?? undefined, type: 'website' },
+    alternates: { canonical: url },
+    openGraph: { title: b.name, description: b.description ?? undefined, type: 'website', url },
   };
 }
 
