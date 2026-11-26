@@ -183,12 +183,12 @@ pnpm migrate        # применить миграции к БД
 `SUPABASE_SERVICE_ROLE_KEY`, `ENCRYPTION_KEY`, `CRON_SECRET`, `RATE_LIMIT_SALT`,
 `ALLOWED_ORIGIN`, `VAPID_*`, `LLM_*`.
 
-**Но это относится к проекту `servis`, а не обязательно к тому, который собирает GitHub.**
-Сборка из GitHub 25.11 в 23:22 упала с `NEXT_PUBLIC_SUPABASE_URL: не задана`, хотя CLI
-за несколько часов до этого показывал её в scope Production. Два взаимоисключающих факта
-объясняются проще всего тем, что репозиторий привязан к **другому** проекту Vercel.
-Проверять в дашборде: Settings → Git (какой проект смотрит в `KazymaAP/saas-booking`) и
-Settings → Environment Variables у этого проекта. Подробно — 5.12.
+**Но это срез проекта `servis` на 25.11, а сборка из GitHub 25.11 в 23:22 упала
+с `NEXT_PUBLIC_SUPABASE_URL: не задана`.** Владелец подтвердил, что проект один и тот же,
+поэтому объяснение одно: переменные заведены не для **Production** (например, только
+Preview/Development) либо были добавлены позже. Проверять в дашборде: Settings →
+Environment Variables, колонка Production. Готовый набор для импорта — `vercel-env.txt`
+в корне рабочей копии (раздел 5.12).
 
 **Нет** (и это причины блокеров из раздела 9): `YOOKASSA_*`, `TELEGRAM_*`,
 `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SUPPORT_TELEGRAM`, `LEGAL_EMAIL`, `LEGAL_ADDRESS`,
@@ -505,13 +505,18 @@ Command failed with exit code 1
 маршрутов помечена `○` (static), ошибок в логе нет. То есть воспроизведено ровно условие
 Vercel, и сборка проходит.
 
-**Что осталось за владельцем:** прописать переменные окружения в настройках **того проекта
-Vercel, к которому привязан репозиторий**. Косвенный признак, что это может быть **не**
-`servis`: в логе Vercel пишет про настройку Node `26.x`, а у `servis` в локальном
-`.vercel/project.json` записано `24.x`. Проверить в дашборде: Settings → Git (какой проект
-смотрит в репозиторий) и Settings → Environment Variables (есть ли `NEXT_PUBLIC_SUPABASE_URL`
-в scope Production). Пока переменных нет, сборка проходит, но раздел копий будет без
-списка сервисов, а всё, что ходит в базу, отдаст ошибку.
+**Что осталось за владельцем:** прописать переменные окружения в проекте Vercel
+**`servis`** (владелец подтвердил 26.11: проект на Vercel — `KazymaAP/servis`,
+репозиторий — `KazymaAP/saas-booking`; это одна и та же пара, «другой проект» тут ни при чём).
+Значит сборка падала потому, что переменных нет именно в scope **Production** —
+скорее всего они заведены только для Preview/Development.
+
+Готовый набор для импорта лежит в корне рабочей копии: **`vercel-env.txt`** (17 переменных,
+только заполненные значения, без плейсхолдеров и локальных адресов; в git не попадает —
+добавлен в `.gitignore`). Как применить: Vercel → проект `servis` → Settings →
+Environment Variables → Import .env → вставить содержимое файла → Production → Save,
+затем Redeploy. Без этого Git-сборка проходит, но сайт остаётся без базы: раздел копий
+будет без списка сервисов, а всё, что ходит в Supabase, отдаст ошибку.
 
 ### 5.13. 26.11.2026 — обход всех страниц живого сайта
 
@@ -909,12 +914,14 @@ projectId `prj_AI6P0rxNOLy3pQ1jm0IZjdD01ffa`, orgId `team_2j43PpcevB3n7qtEl0zt9k
 7. **Полный аудит после деплоя**: `page-audit.cjs`, `copy-audit.cjs`, `link-audit.cjs`,
    `runtime-audit.cjs` против живого домена.
 8. **Решить судьбу раздела копий** — список всех бизнесов виден публично.
-9. **Прописать переменные окружения в том проекте Vercel, к которому привязан репозиторий.**
-   GitHub-интеграция уже подключена (25.11), но сборка падает на `NEXT_PUBLIC_SUPABASE_URL`.
-   Минимум для Production: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
+9. **Прописать переменные окружения в проекте Vercel `servis` (scope Production).**
+   GitHub-интеграция уже подключена (25.11), но сборка падала на `NEXT_PUBLIC_SUPABASE_URL`,
+   а после исправления кода всё равно не выходит на домен: сборка собирается без базы.
+   Готовый файл для импорта — `vercel-env.txt` в корне рабочей копии (17 переменных,
+   в git не попадает). Vercel → `servis` → Settings → Environment Variables →
+   Import .env → вставить → Production → Save → Redeploy.
+   Минимум, без которого сайт не работает: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ENCRYPTION_KEY`, `CRON_SECRET`.
-   Перед этим убедиться, что это тот же проект, что отдаёт `www.zapishisya.ru` (признак
-   расхождения — настройка Node `26.x` в логе против `24.x` у `servis`).
 
 ---
 
@@ -927,7 +934,9 @@ cd D:\Clode\POLsaas-booking\project
 git push origin master     # запускает сборку на Vercel
 ```
 
-Сборка упадёт, если в настройках проекта нет переменных окружения (раздел 5.12).
+Пуш работает только после того, как в проекте `servis` заполнены переменные окружения
+для Production (`vercel-env.txt`, раздел 5.12). Иначе сборка либо падает на `EnvError`,
+либо собирается без базы и на домен не выходит.
 
 **Резервный путь — CLI.** Нужен, когда интеграция недоступна или нужно залить папку как есть:
 
