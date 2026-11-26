@@ -94,23 +94,32 @@ export const SUPERADMIN_PAGES: readonly PageLink[] = [
 // а в базе лежат ещё архивные строки (сидовые glowdetailing и lyubava). Раньше они попадали
 // в справочник и давали восемь ссылок на 404 — в том числе в текстовом списке адресов.
 export async function loadServices(): Promise<Service[]> {
-  const db = adminClient();
-  const [{ data: businesses }, { data: templates }] = await Promise.all([
-    db.from('businesses').select('slug, name, status, vertical_template_id').eq('status', 'client').order('name'),
-    db.from('vertical_templates').select('id, url_prefix'),
-  ]).catch(() => [{ data: [] }, { data: [] }] as const);
+  // try/catch обязателен: adminClient() бросает EnvError СИНХРОННО, до первого запроса.
+  // Без него `.catch()` ниже не срабатывает, и при сборке без переменных окружения
+  // (например, на Vercel с ненастроенным проектом) падает предрендер всей страницы,
+  // а вместе с ним и весь билд. Пустой список — правильное поведение: разделы оглавления
+  // статические, от базы зависит только список сервисов.
+  try {
+    const db = adminClient();
+    const [{ data: businesses }, { data: templates }] = await Promise.all([
+      db.from('businesses').select('slug, name, status, vertical_template_id').eq('status', 'client').order('name'),
+      db.from('vertical_templates').select('id, url_prefix'),
+    ]).catch(() => [{ data: [] }, { data: [] }] as const);
 
-  const prefixById = new Map<string, string>();
-  for (const t of (templates ?? []) as TemplateRow[]) {
-    if (t.url_prefix) prefixById.set(t.id, t.url_prefix);
+    const prefixById = new Map<string, string>();
+    for (const t of (templates ?? []) as TemplateRow[]) {
+      if (t.url_prefix) prefixById.set(t.id, t.url_prefix);
+    }
+
+    return ((businesses ?? []) as BusinessRow[]).map((b) => ({
+      slug: b.slug,
+      name: b.name,
+      status: b.status,
+      prefix: (b.vertical_template_id ? prefixById.get(b.vertical_template_id) : null) ?? 'd',
+    }));
+  } catch {
+    return [];
   }
-
-  return ((businesses ?? []) as BusinessRow[]).map((b) => ({
-    slug: b.slug,
-    name: b.name,
-    status: b.status,
-    prefix: (b.vertical_template_id ? prefixById.get(b.vertical_template_id) : null) ?? 'd',
-  }));
 }
 
 // Все пути сервиса: сайт, кабинет с разделами, клиентский кабинет и смены по ролям.
