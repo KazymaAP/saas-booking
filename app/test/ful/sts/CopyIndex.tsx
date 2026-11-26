@@ -82,6 +82,9 @@ export function CopyIndex({ prefix, publicPages, superadminPages, cabinetSection
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск по названию или адресу сервиса…"
+            // placeholder не заменяет подпись: скринридер объявляет поле «поле ввода» без имени.
+            aria-label="Поиск по названию или адресу сервиса"
+            type="search"
           />
         </div>
 

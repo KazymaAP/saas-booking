@@ -41,8 +41,8 @@ export function LegalDocument({ doc, lead, sections, requisites, extra_text }: P
           </dl>
           {!requisites.is_complete && (
             <p role="note" className="mt-4 rounded-md border border-[#e5e5e5] bg-[#f6f6f6] p-3 text-[14px]">
-              Реквизиты исполнителя заполняются. До их публикации по всем вопросам пишите на адрес,
-              указанный в разделе «Реквизиты».
+              Реквизиты исполнителя заполняются. Пока их нет, связаться можно через форму заявки
+              на главной странице.
             </p>
           )}
           <div className="mt-4 grid gap-3 leading-relaxed">{lead}</div>

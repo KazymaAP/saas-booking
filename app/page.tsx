@@ -101,6 +101,18 @@ export default async function Home() {
             <Link href="/auth" className="btn-primary text-body-sm">Войти</Link>
           </div>
         </div>
+        {/* Мобильные разделы. До этой строки на экранах уже 768 px навигация исчезала
+            целиком: до «Тарифов» и «Шаблонов» с телефона можно было добраться только
+            прокруткой всей страницы. Ссылки те же, что в десктопном меню. */}
+        <nav
+          aria-label="Разделы страницы"
+          className="flex gap-5 overflow-x-auto border-t border-brand-border px-4 py-2 text-body-sm text-brand-text-muted md:hidden"
+        >
+          <a href="#clients" className="whitespace-nowrap py-1">Клиентам</a>
+          <a href="#partners" className="whitespace-nowrap py-1">Партнёрам</a>
+          <a href="#templates" className="whitespace-nowrap py-1">Шаблоны</a>
+          <a href="#pricing" className="whitespace-nowrap py-1">Тарифы</a>
+        </nav>
       </header>
 
       <main>

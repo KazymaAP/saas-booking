@@ -64,8 +64,14 @@ export async function generateMetadata({ params }: { params: { prefix: string; s
   // Превью ссылки: логотип бизнеса, а если его нет — общая карточка платформы.
   // Без images og:image не отдавался вовсе, и ссылка на витрину в мессенджере была пустой.
   const image = b.logo_url ?? `${SITE_URL}/og.png`;
+  // Название бизнеса не уникально: у «Бумеранга» и «Север люкс» по два филиала в одном городе,
+  // и у обеих витрин выходил одинаковый <title> — для поисковика это дубли страниц.
+  // Добавляем город и адрес; город не повторяем, если он уже входит в адрес.
+  const city = b.city?.trim() ?? '';
+  const address = b.address?.trim() ?? '';
+  const place = [city && !address.includes(city) ? city : '', address].filter(Boolean).join(', ');
   return {
-    title: `${b.name} — запись онлайн`,
+    title: place ? `${b.name}, ${place} — запись онлайн` : `${b.name} — запись онлайн`,
     description: b.description ?? undefined,
     manifest: `/${params.prefix}/${params.slug}/manifest.webmanifest`,
     alternates: { canonical: url },
